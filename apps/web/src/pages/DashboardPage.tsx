@@ -10,20 +10,13 @@ import {
   TableRow,
   Tag,
 } from '@carbon/react';
-import {
-  Add,
-  ArrowRight,
-  CheckmarkFilled,
-  DeliveryParcel,
-  Blockchain,
-  WarningAltFilled,
-} from '@carbon/icons-react';
+import { Add, ArrowRight, DeliveryParcel, Blockchain, WarningAltFilled } from '@carbon/icons-react';
 import type { DashboardSummary, Shipment } from '@jixin/shared';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { LedgerBanner } from '../components/LedgerBanner';
 import { EmptyState, ErrorState, PageSkeleton } from '../components/PageState';
-import { RouteScene } from '../components/RouteScene';
+import { ShipmentProgress } from '../components/ShipmentProgress';
 import { StatusTag } from '../components/StatusTag';
 import { api, getErrorMessage } from '../lib/api';
 import {
@@ -167,21 +160,26 @@ export function DashboardPage() {
 
   const percent = (value: number) =>
     summary.total ? Math.round((value / summary.total) * 100) : 0;
+  const activeShipment =
+    summary.recent.find(
+      (shipment) => shipment.status !== 'RECEIVED' && shipment.status !== 'CANCELLED',
+    ) ??
+    summary.recent[0] ??
+    null;
 
   return (
     <div className="page dashboard-page" ref={pageRef}>
       <header className="dashboard-hero" data-motion="hero">
         <div className="dashboard-hero__copy" data-reveal>
-          <p className="eyebrow">{ROLE_LABELS[user.role]}工作台</p>
+          <p className="eyebrow">{ROLE_LABELS[user.role]} · 今日运输概览</p>
           <h1>
-            {greeting}，{user.displayName}
+            <span>{greeting}</span>
+            <span>{user.displayName}</span>
           </h1>
-          <p>从一处掌握运输进度、待处理动作与可信账本状态。</p>
+          <p>从这里看清每张运单走到哪一步、接下来该做什么，以及系统有没有正常保存记录。</p>
         </div>
         <div className="dashboard-hero__visual" data-reveal>
-          <RouteScene compact />
-          <span>今日责任链</span>
-          <strong>{summary.total} 张活跃运单</strong>
+          <ShipmentProgress shipment={activeShipment} compact />
         </div>
         <div className="dashboard-hero__action" data-reveal>
           {user.role === 'shipper' ? (
@@ -215,7 +213,11 @@ export function DashboardPage() {
         </article>
       </section>
 
-      <section className="dashboard-bento" aria-label="运单概览" data-motion="bento">
+      <section
+        className={`dashboard-bento ${pending.length ? 'has-attention' : ''}`}
+        aria-label="运单概览"
+        data-motion="bento"
+      >
         <article className="bento-card bento-card--overview" data-bento-card>
           <div className="bento-card__heading">
             <div>
@@ -250,24 +252,17 @@ export function DashboardPage() {
           </button>
         </article>
 
-        <article
-          className={`bento-card bento-card--attention ${pending.length ? 'has-alert' : ''}`}
-          data-bento-card
-        >
-          <div className="bento-card__heading bento-card__heading--compact">
-            <div>
-              <span>需要推进</span>
-              <h2>我的待处理</h2>
-            </div>
-            {pending.length ? (
+        {pending.length ? (
+          <article className="bento-card bento-card--attention has-alert" data-bento-card>
+            <div className="bento-card__heading bento-card__heading--compact">
+              <div>
+                <span>需要推进</span>
+                <h2>我的待处理</h2>
+              </div>
               <WarningAltFilled size={24} aria-hidden="true" />
-            ) : (
-              <CheckmarkFilled size={24} aria-hidden="true" />
-            )}
-          </div>
-          <Tag type={pending.length ? 'red' : 'green'}>{pending.length} 项</Tag>
-          <div className="attention-panel__body">
-            {pending.length ? (
+            </div>
+            <Tag type="red">{pending.length} 项</Tag>
+            <div className="attention-panel__body">
               <ul className="attention-list">
                 {pending.slice(0, 3).map(({ shipment, action }) => (
                   <li key={`${shipment.id}-${action}`}>
@@ -278,35 +273,41 @@ export function DashboardPage() {
                   </li>
                 ))}
               </ul>
-            ) : (
-              <div className="compact-empty">
-                <CheckmarkFilled size={24} aria-hidden="true" />
-                <p>当前没有需要你处理的运单。</p>
-              </div>
-            )}
-          </div>
-        </article>
+            </div>
+          </article>
+        ) : null}
 
         <article className="bento-card bento-card--network" data-bento-card>
           <div className="bento-card__heading bento-card__heading--compact">
             <div>
-              <span>可信基础设施</span>
-              <h2>账本连接</h2>
+              <span>关键操作会自动保存</span>
+              <h2>记录服务在线</h2>
             </div>
             <Blockchain size={24} aria-hidden="true" />
           </div>
           <div className="network-panel__status">
             <span className="network-pulse" aria-hidden="true" />
-            <strong>
-              {network?.label ?? (ledgerMode === 'fabric' ? 'Hyperledger Fabric' : '本地演示账本')}
-            </strong>
+            <strong>{ledgerMode === 'fabric' ? 'Fabric 协作网络' : '本地演示环境'}</strong>
           </div>
           <p>
-            {network?.health.details ??
-              (ledgerMode === 'fabric'
-                ? '业务写操作通过 Fabric Gateway 提交。'
-                : '用于功能预览，不构成真实上链证明。')}
+            {ledgerMode === 'fabric'
+              ? '建单、交接和签收都会由多个协作方共同确认并保存。'
+              : '完整流程可以体验，但当前记录只保存在本地演示环境中。'}
           </p>
+          <div className="network-record-feed" aria-label="系统记录服务状态">
+            <div>
+              <span>连接状态</span>
+              <strong>{network?.health.status === 'degraded' ? '需要检查' : '正常'}</strong>
+            </div>
+            <div>
+              <span>记录方式</span>
+              <strong>{ledgerMode === 'fabric' ? '多方共同确认' : '本地演示保存'}</strong>
+            </div>
+            <div>
+              <span>最近检查</span>
+              <strong>刚刚</strong>
+            </div>
+          </div>
           <LedgerBanner mode={ledgerMode} compact />
         </article>
       </section>
@@ -314,7 +315,7 @@ export function DashboardPage() {
       <section className="dashboard-recent">
         <div className="dashboard-recent__heading">
           <div>
-            <p className="eyebrow">实时业务动态</p>
+            <p className="eyebrow">刚刚发生</p>
             <h2>最近更新的运单</h2>
           </div>
           <Button kind="ghost" renderIcon={ArrowRight} onClick={() => navigate('/app/shipments')}>

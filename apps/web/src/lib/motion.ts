@@ -19,17 +19,17 @@ export function useCinematicMotion(
       const bentoCards = Array.from(
         scope.current.querySelectorAll<HTMLElement>('[data-motion="bento"] > [data-bento-card]'),
       );
-      const routeScenes = Array.from(
-        scope.current.querySelectorAll<HTMLElement>('[data-route-scene]'),
+      const timelineItems = Array.from(
+        scope.current.querySelectorAll<HTMLElement>('.shipment-timeline__item'),
       );
 
       const entrance = gsap.timeline({ defaults: { ease: 'power3.out' } });
       if (heroItems.length) {
         entrance.from(heroItems, {
-          y: 16,
+          y: 44,
           opacity: 0,
-          duration: 0.52,
-          stagger: 0.06,
+          duration: 0.84,
+          stagger: 0.1,
           clearProps: 'transform,opacity',
         });
       }
@@ -37,42 +37,29 @@ export function useCinematicMotion(
         entrance.from(
           bentoCards,
           {
-            y: 8,
+            y: 30,
             opacity: 0,
-            duration: 0.24,
-            stagger: 0,
+            duration: 0.54,
+            stagger: 0.08,
             clearProps: 'transform,opacity',
           },
-          heroItems.length ? '-=0.18' : 0,
+          heroItems.length ? '-=0.32' : 0,
         );
       }
 
-      routeScenes.forEach((scene) => {
-        const line = scene.querySelector<SVGPathElement>('[data-route-line]');
-        const nodes = Array.from(scene.querySelectorAll<HTMLElement>('[data-route-node]'));
-        if (line) {
-          gsap.fromTo(
-            line,
-            { strokeDashoffset: 1 },
-            {
-              strokeDashoffset: 0,
-              duration: 0.88,
-              ease: 'power2.out',
-              clearProps: 'strokeDashoffset',
-            },
-          );
-        }
-        if (nodes.length) {
-          gsap.from(nodes, {
-            opacity: 0,
-            scale: 0.75,
-            duration: 0.18,
-            stagger: 0.07,
-            delay: line ? 0.28 : 0,
-            ease: 'power2.out',
-            clearProps: 'transform,opacity',
-          });
-        }
+      timelineItems.forEach((item, index) => {
+        gsap.from(item, {
+          x: index % 2 ? 28 : -18,
+          opacity: 0,
+          duration: 0.62,
+          ease: 'power3.out',
+          clearProps: 'transform,opacity',
+          scrollTrigger: {
+            trigger: item,
+            start: 'top 88%',
+            toggleActions: 'play none none reverse',
+          },
+        });
       });
 
       const media = gsap.matchMedia();
@@ -85,20 +72,24 @@ export function useCinematicMotion(
           '[data-scrub-copy]',
           scope.current ?? undefined,
         );
+        const scrubWords = gsap.utils.toArray<HTMLElement>(
+          '[data-scrub-word]',
+          scope.current ?? undefined,
+        );
 
         imageReveals.forEach((image) => {
           gsap.fromTo(
             image,
-            { scale: 0.97, opacity: 0.82 },
+            { scale: 0.86, opacity: 0.56 },
             {
               scale: 1,
               opacity: 1,
               ease: 'power1.out',
               scrollTrigger: {
                 trigger: image,
-                start: 'top 86%',
-                end: 'top 58%',
-                scrub: 0.45,
+                start: 'top 92%',
+                end: 'top 52%',
+                scrub: 0.65,
               },
             },
           );
@@ -107,19 +98,80 @@ export function useCinematicMotion(
         copyReveals.forEach((copy) => {
           gsap.fromTo(
             copy,
-            { y: 10, opacity: 0.42 },
+            { y: 32, opacity: 0.2 },
             {
               y: 0,
               opacity: 1,
               ease: 'none',
               scrollTrigger: {
                 trigger: copy,
-                start: 'top 88%',
-                end: 'top 64%',
-                scrub: 0.4,
+                start: 'top 90%',
+                end: 'top 56%',
+                scrub: 0.65,
               },
             },
           );
+        });
+
+        const scrubTrigger = scrubWords[0]?.parentElement;
+        if (scrubWords.length && scrubTrigger) {
+          gsap.fromTo(
+            scrubWords,
+            { y: 22, opacity: 0.1 },
+            {
+              y: 0,
+              opacity: 1,
+              stagger: 0.32,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: scrubTrigger,
+                start: 'top 78%',
+                end: 'bottom 38%',
+                scrub: 0.75,
+              },
+            },
+          );
+        }
+      });
+
+      media.add('(min-width: 900px) and (prefers-reduced-motion: no-preference)', () => {
+        const pinSections = gsap.utils.toArray<HTMLElement>(
+          '[data-motion-pin]',
+          scope.current ?? undefined,
+        );
+
+        pinSections.forEach((section) => {
+          const heading = section.querySelector<HTMLElement>('[data-pin-heading]');
+          const cards = gsap.utils.toArray<HTMLElement>('[data-pin-card]', section);
+          if (!heading || !cards.length) return;
+
+          ScrollTrigger.create({
+            trigger: section,
+            start: 'top 7rem',
+            end: 'bottom 72%',
+            pin: heading,
+            pinSpacing: false,
+            anticipatePin: 1,
+          });
+
+          cards.forEach((card) => {
+            gsap.fromTo(
+              card,
+              { x: 92, scale: 0.94, opacity: 0.18 },
+              {
+                x: 0,
+                scale: 1,
+                opacity: 1,
+                ease: 'power2.out',
+                scrollTrigger: {
+                  trigger: card,
+                  start: 'top 88%',
+                  end: 'top 48%',
+                  scrub: 0.65,
+                },
+              },
+            );
+          });
         });
       });
 

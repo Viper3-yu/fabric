@@ -14,12 +14,12 @@ export function PublicHeader() {
       </NavLink>
       <nav className="public-nav__links" aria-label="公开服务导航">
         <NavLink to="/track">物流查询</NavLink>
-        <NavLink to="/verify">证据验真</NavLink>
+        <NavLink to="/verify">记录核对</NavLink>
       </nav>
       <div className="public-nav__actions">
-        <NavLink className="public-nav__verify" to="/verify" aria-label="证据验真">
+        <NavLink className="public-nav__verify" to="/verify" aria-label="核对运输记录">
           <CertificateCheck size={18} aria-hidden="true" />
-          <span>核验</span>
+          <span>核对记录</span>
         </NavLink>
         <NavLink className="public-nav__login" to="/login">
           <span>业务登录</span>

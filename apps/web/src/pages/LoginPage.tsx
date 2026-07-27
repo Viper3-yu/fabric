@@ -4,7 +4,6 @@ import { ArrowRight, Checkmark, Information, Search } from '@carbon/icons-react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { BrandMark } from '../components/BrandMark';
-import { RouteScene } from '../components/RouteScene';
 import { getErrorMessage } from '../lib/api';
 import { useCinematicMotion } from '../lib/motion';
 
@@ -31,7 +30,7 @@ const DEMO_ACCOUNTS = [
     role: '审计访客',
     username: 'auditor',
     password: 'auditor123',
-    description: '只读查询和交易证据核验',
+    description: '只读查看运输和修改记录',
   },
 ];
 
@@ -73,22 +72,15 @@ export function LoginPage() {
           <span className="login-brand__descriptor">可信物流协作网络</span>
         </div>
         <div className="login-intro__copy" data-reveal>
-          <p className="eyebrow">从发货到签收，责任清晰可查</p>
+          <p className="eyebrow">从发货到签收 责任清晰可查</p>
           <h1 id="login-title">
             每次物流
             <span className="inline-route-image" aria-hidden="true" />
             <span className="login-title__tail">交接都有可信记录</span>
           </h1>
           <p className="login-lead">
-            发货、承运、异常处理和签收在同一条责任链中完成，关键证据以摘要形式留存。
+            发货、承运、异常处理和签收都在同一张运单里协作，关键操作和文件核对编号都会自动保存。
           </p>
-        </div>
-        <div className="login-route" data-reveal>
-          <RouteScene compact />
-          <div className="login-route__meta">
-            <span>协作节点在线</span>
-            <strong className="mono">ORG1 - ORG2</strong>
-          </div>
         </div>
         <div className="login-intro__footer" data-reveal>
           <Link className="public-entry" to="/track">
@@ -109,7 +101,7 @@ export function LoginPage() {
 
           <div className="ledger-disclaimer">
             <Information size={18} aria-hidden="true" />
-            <span>演示账本仅用于流程预览，不作为真实 Fabric 上链证明。</span>
+            <span>当前是演示环境，可以体验完整流程，但记录没有写入真实 Fabric 区块链网络。</span>
           </div>
 
           <Form onSubmit={handleSubmit} className="login-form">
@@ -172,15 +164,22 @@ export function LoginPage() {
                     <span>{account.password}</span>
                   </p>
                   <Button
-                    kind="ghost"
+                    kind={username === account.username ? 'primary' : 'secondary'}
                     size="sm"
+                    renderIcon={username === account.username ? Checkmark : ArrowRight}
+                    aria-pressed={username === account.username}
+                    aria-label={
+                      username === account.username
+                        ? `已选择${account.role}账户`
+                        : `使用${account.role}账户`
+                    }
                     onClick={() => {
                       setUsername(account.username);
                       setPassword(account.password);
                       setError('');
                     }}
                   >
-                    使用此账户
+                    {username === account.username ? '已选择此账户' : '使用此账户'}
                   </Button>
                 </article>
               ))}

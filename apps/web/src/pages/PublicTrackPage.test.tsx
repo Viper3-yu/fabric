@@ -75,7 +75,7 @@ describe('公开物流查询', () => {
     });
   });
 
-  it('查询后显示脱敏轨迹和演示账本警告', async () => {
+  it('查询后显示脱敏轨迹和演示记录提示', async () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={['/track']}>
@@ -87,29 +87,23 @@ describe('公开物流查询', () => {
     await user.click(screen.getByRole('button', { name: '查询物流' }));
 
     expect(await screen.findByText('广州 至 上海')).toBeInTheDocument();
-    expect(screen.getByText('当前为演示账本')).toBeInTheDocument();
+    expect(screen.getByText('当前使用演示记录')).toBeInTheDocument();
     expect(screen.getByText('周女士，139****2068')).toBeInTheDocument();
     expect(screen.getByText('tx-demo-001')).toBeInTheDocument();
   });
 
-  it('可以切换公开、脱敏与链下原件边界', async () => {
-    const user = userEvent.setup();
+  it('直接说明公开、脱敏与内部原件边界', () => {
     render(
       <MemoryRouter initialEntries={['/track']}>
         <PublicTrackPage />
       </MemoryRouter>,
     );
 
-    const maskedLayer = screen.getByRole('button', {
-      name: '02 · 隐私脱敏 联系人只保留必要线索',
-    });
-    expect(maskedLayer).toHaveAttribute('aria-expanded', 'false');
-
-    await user.click(maskedLayer);
-
-    expect(maskedLayer).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('每次变化都按顺序保存')).toBeInTheDocument();
+    expect(screen.getByText('联系人只显示必要信息')).toBeInTheDocument();
+    expect(screen.getByText('只保存文件核对编号')).toBeInTheDocument();
     expect(
-      screen.getByText('公开端隐藏完整手机号和详细身份，避免业务透明演变为个人信息泄露。'),
+      screen.getByText('公开页面不会显示完整手机号和个人身份，查物流不等于暴露收发货人的隐私。'),
     ).toBeInTheDocument();
   });
 });

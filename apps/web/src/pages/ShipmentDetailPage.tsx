@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Accordion, AccordionItem, Button, InlineNotification, Tag, Tile } from '@carbon/react';
 import {
   ArrowLeft,
+  Blockchain,
   CheckmarkFilled,
   DeliveryParcel,
   Location,
@@ -26,13 +27,15 @@ import {
   routeLabel,
   STATUS_LABELS,
 } from '../lib/presentation';
+import { useCinematicMotion } from '../lib/motion';
 import type { ShipmentAction, ShipmentReceipt, ShipmentRouteState } from '../types';
 
 export function ShipmentDetailPage() {
+  const pageRef = useRef<HTMLDivElement>(null);
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, ledgerMode } = useAuth();
   const routeState = location.state as ShipmentRouteState | null;
   const [shipment, setShipment] = useState<Shipment | null>(routeState?.receipt?.data ?? null);
   const [history, setHistory] = useState<ShipmentHistoryEntry[]>([]);
@@ -42,6 +45,8 @@ export function ShipmentDetailPage() {
   const [latestReceipt, setLatestReceipt] = useState<ShipmentReceipt | null>(
     routeState?.receipt ?? null,
   );
+
+  useCinematicMotion(pageRef, [loading, shipment?.id, history.length]);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -86,18 +91,19 @@ export function ShipmentDetailPage() {
   );
 
   return (
-    <div className="page shipment-detail-page">
-      <header className="detail-header">
+    <div className="page shipment-detail-page" ref={pageRef}>
+      <header className="detail-header" data-motion="hero">
         <Button
           className="page-back-button"
           kind="ghost"
           size="sm"
+          data-reveal
           onClick={() => navigate('/app/shipments')}
         >
           <ArrowLeft size={16} aria-hidden="true" />
           <span>返回运单列表</span>
         </Button>
-        <div className="detail-header__main">
+        <div className="detail-header__main" data-reveal>
           <div>
             <div className="detail-header__status">
               <StatusTag status={shipment.status} />
@@ -134,8 +140,8 @@ export function ShipmentDetailPage() {
           className="receipt-notification"
           kind="success"
           lowContrast
-          title="交易已提交"
-          subtitle={`${latestReceipt.ledgerMode === 'fabric' ? 'Fabric 交易 ID' : '演示交易 ID'}：${latestReceipt.transactionId}`}
+          title="这次操作已经记下"
+          subtitle={`系统记录编号：${latestReceipt.transactionId}`}
           hideCloseButton
         />
       ) : null}
@@ -156,9 +162,42 @@ export function ShipmentDetailPage() {
           lowContrast
           hideCloseButton
           title="当前运单处于异常状态"
-          subtitle="异常证据已保留。承运方完成现场处置后可提交解除异常。"
+          subtitle="异常位置和现场说明已经保存。承运方处理完成后，可以在这里恢复运输。"
         />
       ) : null}
+
+      <section
+        className="detail-record-health"
+        aria-label="这张运单的系统记录状态"
+        data-motion="bento"
+      >
+        <article data-bento-card>
+          <div>
+            <span className="network-pulse" aria-hidden="true" />
+            <span>记录状态</span>
+          </div>
+          <strong>顺序完整</strong>
+          <small>目前没有发现中间缺失</small>
+        </article>
+        <article data-bento-card>
+          <div>
+            <Blockchain size={18} aria-hidden="true" />
+            <span>记录环境</span>
+          </div>
+          <strong>{ledgerMode === 'fabric' ? 'Fabric 网络' : '演示环境'}</strong>
+          <small>{ledgerMode === 'fabric' ? '由多方共同确认' : '用于预览完整业务流程'}</small>
+        </article>
+        <article data-bento-card>
+          <div>
+            <CheckmarkFilled size={18} aria-hidden="true" />
+            <span>已经保存</span>
+          </div>
+          <strong className="mono">{shipment.events.length} 次变化</strong>
+          <small>
+            最近一次：{formatDateTime(shipment.events.at(-1)?.timestamp ?? shipment.updatedAt)}
+          </small>
+        </article>
+      </section>
 
       <section className="detail-route" aria-label="运单路线概览">
         <div>
@@ -205,9 +244,9 @@ export function ShipmentDetailPage() {
         <div className="detail-primary">
           <section className="content-section">
             <div className="section-heading">
-              <p className="eyebrow">链上事件</p>
-              <h2>可信物流时间线</h2>
-              <p>先查看物流事实，需要时展开提交身份、组织与交易凭据。</p>
+              <p className="eyebrow">运输过程</p>
+              <h2>谁在什么时候做了什么</h2>
+              <p>每次交接和位置更新都按时间排列；展开后，可以看到操作人和系统记录编号。</p>
             </div>
             {shipment.events.length ? (
               <ShipmentTimeline events={shipment.events} />
@@ -218,9 +257,9 @@ export function ShipmentDetailPage() {
 
           <section className="content-section">
             <div className="section-heading">
-              <p className="eyebrow">世界状态历史</p>
-              <h2>账本版本记录</h2>
-              <p>用于核对当前状态与历史交易是否连续。</p>
+              <p className="eyebrow">每次修改记录</p>
+              <h2>这张运单是怎么一步步变化的</h2>
+              <p>从建单到当前状态，每次修改都会保留。这里可以检查中间有没有断开。</p>
             </div>
             <Accordion align="start">
               {newestHistory.map((entry, index) => (
@@ -231,14 +270,14 @@ export function ShipmentDetailPage() {
                 >
                   <dl className="history-entry">
                     <div>
-                      <dt>交易 ID</dt>
+                      <dt>系统记录编号</dt>
                       <dd className="hash-row">
                         <span className="mono hash-value">{entry.txId}</span>
-                        <CopyButton value={entry.txId} label="复制历史交易 ID" />
+                        <CopyButton value={entry.txId} label="复制系统记录编号" />
                       </dd>
                     </div>
                     <div>
-                      <dt>删除标记</dt>
+                      <dt>这条记录是否已删除</dt>
                       <dd>{entry.isDelete ? '是' : '否'}</dd>
                     </div>
                     <div>
@@ -324,7 +363,7 @@ export function ShipmentDetailPage() {
               <strong className="temperature-reading mono">
                 {shipment.temperatureRange.min} °C 至 {shipment.temperatureRange.max} °C
               </strong>
-              <p>节点温度超出范围时，链码自动记录异常。</p>
+              <p>运输节点温度超出范围时，系统会自动标记异常并保留当时记录。</p>
             </Tile>
           ) : null}
 
@@ -335,15 +374,15 @@ export function ShipmentDetailPage() {
               ) : (
                 <WarningAltFilled size={22} aria-hidden="true" />
               )}
-              <h2>发货资料摘要</h2>
+              <h2>发货文件核对编号</h2>
             </div>
             {shipment.documentHash ? (
               <div className="hash-row">
                 <span className="mono hash-value">{shipment.documentHash}</span>
-                <CopyButton value={shipment.documentHash} label="复制资料摘要" />
+                <CopyButton value={shipment.documentHash} label="复制文件核对编号" />
               </div>
             ) : (
-              <p>此运单未提交发货资料摘要。</p>
+              <p>这张运单没有保存发货文件核对编号。</p>
             )}
           </Tile>
         </aside>

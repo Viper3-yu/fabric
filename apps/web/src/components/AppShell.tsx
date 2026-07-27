@@ -58,7 +58,7 @@ export function AppShell() {
       <header className="app-nav" data-motion="nav">
         <NavLink className="app-nav__brand" to="/app" aria-label="迹信工作台首页">
           <BrandMark />
-          <span className="app-nav__product">可信物流控制台</span>
+          <span className="app-nav__product">物流协作台</span>
         </NavLink>
 
         <nav className="app-nav__links" aria-label="主导航">

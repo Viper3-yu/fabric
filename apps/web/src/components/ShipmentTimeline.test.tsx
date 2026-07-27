@@ -29,7 +29,7 @@ const events = [
 ] satisfies ShipmentEvent[];
 
 describe('ShipmentTimeline', () => {
-  it('默认展开最新凭据，并在折叠的旧事件中保留交易 ID 与复制按钮语义', () => {
+  it('默认展开最新记录，并在折叠的旧事件中保留系统编号与复制按钮语义', () => {
     render(<ShipmentTimeline events={events} />);
 
     const latestEvidence = screen.getByText('tx-latest').closest('details');
@@ -40,6 +40,6 @@ describe('ShipmentTimeline', () => {
     expect(within(olderEvidence!).getByText('tx-older')).toBeInTheDocument();
 
     const copyButton = olderEvidence!.querySelector('button');
-    expect(copyButton).toHaveAccessibleName('复制交易 ID');
+    expect(copyButton).toHaveAccessibleName('复制系统记录编号');
   });
 });

@@ -42,8 +42,7 @@ describe('登录页', () => {
     expect(screen.getByText('演示账户')).toBeInTheDocument();
     expect(screen.getByText('carrier123')).toBeInTheDocument();
 
-    const accountButtons = screen.getAllByRole('button', { name: '使用此账户' });
-    await user.click(accountButtons[1]!);
+    await user.click(screen.getByRole('button', { name: '使用承运方账户' }));
     expect(screen.getByLabelText('用户名')).toHaveValue('carrier');
     expect(screen.getByLabelText('密码')).toHaveValue('carrier123');
 

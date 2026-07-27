@@ -310,8 +310,8 @@ export function CreateShipmentPage() {
           <TextInput
             id="document-hash"
             name="documentHash"
-            labelText="发货资料 SHA-256 摘要（选填）"
-            helperText="填写 64 位十六进制摘要，原始文件不会写入区块链。"
+            labelText="发货文件核对编号（选填）"
+            helperText="填写文件生成的 64 位核对编号。系统用它判断文件有没有被换过，不会公开原文件。"
             pattern="[A-Fa-f0-9]{64}"
           />
         </Tile>
@@ -319,10 +319,10 @@ export function CreateShipmentPage() {
         <div className="form-submit-bar">
           <div>
             <Information size={20} aria-hidden="true" />
-            <span>交易时间由账本提供，浏览器时间不作为可信时间。</span>
+            <span>操作时间由记录服务统一提供，不使用当前电脑的时间。</span>
           </div>
           <Button type="submit" renderIcon={ArrowRight} disabled={submitting}>
-            {submitting ? '正在提交交易' : '创建并提交账本'}
+            {submitting ? '正在保存运单' : '创建并保存运单'}
           </Button>
         </div>
       </Form>
@@ -333,7 +333,10 @@ export function CreateShipmentPage() {
           {receipt ? (
             <div className="creation-success">
               <CheckmarkFilled size={32} aria-hidden="true" />
-              <p>运单已写入{receipt.ledgerMode === 'fabric' ? ' Fabric 账本' : '演示账本'}。</p>
+              <p>
+                运单已保存到
+                {receipt.ledgerMode === 'fabric' ? ' Fabric 协作网络' : '演示环境'}。
+              </p>
               {receipt.deliveryCode ? (
                 <div className="delivery-code-block">
                   <span>一次性签收码</span>
@@ -350,7 +353,7 @@ export function CreateShipmentPage() {
                   <dd className="mono">{receipt.data.trackingNumber}</dd>
                 </div>
                 <div>
-                  <dt>交易 ID</dt>
+                  <dt>系统记录编号</dt>
                   <dd className="mono hash-value">{receipt.transactionId}</dd>
                 </div>
               </dl>

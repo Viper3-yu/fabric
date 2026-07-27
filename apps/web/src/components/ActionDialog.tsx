@@ -21,17 +21,17 @@ const ACTION_COPY: Record<
   accept: { description: '确认由当前承运方承担后续运输责任。', submit: '确认接单' },
   pickup: { description: '记录实际揽收地点，责任由发货方转移至承运方。', submit: '确认已揽收' },
   checkpoint: {
-    description: '追加不可覆盖的运输节点。温度越界时链码会自动标记异常。',
+    description: '追加一条不能被悄悄覆盖的运输记录。温度超出范围时，系统会自动标记异常。',
     submit: '提交运输节点',
   },
   exception: {
-    description: '上报运输异常并保留位置、说明和可选证据摘要。',
+    description: '上报运输异常，同时保存位置、现场说明和可选文件核对编号。',
     submit: '确认上报异常',
     danger: true,
   },
   resolve: { description: '说明异常处理结果，运单将恢复为运输中。', submit: '确认解除异常' },
   deliver: {
-    description: '提交送达凭证摘要，随后由收货方使用签收码完成闭环。',
+    description: '保存送达文件的核对编号，随后由收货方使用签收码完成确认。',
     submit: '确认已送达',
   },
   confirm: {
@@ -164,8 +164,8 @@ export function ActionDialog({
             <TextInput
               id={`${formId}-evidence`}
               name="evidenceHash"
-              labelText={`证据 SHA-256 摘要${action === 'deliver' ? '' : '（选填）'}`}
-              helperText="原始文件不上链，仅提交 64 位十六进制摘要。"
+              labelText={`文件核对编号${action === 'deliver' ? '' : '（选填）'}`}
+              helperText="填写文件生成的 64 位核对编号。系统用它判断文件有没有被换过，不会公开原文件。"
               pattern="[A-Fa-f0-9]{64}"
               required={action === 'deliver'}
             />
@@ -190,7 +190,7 @@ export function ActionDialog({
               kind="error"
               lowContrast
               hideCloseButton
-              title="交易提交失败"
+              title="这次操作保存失败"
               subtitle={error}
             />
           ) : null}
@@ -206,7 +206,7 @@ export function ActionDialog({
           kind={copy.danger ? 'danger' : 'primary'}
           disabled={submitting}
         >
-          {submitting ? '正在提交交易' : copy.submit}
+          {submitting ? '正在保存记录' : copy.submit}
         </Button>
       </ModalFooter>
     </ComposedModal>

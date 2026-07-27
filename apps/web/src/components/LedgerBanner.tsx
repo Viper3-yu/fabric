@@ -6,7 +6,7 @@ export function LedgerBanner({ mode, compact = false }: { mode: LedgerMode; comp
   if (compact) {
     return (
       <Tag type={mode === 'fabric' ? 'green' : 'warm-gray'} renderIcon={Blockchain}>
-        {mode === 'fabric' ? 'Fabric 账本' : '演示账本'}
+        {mode === 'fabric' ? 'Fabric 协作网络' : '演示记录'}
       </Tag>
     );
   }
@@ -19,8 +19,8 @@ export function LedgerBanner({ mode, compact = false }: { mode: LedgerMode; comp
       kind="warning"
       lowContrast
       hideCloseButton
-      title="当前为演示账本"
-      subtitle="页面中的交易回执用于流程预览，不能作为真实上链证明。"
+      title="当前使用演示记录"
+      subtitle="你可以体验完整流程，但这些记录没有写入真实的 Fabric 区块链网络。"
     />
   );
 }

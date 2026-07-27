@@ -48,27 +48,35 @@ export function VerifyPage() {
       <main id="main-content">
         <section className="verify-layout" aria-labelledby="verify-title">
           <div className="verify-intro">
-            <p className="eyebrow">公开证据验真</p>
-            <h1 id="verify-title">检查物流记录是否完整可信</h1>
-            <p>输入运单号检查状态历史连续性，也可提交证据摘要进行链上比对。</p>
+            <p className="eyebrow">公开记录核对</p>
+            <h1 id="verify-title">
+              <span>运输记录完整吗</span>
+              <span>文件被换过吗</span>
+            </h1>
+            <p>
+              输入运单号，系统会检查每次状态变化是否首尾相连；如果你有文件核对编号，也可以一起比对。
+            </p>
             <div className="verify-explainer">
               <div>
+                <span className="verify-explainer__index mono">01</span>
                 <Blockchain size={24} aria-hidden="true" />
-                <span>读取账本历史版本</span>
+                <span>读取这张运单的每次修改</span>
               </div>
               <div>
+                <span className="verify-explainer__index mono">02</span>
                 <DataCheck size={24} aria-hidden="true" />
-                <span>检查事件与状态连续性</span>
+                <span>检查中间有没有缺少记录</span>
               </div>
               <div>
+                <span className="verify-explainer__index mono">03</span>
                 <SearchLocate size={24} aria-hidden="true" />
-                <span>比对资料或节点证据摘要</span>
+                <span>比对文件核对编号是否一致</span>
               </div>
             </div>
           </div>
 
           <Tile className="verify-form-card">
-            <h2>提交核验</h2>
+            <h2>输入要核对的内容</h2>
             <Form onSubmit={handleSubmit}>
               <TextInput
                 id="verify-tracking-number"
@@ -79,8 +87,8 @@ export function VerifyPage() {
               />
               <TextInput
                 id="verify-evidence-hash"
-                labelText="证据 SHA-256 摘要（选填）"
-                helperText="填写 64 位十六进制摘要，可比对发货资料或节点证据。"
+                labelText="文件核对编号（选填）"
+                helperText="如果你有一串 64 位文件核对编号，可以填在这里检查是否一致。"
                 value={evidenceHash}
                 onChange={(event) => setEvidenceHash(event.currentTarget.value)}
                 pattern="[A-Fa-f0-9]{64}"
@@ -90,12 +98,12 @@ export function VerifyPage() {
                   kind="error"
                   lowContrast
                   hideCloseButton
-                  title="核验请求失败"
+                  title="暂时无法核对"
                   subtitle={error}
                 />
               ) : null}
               <Button type="submit" renderIcon={DataCheck} disabled={loading}>
-                {loading ? '正在核验' : '开始核验'}
+                {loading ? '正在检查记录' : '开始检查'}
               </Button>
             </Form>
           </Tile>
@@ -112,17 +120,17 @@ export function VerifyPage() {
               hideCloseButton
               title={
                 result.verified
-                  ? '核验通过'
+                  ? '记录完整，内容一致'
                   : result.ledgerMode === 'demo'
-                    ? '演示核验完成'
-                    : '核验未通过'
+                    ? '演示检查完成'
+                    : '发现不一致'
               }
               subtitle={
                 result.verified
-                  ? '运单历史连续，提交的证据摘要与账本记录一致。'
+                  ? '这张运单的修改记录首尾相连，填写的文件核对编号也与系统保存的一致。'
                   : result.ledgerMode === 'demo'
-                    ? '历史连续性已检查，但演示账本结果不能作为真实上链证明。'
-                    : '发现历史不连续或证据摘要不匹配，请核对输入并联系业务方。'
+                    ? '记录已经检查完成，但当前是演示环境，结果没有写入真实 Fabric 区块链网络。'
+                    : '中间可能缺少记录，或者文件核对编号不一致。请检查输入，也可以联系相关业务方。'
               }
             />
             <div className="verify-result__header">
@@ -134,26 +142,26 @@ export function VerifyPage() {
                 )}
                 <div>
                   <span className="mono">{result.trackingNumber}</span>
-                  <h2>完整性核验报告</h2>
+                  <h2>运输记录检查结果</h2>
                 </div>
               </div>
               <StatusTag status={result.status} />
             </div>
             <div className="verify-metrics">
               <Tile>
-                <span>可信事件</span>
+                <span>操作记录</span>
                 <strong className="mono">{result.eventCount}</strong>
               </Tile>
               <Tile>
-                <span>历史连续</span>
-                <strong>{result.historyContinuous ? '是' : '否'}</strong>
+                <span>中间有无缺失</span>
+                <strong>{result.historyContinuous ? '没有缺失' : '可能缺失'}</strong>
               </Tile>
               <Tile>
-                <span>账本模式</span>
-                <strong>{result.ledgerMode === 'fabric' ? 'Fabric' : '演示账本'}</strong>
+                <span>记录环境</span>
+                <strong>{result.ledgerMode === 'fabric' ? 'Fabric 网络' : '演示环境'}</strong>
               </Tile>
               <Tile>
-                <span>核验时间</span>
+                <span>检查时间</span>
                 <strong>{formatDateTime(result.checkedAt)}</strong>
               </Tile>
             </div>
@@ -177,7 +185,7 @@ export function VerifyPage() {
       </main>
       <footer className="public-footer">
         <span>迹信可信物流追踪</span>
-        <span>公开核验结果不包含完整个人信息</span>
+        <span>公开检查结果不会显示完整个人信息</span>
       </footer>
     </div>
   );

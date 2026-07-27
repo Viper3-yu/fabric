@@ -51,19 +51,19 @@ export function ShipmentTimeline({ events }: { events: ShipmentEvent[] }) {
               <summary>
                 <span>
                   <DataCheck size={17} aria-hidden="true" />
-                  查看链上凭据
+                  查看这次操作的系统记录
                 </span>
                 <ChevronDown size={18} aria-hidden="true" />
               </summary>
               <dl className="evidence-grid">
                 {event.actorName ? (
                   <div>
-                    <dt>提交身份</dt>
+                    <dt>操作人</dt>
                     <dd>{event.actorName}</dd>
                   </div>
                 ) : null}
                 <div>
-                  <dt>提交组织</dt>
+                  <dt>所属协作方</dt>
                   <dd className="mono">{event.mspId}</dd>
                 </div>
                 {event.temperature !== undefined ? (
@@ -73,18 +73,18 @@ export function ShipmentTimeline({ events }: { events: ShipmentEvent[] }) {
                   </div>
                 ) : null}
                 <div className="evidence-grid__wide">
-                  <dt>交易 ID</dt>
+                  <dt>系统记录编号</dt>
                   <dd className="hash-row">
                     <span className="mono hash-value">{event.txId}</span>
-                    <CopyButton value={event.txId} label="复制交易 ID" />
+                    <CopyButton value={event.txId} label="复制系统记录编号" />
                   </dd>
                 </div>
                 {event.evidenceHash ? (
                   <div className="evidence-grid__wide">
-                    <dt>证据摘要</dt>
+                    <dt>文件核对编号</dt>
                     <dd className="hash-row">
                       <span className="mono hash-value">{event.evidenceHash}</span>
-                      <CopyButton value={event.evidenceHash} label="复制证据摘要" />
+                      <CopyButton value={event.evidenceHash} label="复制文件核对编号" />
                     </dd>
                   </div>
                 ) : null}
