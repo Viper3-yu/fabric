@@ -1,0 +1,59 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+  - 'chaincode/*'
+
+allowBuilds:
+  '@carbon/colors': true
+  '@carbon/feature-flags': true
+  '@carbon/grid': true
+  '@carbon/icon-helpers': true
+  '@carbon/icons-react': true
+  '@carbon/layout': true
+  '@carbon/motion': true
+  '@carbon/react': true
+  '@carbon/styles': true
+  '@carbon/themes': true
+  '@carbon/type': true
+  '@carbon/utilities': true
+  '@ibm/plex': true
+  '@ibm/plex-mono': true
+  '@ibm/plex-sans': true
+  '@ibm/plex-sans-arabic': true
+  '@ibm/plex-sans-devanagari': true
+  '@ibm/plex-sans-hebrew': true
+  '@ibm/plex-sans-thai': true
+  '@ibm/plex-sans-thai-looped': true
+  '@ibm/plex-serif': true
+  '@parcel/watcher': true
+  esbuild: true
+  pkcs11js: true
+  protobufjs: true
+
+onlyBuiltDependencies:
+  - '@hyperledger/fabric-gateway'
+  - '@carbon/colors'
+  - '@carbon/feature-flags'
+  - '@carbon/grid'
+  - '@carbon/icon-helpers'
+  - '@carbon/icons-react'
+  - '@carbon/layout'
+  - '@carbon/motion'
+  - '@carbon/react'
+  - '@carbon/styles'
+  - '@carbon/themes'
+  - '@carbon/type'
+  - '@carbon/utilities'
+  - '@ibm/plex'
+  - '@ibm/plex-mono'
+  - '@ibm/plex-sans'
+  - '@ibm/plex-sans-arabic'
+  - '@ibm/plex-sans-devanagari'
+  - '@ibm/plex-sans-hebrew'
+  - '@ibm/plex-sans-thai'
+  - '@ibm/plex-sans-thai-looped'
+  - '@ibm/plex-serif'
+  - '@parcel/watcher'
+  - 'esbuild'
+  - 'pkcs11js'
+  - 'protobufjs'

@@ -1,0 +1,31 @@
+{
+  "name": "trace-trust-logistics",
+  "version": "1.0.0",
+  "private": true,
+  "description": "迹信 - 基于 Hyperledger Fabric 的可信物流追踪系统",
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "doctor": "powershell -ExecutionPolicy Bypass -File scripts/doctor.ps1",
+    "dev": "concurrently -k -n API,WEB -c blue,green \"pnpm --filter @jixin/api dev\" \"pnpm --filter @jixin/web dev\"",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "test:unit": "pnpm -r test:unit",
+    "test:closed-loop": "pnpm --filter @jixin/api test:closed-loop",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "fabric:bootstrap": "powershell -ExecutionPolicy Bypass -File network/bootstrap.ps1",
+    "fabric:up": "powershell -ExecutionPolicy Bypass -File network/start.ps1",
+    "fabric:down": "powershell -ExecutionPolicy Bypass -File network/stop.ps1",
+    "seed": "pnpm --filter @jixin/api seed"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "prettier": "^3.6.2",
+    "typescript": "^5.8.3"
+  }
+}
