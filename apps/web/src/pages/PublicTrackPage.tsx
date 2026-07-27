@@ -189,7 +189,7 @@ export function PublicTrackPage() {
               区块链可信物流追踪
             </p>
             <h1 id="track-title" data-reveal>
-              每次交接，
+              <span className="public-title__lead">每次交接，</span>
               <span className="public-title__tail">都有证据可查</span>
             </h1>
             <p data-reveal>输入运单号，查询脱敏物流轨迹、运输状态与链上交易证据。</p>
@@ -224,15 +224,15 @@ export function PublicTrackPage() {
           </div>
           <figure className="public-hero__visual" data-reveal data-motion-image>
             <img
-              src="/logistics-hub.webp"
-              alt="自动化物流枢纽中的货运车辆经过交接检查站"
+              src="/logistics-terminal-v2.webp"
+              alt="蓝调时刻，两辆货运车辆驶过现代物流枢纽的自动交接检查门"
               loading="eager"
               decoding="async"
             />
             <RouteScene />
             <figcaption>
-              <span>交接检查站 · 节点 03</span>
-              <strong>摘要已写入账本</strong>
+              <span>自动交接门 · 节点 03</span>
+              <strong>扫描完成，摘要已确认</strong>
               <small>2026-07-20 13:20:08</small>
             </figcaption>
           </figure>
