@@ -16,6 +16,7 @@ import { ActionDialog } from '../components/ActionDialog';
 import { CopyButton } from '../components/CopyButton';
 import { ErrorState, PageSkeleton } from '../components/PageState';
 import { ShipmentTimeline } from '../components/ShipmentTimeline';
+import { ShipmentRouteMap } from '../components/ShipmentRouteMap';
 import { StatusTag } from '../components/StatusTag';
 import { api, getErrorMessage } from '../lib/api';
 import {
@@ -190,27 +191,7 @@ export function ShipmentDetailPage() {
         </article>
       </section>
 
-      <section className="detail-route" aria-label="运单路线概览">
-        <div>
-          <span>始发地</span>
-          <strong>{shipment.origin.city}</strong>
-        </div>
-        <div className="detail-route__line" aria-hidden="true">
-          <i />
-          <span />
-          <i className="is-current" />
-          <span />
-          <i />
-        </div>
-        <div className="detail-route__current">
-          <span>当前位置</span>
-          <strong>{shipment.lastLocation}</strong>
-        </div>
-        <div>
-          <span>目的地</span>
-          <strong>{shipment.destination.city}</strong>
-        </div>
-      </section>
+      <ShipmentRouteMap shipment={shipment} />
 
       <section className="detail-summary" aria-label="运单当前概览">
         <Tile>

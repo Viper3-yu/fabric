@@ -14,11 +14,12 @@ import {
   TableRow,
   Tag,
 } from '@carbon/react';
-import { Add, ArrowRight, Filter } from '@carbon/icons-react';
+import { Add, ArrowRight, DocumentImport, Filter } from '@carbon/icons-react';
 import { SHIPMENT_STATUSES, type Shipment, type ShipmentStatus } from '@jixin/shared';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { EmptyState, ErrorState, PageSkeleton } from '../components/PageState';
+import { ShipmentImportPanel } from '../components/ShipmentImportPanel';
 import { StatusTag } from '../components/StatusTag';
 import { api, getErrorMessage } from '../lib/api';
 import {
@@ -42,6 +43,7 @@ export function ShipmentsPage() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [importOpen, setImportOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -101,11 +103,35 @@ export function ShipmentsPage() {
           <p>按运单号、货物或路线检索，并进入详情完成当前角色可执行的动作。</p>
         </div>
         {user?.role === 'shipper' ? (
-          <Button renderIcon={Add} onClick={() => navigate('/app/shipments/new')}>
-            创建运单
-          </Button>
+          <div className="shipment-header-actions">
+            <Button
+              kind="tertiary"
+              renderIcon={DocumentImport}
+              onClick={() => setImportOpen((current) => !current)}
+              aria-expanded={importOpen}
+              aria-controls="shipment-import-panel"
+            >
+              导入运单
+            </Button>
+            <Button renderIcon={Add} onClick={() => navigate('/app/shipments/new')}>
+              创建运单
+            </Button>
+          </div>
         ) : null}
       </header>
+
+      {user?.role === 'shipper' ? (
+        <div id="shipment-import-panel">
+          <ShipmentImportPanel
+            open={importOpen}
+            onClose={() => setImportOpen(false)}
+            onImported={() => {
+              setPage(1);
+              void load();
+            }}
+          />
+        </div>
+      ) : null}
 
       <form className="filter-bar" onSubmit={handleSearch} aria-label="筛选运单">
         <Search

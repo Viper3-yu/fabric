@@ -1876,7 +1876,6 @@ p {
 
 .hero-proof > div:nth-child(1) strong {
   color: #7bd6ad;
-  font-size: clamp(1.45rem, 3vw, 2.2rem);
 }
 
 .hero-proof > div:nth-child(2),
