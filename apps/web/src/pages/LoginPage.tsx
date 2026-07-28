@@ -1,11 +1,11 @@
-import { useRef, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Button, Form, InlineNotification, PasswordInput, TextInput } from '@carbon/react';
-import { ArrowRight, Checkmark, Information, Search } from '@carbon/icons-react';
+import { ArrowRight, Blockchain, Checkmark, Information, Search } from '@carbon/icons-react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { BrandMark } from '../components/BrandMark';
-import { getErrorMessage } from '../lib/api';
-import { useCinematicMotion } from '../lib/motion';
+import { api, getErrorMessage } from '../lib/api';
+import type { LedgerMode } from '../types';
 
 const DEMO_ACCOUNTS = [
   {
@@ -35,7 +35,6 @@ const DEMO_ACCOUNTS = [
 ];
 
 export function LoginPage() {
-  const pageRef = useRef<HTMLElement>(null);
   const { user, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -43,8 +42,22 @@ export function LoginPage() {
   const [password, setPassword] = useState('shipper123');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [networkMode, setNetworkMode] = useState<LedgerMode | null>(null);
 
-  useCinematicMotion(pageRef);
+  useEffect(() => {
+    let active = true;
+    api.network
+      .info()
+      .then(({ data }) => {
+        if (active) setNetworkMode(data.mode);
+      })
+      .catch(() => {
+        if (active) setNetworkMode(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   if (user) return <Navigate to="/app" replace />;
 
@@ -65,13 +78,13 @@ export function LoginPage() {
   };
 
   return (
-    <main className="login-page" ref={pageRef}>
-      <section className="login-intro" aria-labelledby="login-title" data-motion="hero">
-        <div className="login-brand" data-reveal>
+    <main className="login-page">
+      <section className="login-intro" aria-labelledby="login-title">
+        <div className="login-brand">
           <BrandMark />
           <span className="login-brand__descriptor">可信物流协作网络</span>
         </div>
-        <div className="login-intro__copy" data-reveal>
+        <div className="login-intro__copy">
           <p className="eyebrow">从发货到签收 责任清晰可查</p>
           <h1 id="login-title">
             每次物流
@@ -82,7 +95,7 @@ export function LoginPage() {
             发货、承运、异常处理和签收都在同一张运单里协作，关键操作和文件核对编号都会自动保存。
           </p>
         </div>
-        <div className="login-intro__footer" data-reveal>
+        <div className="login-intro__footer">
           <Link className="public-entry" to="/track">
             <Search size={19} aria-hidden="true" />
             无需登录，查询公开物流
@@ -99,9 +112,19 @@ export function LoginPage() {
             <p>使用业务账户继续处理运单，或选择一个演示角色快速进入。</p>
           </div>
 
-          <div className="ledger-disclaimer">
-            <Information size={18} aria-hidden="true" />
-            <span>当前是演示环境，可以体验完整流程，但记录没有写入真实 Fabric 区块链网络。</span>
+          <div className={`ledger-disclaimer ${networkMode === 'fabric' ? 'is-fabric' : ''}`}>
+            {networkMode === 'fabric' ? (
+              <Blockchain size={18} aria-hidden="true" />
+            ) : (
+              <Information size={18} aria-hidden="true" />
+            )}
+            <span>
+              {networkMode === 'fabric'
+                ? '当前已连接真实 Fabric 网络，关键业务记录会写入区块链。该网络仍用于测试，不等同于生产环境。'
+                : networkMode === 'demo'
+                  ? '当前是演示环境，可以体验完整流程，但记录没有写入真实 Fabric 区块链网络。'
+                  : '正在确认记录服务状态。'}
+            </span>
           </div>
 
           <Form onSubmit={handleSubmit} className="login-form">

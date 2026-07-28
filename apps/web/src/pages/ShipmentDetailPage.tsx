@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Accordion, AccordionItem, Button, InlineNotification, Tag, Tile } from '@carbon/react';
 import {
   ArrowLeft,
@@ -27,11 +27,9 @@ import {
   routeLabel,
   STATUS_LABELS,
 } from '../lib/presentation';
-import { useCinematicMotion } from '../lib/motion';
 import type { ShipmentAction, ShipmentReceipt, ShipmentRouteState } from '../types';
 
 export function ShipmentDetailPage() {
-  const pageRef = useRef<HTMLDivElement>(null);
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -45,8 +43,6 @@ export function ShipmentDetailPage() {
   const [latestReceipt, setLatestReceipt] = useState<ShipmentReceipt | null>(
     routeState?.receipt ?? null,
   );
-
-  useCinematicMotion(pageRef, [loading, shipment?.id, history.length]);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -91,19 +87,18 @@ export function ShipmentDetailPage() {
   );
 
   return (
-    <div className="page shipment-detail-page" ref={pageRef}>
-      <header className="detail-header" data-motion="hero">
+    <div className="page shipment-detail-page">
+      <header className="detail-header">
         <Button
           className="page-back-button"
           kind="ghost"
           size="sm"
-          data-reveal
           onClick={() => navigate('/app/shipments')}
         >
           <ArrowLeft size={16} aria-hidden="true" />
           <span>返回运单列表</span>
         </Button>
-        <div className="detail-header__main" data-reveal>
+        <div className="detail-header__main">
           <div>
             <div className="detail-header__status">
               <StatusTag status={shipment.status} />
@@ -166,12 +161,8 @@ export function ShipmentDetailPage() {
         />
       ) : null}
 
-      <section
-        className="detail-record-health"
-        aria-label="这张运单的系统记录状态"
-        data-motion="bento"
-      >
-        <article data-bento-card>
+      <section className="detail-record-health" aria-label="这张运单的系统记录状态">
+        <article>
           <div>
             <span className="network-pulse" aria-hidden="true" />
             <span>记录状态</span>
@@ -179,7 +170,7 @@ export function ShipmentDetailPage() {
           <strong>顺序完整</strong>
           <small>目前没有发现中间缺失</small>
         </article>
-        <article data-bento-card>
+        <article>
           <div>
             <Blockchain size={18} aria-hidden="true" />
             <span>记录环境</span>
@@ -187,7 +178,7 @@ export function ShipmentDetailPage() {
           <strong>{ledgerMode === 'fabric' ? 'Fabric 网络' : '演示环境'}</strong>
           <small>{ledgerMode === 'fabric' ? '由多方共同确认' : '用于预览完整业务流程'}</small>
         </article>
-        <article data-bento-card>
+        <article>
           <div>
             <CheckmarkFilled size={18} aria-hidden="true" />
             <span>已经保存</span>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Button,
   Table,
@@ -23,11 +23,9 @@ import {
   ACTION_LABELS,
   formatDateTime,
   getAvailableActions,
-  ROLE_LABELS,
   routeLabel,
 } from '../lib/presentation';
 import type { NetworkInfo } from '../types';
-import { useCinematicMotion } from '../lib/motion';
 
 function RecentShipments({ shipments }: { shipments: Shipment[] }) {
   const navigate = useNavigate();
@@ -102,15 +100,12 @@ function RecentShipments({ shipments }: { shipments: Shipment[] }) {
 }
 
 export function DashboardPage() {
-  const pageRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user, ledgerMode } = useAuth();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [network, setNetwork] = useState<NetworkInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  useCinematicMotion(pageRef, [loading, summary?.total]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -148,18 +143,11 @@ export function DashboardPage() {
   const greeting = hour < 12 ? '上午好' : hour < 18 ? '下午好' : '晚上好';
 
   const statusBreakdown = [
-    { label: '运输中', value: summary.inTransit, tone: 'teal' },
-    { label: '等待签收', value: summary.pendingReceipt, tone: 'lime' },
-    {
-      label: '异常待处理',
-      value: summary.exceptions,
-      tone: 'red',
-    },
-    { label: '已完成', value: summary.completed, tone: 'slate' },
+    { label: '运输中', value: summary.inTransit },
+    { label: '等待签收', value: summary.pendingReceipt },
+    { label: '异常待处理', value: summary.exceptions },
+    { label: '已完成', value: summary.completed },
   ];
-
-  const percent = (value: number) =>
-    summary.total ? Math.round((value / summary.total) * 100) : 0;
   const activeShipment =
     summary.recent.find(
       (shipment) => shipment.status !== 'RECEIVED' && shipment.status !== 'CANCELLED',
@@ -168,20 +156,15 @@ export function DashboardPage() {
     null;
 
   return (
-    <div className="page dashboard-page" ref={pageRef}>
-      <header className="dashboard-hero" data-motion="hero">
-        <div className="dashboard-hero__copy" data-reveal>
-          <p className="eyebrow">{ROLE_LABELS[user.role]} · 今日运输概览</p>
-          <h1>
-            <span>{greeting}</span>
-            <span>{user.displayName}</span>
-          </h1>
-          <p>从这里看清每张运单走到哪一步、接下来该做什么，以及系统有没有正常保存记录。</p>
+    <div className="page dashboard-page">
+      <header className="page-header page-header--with-action dashboard-header">
+        <div>
+          <h1>工作台</h1>
+          <p>
+            {greeting}，{user.displayName}。查看当前运输进度、待处理事项和记录服务状态。
+          </p>
         </div>
-        <div className="dashboard-hero__visual" data-reveal>
-          <ShipmentProgress shipment={activeShipment} compact />
-        </div>
-        <div className="dashboard-hero__action" data-reveal>
+        <div className="dashboard-header__action">
           {user.role === 'shipper' ? (
             <Button renderIcon={Add} onClick={() => navigate('/app/shipments/new')}>
               创建运单
@@ -193,6 +176,16 @@ export function DashboardPage() {
           )}
         </div>
       </header>
+
+      <section className="dashboard-focus" aria-label="当前运输焦点">
+        <div className="dashboard-focus__heading">
+          <span>当前运输焦点</span>
+          <strong className={activeShipment ? 'mono' : undefined}>
+            {activeShipment?.trackingNumber ?? '暂无活动运单'}
+          </strong>
+        </div>
+        <ShipmentProgress shipment={activeShipment} compact />
+      </section>
 
       <section className="dashboard-kpis" aria-label="关键运单指标">
         <article>
@@ -214,36 +207,27 @@ export function DashboardPage() {
       </section>
 
       <section
-        className={`dashboard-bento ${pending.length ? 'has-attention' : ''}`}
+        className={`dashboard-operations-grid ${pending.length ? 'has-attention' : ''}`}
         aria-label="运单概览"
-        data-motion="bento"
       >
-        <article className="bento-card bento-card--overview" data-bento-card>
-          <div className="bento-card__heading">
+        <article className="operations-panel operations-panel--overview">
+          <div className="operations-panel__heading">
             <div>
-              <span>全部运单</span>
-              <strong className="mono">{summary.total}</strong>
+              <span>状态分布</span>
+              <h2>运单概览</h2>
             </div>
             <DeliveryParcel size={28} aria-hidden="true" />
           </div>
-          <div className="status-distribution" aria-label="运单状态分布">
+          <dl className="operations-status-list" aria-label="运单状态分布">
             {statusBreakdown.map((item) => (
-              <div className="status-distribution__row" key={item.label}>
-                <div>
-                  <span>{item.label}</span>
-                  <strong className="mono">{item.value}</strong>
-                </div>
-                <div className="status-distribution__track" aria-hidden="true">
-                  <span
-                    className={`tone-${item.tone}`}
-                    style={{ width: `${Math.max(item.value ? 8 : 0, percent(item.value))}%` }}
-                  />
-                </div>
+              <div key={item.label}>
+                <dt>{item.label}</dt>
+                <dd className="mono">{item.value}</dd>
               </div>
             ))}
-          </div>
+          </dl>
           <button
-            className="bento-card__link"
+            className="operations-panel__link"
             type="button"
             onClick={() => navigate('/app/shipments')}
           >
@@ -253,8 +237,8 @@ export function DashboardPage() {
         </article>
 
         {pending.length ? (
-          <article className="bento-card bento-card--attention has-alert" data-bento-card>
-            <div className="bento-card__heading bento-card__heading--compact">
+          <article className="operations-panel operations-panel--attention">
+            <div className="operations-panel__heading">
               <div>
                 <span>需要推进</span>
                 <h2>我的待处理</h2>
@@ -277,11 +261,11 @@ export function DashboardPage() {
           </article>
         ) : null}
 
-        <article className="bento-card bento-card--network" data-bento-card>
-          <div className="bento-card__heading bento-card__heading--compact">
+        <article className="operations-panel operations-panel--network">
+          <div className="operations-panel__heading">
             <div>
-              <span>关键操作会自动保存</span>
-              <h2>记录服务在线</h2>
+              <span>记录服务</span>
+              <h2>系统状态</h2>
             </div>
             <Blockchain size={24} aria-hidden="true" />
           </div>
@@ -315,7 +299,6 @@ export function DashboardPage() {
       <section className="dashboard-recent">
         <div className="dashboard-recent__heading">
           <div>
-            <p className="eyebrow">刚刚发生</p>
             <h2>最近更新的运单</h2>
           </div>
           <Button kind="ghost" renderIcon={ArrowRight} onClick={() => navigate('/app/shipments')}>

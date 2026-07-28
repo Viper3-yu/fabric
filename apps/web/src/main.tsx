@@ -3,10 +3,10 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import '@fontsource-variable/manrope';
 import '@fontsource-variable/noto-sans-sc';
-import '@fontsource-variable/noto-serif-sc';
 import '@carbon/styles/css/styles.css';
 import './styles.css';
 import './visual-system.css';
+import './operations-system.css';
 import App from './App';
 
 createRoot(document.getElementById('root')!).render(

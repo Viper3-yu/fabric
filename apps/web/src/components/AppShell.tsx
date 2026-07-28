@@ -8,7 +8,7 @@ import {
   Search,
   UserAvatar,
 } from '@carbon/icons-react';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { ROLE_LABELS } from '../lib/presentation';
 import { BrandMark } from './BrandMark';
@@ -29,6 +29,15 @@ const NAV_ITEMS: NavItem[] = [
   { label: '公开查询', path: '/track', icon: Search, external: true },
 ];
 
+export function isNavItemActive(pathname: string, itemPath: string): boolean {
+  if (itemPath === '/app') return pathname === itemPath;
+  if (itemPath === '/app/shipments/new') return pathname === itemPath;
+  if (itemPath === '/app/shipments') {
+    return pathname.startsWith(itemPath) && pathname !== '/app/shipments/new';
+  }
+  return pathname === itemPath;
+}
+
 export function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -44,6 +53,16 @@ export function AppShell() {
 
   const navItems = NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(user.role));
   const primaryNavItems = navItems.filter((item) => !item.external);
+  const currentSection =
+    location.pathname === '/app'
+      ? '工作台'
+      : location.pathname === '/app/shipments/new'
+        ? '创建运单'
+        : location.pathname === '/app/shipments'
+          ? '运单管理'
+          : location.pathname.startsWith('/app/shipments/')
+            ? '运单详情'
+            : '物流协作台';
 
   const handleLogout = () => {
     logout();
@@ -55,37 +74,68 @@ export function AppShell() {
       <a className="skip-link" href="#main-content">
         跳到主要内容
       </a>
-      <header className="app-nav" data-motion="nav">
-        <NavLink className="app-nav__brand" to="/app" aria-label="迹信工作台首页">
+      <aside className="app-sidebar" aria-label="业务导航">
+        <Link className="app-sidebar__brand" to="/app" aria-label="迹信工作台首页">
           <BrandMark />
-          <span className="app-nav__product">物流协作台</span>
-        </NavLink>
+          <span className="app-sidebar__product">物流协作台</span>
+        </Link>
 
-        <nav className="app-nav__links" aria-label="主导航">
+        <nav className="app-sidebar__links" aria-label="主导航">
           {primaryNavItems.map((item) => {
             const Icon = item.icon;
+            const active = isNavItemActive(location.pathname, item.path);
             return (
-              <NavLink
+              <Link
                 key={item.path}
                 to={item.path}
-                end={item.path === '/app'}
-                className={({ isActive }) => `app-nav__link ${isActive ? 'is-active' : ''}`}
+                className={`app-sidebar__link ${active ? 'is-active' : ''}`}
+                aria-current={active ? 'page' : undefined}
               >
-                <Icon size={17} aria-hidden="true" />
+                <Icon size={18} aria-hidden="true" />
                 <span>{item.label}</span>
-              </NavLink>
+              </Link>
             );
           })}
         </nav>
 
-        <div className="app-nav__tools">
+        <div className="app-sidebar__footer">
+          <span>当前身份</span>
+          <strong>{ROLE_LABELS[user.role]}</strong>
+        </div>
+      </aside>
+
+      <header className="app-topbar">
+        <div className="app-topbar__mobile">
+          <button
+            className="icon-button app-topbar__menu"
+            type="button"
+            aria-label={mobileNavOpen ? '关闭导航菜单' : '打开导航菜单'}
+            aria-expanded={mobileNavOpen}
+            onClick={() => setMobileNavOpen((value) => !value)}
+          >
+            <Menu size={20} />
+          </button>
+          <Link className="app-topbar__brand" to="/app" aria-label="迹信工作台首页">
+            <BrandMark />
+          </Link>
+        </div>
+
+        <div className="app-topbar__context">
+          <strong>{currentSection}</strong>
+          <small>{ROLE_LABELS[user.role]}</small>
+        </div>
+
+        <div className="app-topbar__tools">
           <LedgerBanner mode={ledgerMode} compact />
-          <NavLink className="app-nav__public" to="/track">
+          <Link className="app-topbar__public" to="/track">
             <Search size={17} aria-hidden="true" />
             <span>公开查询</span>
-          </NavLink>
-          <div className="app-nav__user" title={`${user.displayName}，${ROLE_LABELS[user.role]}`}>
-            <span className="app-nav__avatar" aria-hidden="true">
+          </Link>
+          <div
+            className="app-topbar__user"
+            title={`${user.displayName}，${ROLE_LABELS[user.role]}`}
+          >
+            <span className="app-topbar__avatar" aria-hidden="true">
               <UserAvatar size={18} />
             </span>
             <span>
@@ -101,15 +151,6 @@ export function AppShell() {
           >
             <Logout size={19} />
           </button>
-          <button
-            className="icon-button app-nav__menu"
-            type="button"
-            aria-label={mobileNavOpen ? '关闭导航菜单' : '打开导航菜单'}
-            aria-expanded={mobileNavOpen}
-            onClick={() => setMobileNavOpen((value) => !value)}
-          >
-            <Menu size={20} />
-          </button>
         </div>
       </header>
 
@@ -117,16 +158,17 @@ export function AppShell() {
         <nav aria-label="移动端导航">
           {navItems.map((item) => {
             const Icon = item.icon;
+            const active = isNavItemActive(location.pathname, item.path);
             return (
-              <NavLink
+              <Link
                 key={item.path}
                 to={item.path}
-                end={item.path === '/app'}
-                className={({ isActive }) => (isActive ? 'is-active' : '')}
+                className={active ? 'is-active' : ''}
+                aria-current={active ? 'page' : undefined}
               >
                 <Icon size={20} aria-hidden="true" />
                 <span>{item.label}</span>
-              </NavLink>
+              </Link>
             );
           })}
         </nav>
