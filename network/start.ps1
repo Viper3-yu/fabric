@@ -19,10 +19,28 @@ if ($LASTEXITCODE -ne 0) {
   throw "Docker Desktop is not running, or the current user cannot access Docker Engine."
 }
 
+$FabricVersionParts = $FabricVersion.Split(".")
+if ($FabricVersionParts.Count -lt 2) {
+  throw "FabricVersion must include at least a major and minor version."
+}
+$NodeEnvTag = "$($FabricVersionParts[0]).$($FabricVersionParts[1])"
+$NodeEnvImage = "hyperledger/fabric-nodeenv:$NodeEnvTag"
+docker image inspect $NodeEnvImage *> $null
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "Downloading the Fabric Node chaincode build image $NodeEnvImage..."
+  docker pull $NodeEnvImage
+  if ($LASTEXITCODE -ne 0) {
+    throw "The Fabric Node chaincode build image was not downloaded successfully."
+  }
+}
+
 $TestNetworkDir = Join-Path $NetworkDir "fabric-samples\test-network"
 if (-not (Test-Path -LiteralPath (Join-Path $TestNetworkDir "network.sh"))) {
   throw "fabric-samples was not found. Run pnpm fabric:bootstrap first."
 }
+
+$JqExe = & (Join-Path $NetworkDir "ensure-jq.ps1")
+Write-Host "Using project-local jq: $JqExe"
 
 $Pnpm = Get-Command pnpm -ErrorAction SilentlyContinue
 if (-not $Pnpm) {
@@ -47,7 +65,7 @@ $env:JIXIN_CHAINCODE_NAME = $ChaincodeName
 
 Push-Location $NetworkDir
 try {
-  & $BashExe "./start-fabric.sh"
+  & $BashExe "--login" "./start-fabric.sh"
   if ($LASTEXITCODE -ne 0) {
     throw "Fabric network startup or chaincode deployment failed with exit code $LASTEXITCODE."
   }

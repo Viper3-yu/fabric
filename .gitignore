@@ -14,6 +14,7 @@ data/demo-ledger.json
 apps/api/data/demo-ledger.json
 network/fabric-samples/
 network/install-fabric.sh
+network/bin/
 network/wallet/
 network/organizations/
 network/connection-profiles/

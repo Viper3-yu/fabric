@@ -38,7 +38,10 @@ function Resolve-GitBash {
     }
   }
 
-  foreach ($candidate in @(($usrCandidates + $binCandidates) | Select-Object -Unique)) {
+  # Git\bin\bash.exe initializes the MINGW64 environment expected by the
+  # official Fabric installer. Calling usr\bin\bash.exe directly reports
+  # MSYS_NT and makes the installer construct an invalid binary URL.
+  foreach ($candidate in @(($binCandidates + $usrCandidates) | Select-Object -Unique)) {
     if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) { continue }
 
     $fullPath = [IO.Path]::GetFullPath($candidate)
