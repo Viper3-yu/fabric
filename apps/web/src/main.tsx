@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import '@fontsource-variable/manrope';
+import '@fontsource-variable/geist';
 import '@fontsource-variable/noto-sans-sc';
 import '@carbon/styles/css/styles.css';
 import './styles.css';

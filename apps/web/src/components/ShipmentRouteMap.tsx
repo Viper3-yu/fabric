@@ -104,18 +104,18 @@ export function ShipmentRouteMap({ shipment }: ShipmentRouteMapProps) {
     <section className="shipment-route-map" aria-label="运单路线地图">
       <header className="shipment-route-map__header">
         <div>
-          <span>路线与已记录节点</span>
+          <span>路线地图与链上节点</span>
           <strong>
             {shipment.origin.city} → {shipment.destination.city}
           </strong>
         </div>
         <dl>
           <div>
-            <dt>地图节点</dt>
+            <dt>已定位节点</dt>
             <dd>{points.length}</dd>
           </div>
           <div>
-            <dt>节点直线连线</dt>
+            <dt>节点间直线距离</dt>
             <dd>约 {lineDistance} km</dd>
           </div>
         </dl>
@@ -138,7 +138,7 @@ export function ShipmentRouteMap({ shipment }: ShipmentRouteMapProps) {
       <footer>
         <Information size={16} aria-hidden="true" />
         <span>
-          地图按运单城市和链上节点定位，虚线仅连接已记录位置，不代表道路导航；尚未接入车辆 GPS。
+          地图按运单城市和链上节点定位；虚线表示节点间直线关系，数字不是道路里程。当前尚未接入车辆 GPS。
         </span>
       </footer>
     </section>

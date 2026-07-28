@@ -53,9 +53,9 @@ describe('parseImportRecords', () => {
 
     expect(candidate.errors).toEqual(
       expect.arrayContaining([
-        '件数须为 1–100000 的整数',
+        '件数须为 1 至 100000 的整数',
         '预计送达日期须使用 YYYY-MM-DD',
-        '温控范围须在 -100–100℃ 且下限小于上限',
+        '温控范围须在 -100 至 100℃ 且下限小于上限',
       ]),
     );
   });
