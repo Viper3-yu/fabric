@@ -840,6 +840,483 @@
   color: inherit;
 }
 
+.app-shell .shipment-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* Shipment spreadsheet import */
+.app-shell .shipment-import-panel {
+  margin: 0 0 1rem;
+  overflow: hidden;
+  border: 1px solid var(--jixin-border-strong);
+  border-radius: var(--jixin-card-radius);
+  background: var(--jixin-surface-raised);
+}
+
+.app-shell .shipment-import-panel > header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  color: #edf4f0;
+  background: #1a3328;
+}
+
+.app-shell .shipment-import-panel > header > div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.app-shell .shipment-import-panel > header span {
+  color: #a9beb4;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+}
+
+.app-shell .shipment-import-panel > header h2 {
+  margin: 0;
+  color: #f1f6f3;
+  font-size: 1.1rem;
+  font-weight: 650;
+}
+
+.app-shell .shipment-import-panel > header p {
+  max-width: 68ch;
+  margin: 0.1rem 0 0;
+  color: #bfd0c7;
+  font-size: 0.74rem;
+  line-height: 1.55;
+}
+
+.app-shell .shipment-import-panel > header .cds--btn--ghost {
+  color: #dce8e2;
+}
+
+.app-shell .shipment-import-panel__start {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid var(--jixin-border);
+}
+
+.app-shell .shipment-import-dropzone {
+  display: grid;
+  min-height: 4.25rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px dashed var(--jixin-border-strong);
+  border-radius: var(--jixin-control-radius);
+  color: var(--jixin-accent);
+  background: var(--jixin-panel-soft);
+  cursor: pointer;
+  transition:
+    border-color var(--motion-control) var(--ease-standard),
+    background var(--motion-control) var(--ease-standard);
+}
+
+.app-shell .shipment-import-dropzone:hover {
+  border-color: var(--jixin-accent);
+  background: var(--jixin-accent-soft);
+}
+
+.app-shell .shipment-import-dropzone:focus-within {
+  outline: 2px solid var(--jixin-accent);
+  outline-offset: 2px;
+}
+
+.app-shell .shipment-import-dropzone input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.app-shell .shipment-import-dropzone > span {
+  display: grid;
+  min-width: 0;
+  gap: 0.15rem;
+}
+
+.app-shell .shipment-import-dropzone strong {
+  overflow: hidden;
+  color: var(--jixin-ink);
+  font-size: 0.8rem;
+  font-weight: 620;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-shell .shipment-import-dropzone small {
+  color: var(--jixin-ink-soft);
+  font-size: 0.68rem;
+  line-height: 1.45;
+}
+
+.app-shell .shipment-import-panel > .cds--inline-loading,
+.app-shell .shipment-import-panel > .cds--inline-notification,
+.app-shell .shipment-import-panel > .cds--progress-bar {
+  margin: 0.8rem 1.1rem;
+}
+
+.app-shell .shipment-import-panel__summary {
+  display: flex;
+  min-height: 3rem;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.65rem 1.1rem;
+  border-bottom: 1px solid var(--jixin-border);
+}
+
+.app-shell .shipment-import-panel__summary > span {
+  margin-right: auto;
+  color: var(--jixin-ink);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.app-shell .shipment-import-preview {
+  max-height: 22rem;
+  overflow: auto;
+  border-block: 1px solid var(--jixin-border);
+}
+
+.app-shell .shipment-import-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--jixin-ink);
+  font-size: 0.74rem;
+  text-align: left;
+}
+
+.app-shell .shipment-import-preview th {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  padding: 0.65rem 0.75rem;
+  color: var(--jixin-ink-soft);
+  border-bottom: 1px solid var(--jixin-border);
+  background: var(--jixin-surface-muted);
+  font-size: 0.68rem;
+  font-weight: 650;
+}
+
+.app-shell .shipment-import-preview td {
+  padding: 0.7rem 0.75rem;
+  border-bottom: 1px solid var(--jixin-border);
+  vertical-align: top;
+}
+
+.app-shell .shipment-import-preview tr:last-child td {
+  border-bottom: 0;
+}
+
+.app-shell .shipment-import-preview tr[data-state='invalid'] td,
+.app-shell .shipment-import-preview tr[data-state='error'] td {
+  background: color-mix(in srgb, var(--jixin-danger) 8%, var(--jixin-surface-raised));
+}
+
+.app-shell .shipment-import-preview tr[data-state='success'] td {
+  background: color-mix(in srgb, var(--jixin-accent-soft) 42%, var(--jixin-surface-raised));
+}
+
+.app-shell .import-row-result {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  color: var(--jixin-ink-soft);
+  line-height: 1.45;
+}
+
+.app-shell .import-row-result.is-error {
+  color: var(--jixin-danger);
+}
+
+.app-shell .import-row-result.is-success {
+  color: var(--jixin-accent-hover);
+  font-weight: 600;
+}
+
+.app-shell .import-row-result.is-success > span {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.app-shell .import-row-result small {
+  color: var(--jixin-ink-soft);
+  font-size: 0.68rem;
+  font-weight: 500;
+}
+
+.app-shell .shipment-import-panel > footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1.1rem;
+}
+
+.app-shell .shipment-import-panel > footer p {
+  max-width: 64ch;
+  margin: 0;
+  color: var(--jixin-ink-soft);
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+.app-shell .shipment-import-panel > footer > div {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Geographic route view */
+.app-shell .shipment-route-map {
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+  border: 1px solid var(--jixin-border);
+  border-radius: var(--jixin-card-radius);
+  background: var(--jixin-surface-raised);
+}
+
+.app-shell .shipment-route-map__header {
+  display: grid;
+  min-height: 4.5rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid var(--jixin-border);
+}
+
+.app-shell .shipment-route-map__header > div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.app-shell .shipment-route-map__header span,
+.app-shell .shipment-route-map__header dt {
+  color: var(--jixin-ink-soft);
+  font-size: 0.68rem;
+}
+
+.app-shell .shipment-route-map__header strong {
+  color: var(--jixin-ink);
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.app-shell .shipment-route-map__header dl {
+  display: flex;
+  margin: 0;
+}
+
+.app-shell .shipment-route-map__header dl > div {
+  display: grid;
+  min-width: 7.75rem;
+  gap: 0.1rem;
+  padding-left: 0.9rem;
+  border-left: 1px solid var(--jixin-border);
+}
+
+.app-shell .shipment-route-map__header dd {
+  margin: 0;
+  color: var(--jixin-ink);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 620;
+}
+
+.app-shell .shipment-route-map__canvas-wrap {
+  position: relative;
+  min-height: 23rem;
+  background:
+    linear-gradient(135deg, rgba(223, 229, 225, 0.72), rgba(235, 239, 237, 0.88)),
+    var(--jixin-panel-soft);
+}
+
+.app-shell .shipment-route-map__canvas {
+  position: absolute;
+  inset: 0;
+  min-height: 23rem;
+}
+
+.app-shell .shipment-route-map__canvas .leaflet-control-container {
+  color: #1c2923;
+}
+
+.app-shell .shipment-route-map__canvas .leaflet-control-attribution {
+  font-size: 0.6rem;
+}
+
+.app-shell .shipment-route-map__canvas .leaflet-control-zoom a {
+  color: #1b3328;
+}
+
+.app-shell .shipment-route-map__legend {
+  position: absolute;
+  z-index: 500;
+  top: 0.75rem;
+  left: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(36, 58, 47, 0.2);
+  border-radius: var(--jixin-control-radius);
+  color: #26372f;
+  background: rgba(250, 252, 251, 0.9);
+  box-shadow: 0 0.35rem 1rem rgba(21, 45, 35, 0.12);
+  backdrop-filter: blur(8px);
+  font-size: 0.65rem;
+}
+
+.app-shell .shipment-route-map__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.app-shell .shipment-route-map__legend i {
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 2px solid #1f6d4a;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.app-shell .shipment-route-map__legend i.is-current {
+  background: #1f6d4a;
+}
+
+.app-shell .shipment-route-map__legend i.is-planned {
+  border-color: #6b7871;
+}
+
+.app-shell .shipment-route-map > footer {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1rem;
+  color: var(--jixin-ink-soft);
+  border-top: 1px solid var(--jixin-border);
+  font-size: 0.67rem;
+  line-height: 1.45;
+}
+
+.app-shell .shipment-route-map > footer svg {
+  flex: 0 0 auto;
+  color: var(--jixin-accent);
+}
+
+.app-shell .shipment-route-map__error {
+  position: absolute;
+  z-index: 500;
+  inset: 50% auto auto 50%;
+  margin: 0;
+  padding: 0.65rem 0.8rem;
+  transform: translate(-50%, -50%);
+  color: #8f2f28;
+  border: 1px solid rgba(150, 56, 48, 0.28);
+  border-radius: var(--jixin-control-radius);
+  background: rgba(255, 247, 246, 0.92);
+  font-size: 0.72rem;
+}
+
+.app-shell .shipment-route-map.is-unavailable {
+  display: flex;
+  min-height: 8rem;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1.25rem;
+  color: var(--jixin-accent);
+}
+
+.app-shell .shipment-route-map.is-unavailable > div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.app-shell .shipment-route-map.is-unavailable strong {
+  color: var(--jixin-ink);
+  font-size: 0.85rem;
+}
+
+.app-shell .shipment-route-map.is-unavailable span {
+  color: var(--jixin-ink-soft);
+  font-size: 0.72rem;
+}
+
+.shipment-map-marker-wrap {
+  background: transparent;
+  border: 0;
+}
+
+.shipment-map-marker {
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  place-items: center;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  color: #ffffff;
+  background: #1f6d4a;
+  box-shadow: 0 0.2rem 0.7rem rgba(20, 47, 35, 0.3);
+  font-family: 'Manrope Variable', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.shipment-map-marker.is-destination {
+  color: #314139;
+  border-color: #ffffff;
+  background: #e7ece9;
+}
+
+.shipment-map-marker.is-current {
+  box-shadow:
+    0 0 0 5px rgba(31, 109, 74, 0.2),
+    0 0.2rem 0.7rem rgba(20, 47, 35, 0.3);
+}
+
+.shipment-map-tooltip.leaflet-tooltip {
+  padding: 0.5rem 0.6rem;
+  color: #1b2922;
+  border: 1px solid rgba(28, 57, 44, 0.2);
+  border-radius: 4px;
+  background: rgba(252, 253, 252, 0.96);
+  box-shadow: 0 0.3rem 1rem rgba(18, 40, 30, 0.16);
+}
+
+.shipment-map-tooltip > div {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.shipment-map-tooltip strong,
+.shipment-map-tooltip span {
+  display: block;
+}
+
+.shipment-map-tooltip strong {
+  font-size: 0.72rem;
+}
+
+.shipment-map-tooltip span {
+  color: #5b6962;
+  font-size: 0.62rem;
+}
+
 @media (prefers-color-scheme: dark) {
   .app-shell {
     --jixin-accent: #68b695;
@@ -876,6 +1353,10 @@
 
   .app-shell .dashboard-focus__heading {
     border-right-color: #365247;
+    background: #14271f;
+  }
+
+  .app-shell .shipment-import-panel > header {
     background: #14271f;
   }
 }
@@ -986,6 +1467,11 @@
   .app-shell .dashboard-operations-grid.has-attention .operations-panel--overview {
     grid-column: 1 / -1;
   }
+
+  .app-shell .shipment-route-map__canvas-wrap,
+  .app-shell .shipment-route-map__canvas {
+    min-height: 20rem;
+  }
 }
 
 @media (max-width: 700px) {
@@ -1004,6 +1490,62 @@
   .app-shell .dashboard-header__action .cds--btn {
     width: 100%;
     max-width: none;
+  }
+
+  .app-shell .shipment-header-actions {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .app-shell .shipment-header-actions .cds--btn {
+    width: 100%;
+    max-width: none;
+  }
+
+  .app-shell .shipment-import-panel__start,
+  .app-shell .shipment-import-panel > footer,
+  .app-shell .shipment-route-map__header {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .app-shell .shipment-import-panel__start > .cds--btn,
+  .app-shell .shipment-import-panel > footer .cds--btn {
+    width: 100%;
+    max-width: none;
+  }
+
+  .app-shell .shipment-import-panel > footer > div {
+    flex-direction: column-reverse;
+  }
+
+  .app-shell .shipment-import-panel__summary {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .app-shell .shipment-import-panel__summary > span {
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .app-shell .shipment-route-map__header {
+    gap: 0.75rem;
+  }
+
+  .app-shell .shipment-route-map__header dl > div:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .app-shell .shipment-route-map__canvas-wrap,
+  .app-shell .shipment-route-map__canvas {
+    min-height: 18rem;
+  }
+
+  .app-shell .shipment-route-map__legend {
+    right: 0.75rem;
   }
 
   .app-shell .dashboard-focus {
@@ -1071,7 +1613,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .app-sidebar__link,
-  .app-shell > .mobile-nav {
+  .app-shell > .mobile-nav,
+  .app-shell .shipment-import-dropzone {
     transition: none;
   }
 }
