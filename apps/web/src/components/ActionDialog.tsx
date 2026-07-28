@@ -21,7 +21,7 @@ const ACTION_COPY: Record<
   accept: { description: '确认由当前承运方承担后续运输责任。', submit: '确认接单' },
   pickup: { description: '记录实际揽收地点，责任由发货方转移至承运方。', submit: '确认已揽收' },
   checkpoint: {
-    description: '追加一条不能被悄悄覆盖的运输记录。温度超出范围时，系统会自动标记异常。',
+    description: '追加一条不能被悄悄覆盖的运输记录。可人工录入节点温度，越界时系统会自动标记异常。',
     submit: '提交运输节点',
   },
   exception: {
@@ -150,13 +150,13 @@ export function ActionDialog({
             <TextInput
               id={`${formId}-temperature`}
               name="temperature"
-              labelText="实测温度（°C，选填）"
+              labelText="节点温度（°C，选填，人工录入）"
               type="number"
               step="0.1"
               helperText={
                 shipment.temperatureRange
-                  ? `设定温区 ${shipment.temperatureRange.min} °C 至 ${shipment.temperatureRange.max} °C`
-                  : '此运单未设置温控范围'
+                  ? `设定温区 ${shipment.temperatureRange.min} °C 至 ${shipment.temperatureRange.max} °C，提交后由链码判断是否越界`
+                  : '此运单未设置温控范围，温度只作为节点记录保存'
               }
             />
           ) : null}

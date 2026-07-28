@@ -506,7 +506,7 @@ export async function seedDemoLedger(ledger: DemoLedger, force = false) {
   await ledger.pickupShipment(second.data.id, { location: '上海张江物流园' }, carrier);
   await ledger.addCheckpoint(
     second.data.id,
-    { location: '苏州温控仓', description: '温度传感器自动上报', temperature: 10.4 },
+    { location: '苏州温控仓', description: '运输节点人工录入温度', temperature: 10.4 },
     carrier,
   );
 
