@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
-
 /*
  * 迹信视觉系统
  * Carbon Chain-of-Custody Console
@@ -7,9 +5,12 @@
 
 :root {
   color-scheme: light;
-  --jixin-font-ui: 'Outfit', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, sans-serif;
-  --jixin-font-editorial: 'Outfit', 'Noto Serif SC Variable', 'Noto Serif SC', serif;
-  --jixin-font-data: 'Outfit', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, sans-serif;
+  --jixin-font-ui:
+    'Manrope Variable', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, sans-serif;
+  --jixin-font-editorial:
+    'Manrope Variable', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, sans-serif;
+  --jixin-font-data:
+    'Manrope Variable', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, sans-serif;
   --jixin-font-mono: 'Cascadia Mono', 'SFMono-Regular', Consolas, monospace;
   --jixin-accent: #1d624b;
   --jixin-accent-hover: #124a37;

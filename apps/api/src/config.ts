@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url';
+import { loadEnvFile } from 'node:process';
 import { z } from 'zod';
 
 const booleanFromString = z
@@ -39,6 +40,10 @@ const envSchema = z.object({
 export type AppConfig = ReturnType<typeof loadConfig>;
 
 export function loadConfig(environment: NodeJS.ProcessEnv = process.env) {
+  if (environment === process.env && environment.ENV_FILE) {
+    loadEnvFile(environment.ENV_FILE);
+  }
+
   const env = envSchema.parse(environment);
   const defaultDemoPath = fileURLToPath(new URL('../data/demo-ledger.json', import.meta.url));
 

@@ -38,5 +38,5 @@ $lines = @(
   "FABRIC_ORG2_KEY_PATH=$($Org2Key.FullName)"
 )
 
-Set-Content -LiteralPath $OutputPath -Value $lines -Encoding utf8
+[IO.File]::WriteAllLines($OutputPath, $lines, [Text.UTF8Encoding]::new($false))
 Write-Host "Generated $OutputPath. It contains machine-local certificate paths and is excluded by .gitignore."

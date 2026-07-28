@@ -23,7 +23,7 @@ if (-not (Test-Path -LiteralPath $Installer)) {
 
 Push-Location $NetworkDir
 try {
-  & $BashExe "./install-fabric.sh" `
+  & $BashExe "--login" "./install-fabric.sh" `
     "--fabric-version" $FabricVersion `
     "--ca-version" $FabricCaVersion `
     "docker" "binary" "samples"
@@ -35,4 +35,36 @@ finally {
   Pop-Location
 }
 
-Write-Host "Fabric $FabricVersion, Fabric CA $FabricCaVersion, and fabric-samples are ready."
+$TestNetworkScript = Join-Path $NetworkDir "fabric-samples\test-network\network.sh"
+$FabricBinDir = Join-Path $NetworkDir "fabric-samples\bin"
+$PeerBinary = @(
+  (Join-Path $FabricBinDir "peer.exe"),
+  (Join-Path $FabricBinDir "peer")
+) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
+
+if (-not (Test-Path -LiteralPath $TestNetworkScript -PathType Leaf) -or -not $PeerBinary) {
+  throw "Fabric samples or CLI binaries are incomplete. Review the installer output and run pnpm fabric:bootstrap again."
+}
+
+docker image inspect "hyperledger/fabric-peer:$FabricVersion" *> $null
+if ($LASTEXITCODE -ne 0) {
+  throw "The Fabric peer Docker image was not downloaded successfully."
+}
+
+$FabricVersionParts = $FabricVersion.Split(".")
+if ($FabricVersionParts.Count -lt 2) {
+  throw "FabricVersion must include at least a major and minor version."
+}
+$NodeEnvTag = "$($FabricVersionParts[0]).$($FabricVersionParts[1])"
+$NodeEnvImage = "hyperledger/fabric-nodeenv:$NodeEnvTag"
+docker image inspect $NodeEnvImage *> $null
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "Downloading the Fabric Node chaincode build image $NodeEnvImage..."
+  docker pull $NodeEnvImage
+  if ($LASTEXITCODE -ne 0) {
+    throw "The Fabric Node chaincode build image was not downloaded successfully."
+  }
+}
+
+$JqExe = & (Join-Path $NetworkDir "ensure-jq.ps1")
+Write-Host "Fabric $FabricVersion, Fabric CA $FabricCaVersion, fabric-samples, and $JqExe are ready."

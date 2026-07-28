@@ -46,13 +46,15 @@ pnpm seed
 
 ## Hyperledger Fabric 模式
 
-以下命令在 Windows PowerShell 中运行。脚本只使用 Git for Windows 的 `usr/bin/bash.exe`（其次才是同一 Git 安装内的 `bin/bash.exe`），不会误用 WSL 的 `bash.exe`。
+以下命令在 Windows PowerShell 中运行。脚本优先使用 Git for Windows 的 `bin/bash.exe`（找不到时才使用同一 Git 安装内的 `usr/bin/bash.exe`），不会误用 WSL 的 `bash.exe`。
 
 首次准备 Fabric 二进制、镜像和官方测试网络：
 
 ```powershell
 pnpm fabric:bootstrap
 ```
+
+该命令会同时准备经过 SHA-256 校验的项目本地 `jq.exe` 和 Node 链码构建镜像，无需修改系统 PATH。
 
 启动双组织网络、创建 `logisticschannel`、部署链码，并生成 `apps/api/.env.fabric`：
 
@@ -67,6 +69,8 @@ $env:ENV_FILE = (Resolve-Path ".\apps\api\.env.fabric").Path
 $env:JWT_SECRET = "$([guid]::NewGuid())$([guid]::NewGuid())"
 pnpm dev
 ```
+
+API 会在启动时读取 `ENV_FILE`；进程环境中已显式设置的变量保持优先。
 
 API 启动日志应显示 `ledger=fabric`。也可访问 <http://127.0.0.1:3001/api/network>，确认 `mode` 为 `fabric` 且 `health.status` 为 `ok`。所有建单和状态变更响应都会返回 Fabric `transactionId`；签收码通过 transient data 提交，不写入区块或事件。
 
