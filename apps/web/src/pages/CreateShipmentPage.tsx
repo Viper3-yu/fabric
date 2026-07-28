@@ -241,7 +241,7 @@ export function CreateShipmentPage() {
             </span>
             <div>
               <h2>货物与交付</h2>
-              <p>温控范围将在链码中用于自动判断运输异常。</p>
+              <p>如有温区要求可选择设置；承运方人工录入节点温度后，链码会判断是否越界。</p>
             </div>
           </div>
           <div className="form-grid form-grid--2">
@@ -282,7 +282,7 @@ export function CreateShipmentPage() {
           <div className="temperature-control">
             <Checkbox
               id="temperature-enabled"
-              labelText="启用温控监测"
+              labelText="设置温控范围（选填）"
               checked={temperatureEnabled}
               onChange={(_event, data) => setTemperatureEnabled(Boolean(data.checked))}
             />

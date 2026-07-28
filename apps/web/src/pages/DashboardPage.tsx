@@ -8,13 +8,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  Tag,
 } from '@carbon/react';
 import { Add, ArrowRight, DeliveryParcel, Blockchain, WarningAltFilled } from '@carbon/icons-react';
 import type { DashboardSummary, Shipment } from '@jixin/shared';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { LedgerBanner } from '../components/LedgerBanner';
 import { EmptyState, ErrorState, PageSkeleton } from '../components/PageState';
 import { ShipmentProgress } from '../components/ShipmentProgress';
 import { StatusTag } from '../components/StatusTag';
@@ -180,9 +178,23 @@ export function DashboardPage() {
       <section className="dashboard-focus" aria-label="当前运输焦点">
         <div className="dashboard-focus__heading">
           <span>当前运输焦点</span>
-          <strong className={activeShipment ? 'mono' : undefined}>
-            {activeShipment?.trackingNumber ?? '暂无活动运单'}
-          </strong>
+          {activeShipment ? (
+            <>
+              <strong>
+                {activeShipment.origin.city} → {activeShipment.destination.city}
+              </strong>
+              <button
+                className="dashboard-focus__link"
+                type="button"
+                onClick={() => navigate(`/app/shipments/${activeShipment.id}`)}
+              >
+                查看路线地图
+                <ArrowRight size={17} aria-hidden="true" />
+              </button>
+            </>
+          ) : (
+            <strong>暂无活动运单</strong>
+          )}
         </div>
         <ShipmentProgress shipment={activeShipment} compact />
       </section>
@@ -245,7 +257,7 @@ export function DashboardPage() {
               </div>
               <WarningAltFilled size={24} aria-hidden="true" />
             </div>
-            <Tag type="red">{pending.length} 项</Tag>
+            <span className="attention-count">{pending.length} 项</span>
             <div className="attention-panel__body">
               <ul className="attention-list">
                 {pending.slice(0, 3).map(({ shipment, action }) => (
@@ -261,39 +273,40 @@ export function DashboardPage() {
           </article>
         ) : null}
 
-        <article className="operations-panel operations-panel--network">
-          <div className="operations-panel__heading">
-            <div>
-              <span>记录服务</span>
-              <h2>系统状态</h2>
-            </div>
-            <Blockchain size={24} aria-hidden="true" />
-          </div>
-          <div className="network-panel__status">
-            <span className="network-pulse" aria-hidden="true" />
+      </section>
+
+      <section
+        className={`dashboard-network-strip ${
+          network?.health.status === 'degraded' ? 'is-degraded' : ''
+        }`}
+        aria-label="系统记录服务状态"
+      >
+        <div className="dashboard-network-strip__identity">
+          <Blockchain size={22} aria-hidden="true" />
+          <div>
+            <span>记录服务</span>
             <strong>{ledgerMode === 'fabric' ? 'Fabric 协作网络' : '本地演示环境'}</strong>
           </div>
-          <p>
-            {ledgerMode === 'fabric'
-              ? '建单、交接和签收都会由多个协作方共同确认并保存。'
-              : '完整流程可以体验，但当前记录只保存在本地演示环境中。'}
-          </p>
-          <div className="network-record-feed" aria-label="系统记录服务状态">
-            <div>
-              <span>连接状态</span>
-              <strong>{network?.health.status === 'degraded' ? '需要检查' : '正常'}</strong>
-            </div>
-            <div>
-              <span>记录方式</span>
-              <strong>{ledgerMode === 'fabric' ? '多方共同确认' : '本地演示保存'}</strong>
-            </div>
-            <div>
-              <span>最近检查</span>
-              <strong>刚刚</strong>
-            </div>
+        </div>
+        <p>
+          {ledgerMode === 'fabric'
+            ? '建单、交接和签收由多个协作方共同确认并保存。'
+            : '流程可以完整体验，但记录仅保存在本地演示环境。'}
+        </p>
+        <dl className="dashboard-network-strip__facts">
+          <div>
+            <dt>连接</dt>
+            <dd>{network?.health.status === 'degraded' ? '需要检查' : '正常'}</dd>
           </div>
-          <LedgerBanner mode={ledgerMode} compact />
-        </article>
+          <div>
+            <dt>记录方式</dt>
+            <dd>{ledgerMode === 'fabric' ? '多方确认' : '本地保存'}</dd>
+          </div>
+          <div>
+            <dt>检查时间</dt>
+            <dd>刚刚</dd>
+          </div>
+        </dl>
       </section>
 
       <section className="dashboard-recent">

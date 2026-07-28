@@ -93,26 +93,3 @@ export function formatDate(value: string): string {
 export function routeLabel(shipment: Shipment): string {
   return `${shipment.origin.city} 至 ${shipment.destination.city}`;
 }
-
-export function statusTone(
-  status: ShipmentStatus,
-): 'cool-gray' | 'blue' | 'cyan' | 'teal' | 'red' | 'purple' | 'green' | 'gray' {
-  switch (status) {
-    case 'CREATED':
-      return 'cool-gray';
-    case 'ACCEPTED':
-      return 'blue';
-    case 'PICKED_UP':
-      return 'cyan';
-    case 'IN_TRANSIT':
-      return 'teal';
-    case 'EXCEPTION':
-      return 'red';
-    case 'DELIVERED':
-      return 'purple';
-    case 'RECEIVED':
-      return 'green';
-    case 'CANCELLED':
-      return 'gray';
-  }
-}

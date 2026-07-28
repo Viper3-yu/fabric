@@ -233,10 +233,10 @@ function toCandidate(
   const quantity = Number(cells.quantity);
   const weightKg = Number(cells.weightKg);
   if (cells.quantity && (!Number.isInteger(quantity) || quantity < 1 || quantity > 100_000)) {
-    errors.push('件数须为 1–100000 的整数');
+    errors.push('件数须为 1 至 100000 的整数');
   }
   if (cells.weightKg && (!Number.isFinite(weightKg) || weightKg <= 0 || weightKg > 1_000_000)) {
-    errors.push('重量须为 0–1000000 kg 的数字');
+    errors.push('重量须为 0 至 1000000 kg 的数字');
   }
   if (cells.originContactPhone && !validatePhone(cells.originContactPhone)) {
     errors.push('发货联系电话格式不正确');
@@ -263,7 +263,7 @@ function toCandidate(
       temperatureMax > 100 ||
       temperatureMin >= temperatureMax
     ) {
-      errors.push('温控范围须在 -100–100℃ 且下限小于上限');
+      errors.push('温控范围须在 -100 至 100℃ 且下限小于上限');
     }
   }
   if (cells.documentHash && !/^[a-fA-F0-9]{64}$/.test(cells.documentHash)) {
@@ -322,8 +322,8 @@ function toCandidate(
     summary: {
       goodsName: cells.goodsName || '未填写',
       route: `${cells.originCity || '未填写'} → ${cells.destinationCity || '未填写'}`,
-      quantity: cells.quantity || '—',
-      expectedDeliveryDate: deliveryDate ?? (cells.expectedDeliveryDate || '—'),
+      quantity: cells.quantity || '未填写',
+      expectedDeliveryDate: deliveryDate ?? (cells.expectedDeliveryDate || '未填写'),
     },
   };
 }
