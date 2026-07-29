@@ -1,0 +1,154 @@
+/*
+ * Quiet logistics field
+ * A low-contrast route network, paper grid, and soft ambient color add depth
+ * without competing with operational content.
+ */
+
+.public-page,
+.verify-page,
+.login-page {
+  background-color: var(--jixin-canvas);
+  background-image:
+    url('/logistics-field.svg'),
+    radial-gradient(circle at 12% 8%, rgba(85, 189, 146, 0.15), transparent 30rem),
+    radial-gradient(circle at 88% 40%, rgba(35, 98, 77, 0.09), transparent 34rem),
+    linear-gradient(rgba(20, 33, 28, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 33, 28, 0.025) 1px, transparent 1px);
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat;
+  background-position:
+    center top,
+    left top,
+    right 18rem,
+    left top,
+    left top;
+  background-size:
+    min(112rem, 120vw) auto,
+    auto,
+    auto,
+    5rem 5rem,
+    5rem 5rem;
+  background-attachment: fixed;
+}
+
+.public-hero,
+.verify-layout {
+  background: transparent;
+}
+
+.public-hero::before {
+  opacity: 0.42;
+}
+
+.public-hero::after {
+  background:
+    radial-gradient(circle at 30% 42%, rgba(85, 189, 146, 0.22), transparent 26%),
+    radial-gradient(circle at 68% 36%, rgba(35, 98, 77, 0.16), transparent 34%);
+}
+
+.login-intro {
+  background:
+    linear-gradient(145deg, rgba(228, 237, 232, 0.9), rgba(228, 237, 232, 0.68)),
+    url('/logistics-field.svg') center / cover no-repeat;
+}
+
+.login-panel {
+  background: color-mix(in srgb, var(--jixin-canvas) 88%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.app-shell,
+.app-shell .app-main {
+  background-color: var(--jixin-canvas);
+}
+
+.app-shell .app-main {
+  background-image:
+    url('/logistics-field.svg'),
+    radial-gradient(circle at 86% 10%, rgba(85, 189, 146, 0.13), transparent 28rem),
+    linear-gradient(rgba(20, 33, 28, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 33, 28, 0.025) 1px, transparent 1px);
+  background-repeat: no-repeat, no-repeat, repeat, repeat;
+  background-position:
+    center -8rem,
+    right top,
+    left top,
+    left top;
+  background-size:
+    min(100rem, 112vw) auto,
+    auto,
+    5rem 5rem,
+    5rem 5rem;
+  background-attachment: fixed;
+}
+
+@media (prefers-color-scheme: dark) {
+  .public-page,
+  .verify-page,
+  .login-page {
+    background-image:
+      url('/logistics-field.svg'),
+      radial-gradient(circle at 12% 8%, rgba(104, 201, 161, 0.14), transparent 30rem),
+      radial-gradient(circle at 88% 40%, rgba(104, 201, 161, 0.08), transparent 34rem),
+      linear-gradient(rgba(226, 239, 232, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(226, 239, 232, 0.025) 1px, transparent 1px);
+  }
+
+  .login-intro {
+    background:
+      linear-gradient(145deg, rgba(28, 42, 36, 0.92), rgba(28, 42, 36, 0.72)),
+      url('/logistics-field.svg') center / cover no-repeat;
+  }
+
+  .app-shell .app-main {
+    background-image:
+      url('/logistics-field.svg'),
+      radial-gradient(circle at 86% 10%, rgba(104, 201, 161, 0.11), transparent 28rem),
+      linear-gradient(rgba(226, 239, 232, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(226, 239, 232, 0.025) 1px, transparent 1px);
+  }
+}
+
+@media (max-width: 768px) {
+  .public-page,
+  .verify-page,
+  .login-page {
+    background-size:
+      70rem auto,
+      auto,
+      auto,
+      4rem 4rem,
+      4rem 4rem;
+    background-position:
+      center top,
+      center top,
+      center top,
+      left top,
+      left top;
+    background-attachment: scroll;
+  }
+
+  .app-shell .app-main {
+    background-size:
+      70rem auto,
+      auto,
+      4rem 4rem,
+      4rem 4rem;
+    background-position:
+      center top,
+      center top,
+      left top,
+      left top;
+    background-attachment: scroll;
+  }
+
+  .login-panel {
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .login-panel {
+    background: var(--jixin-canvas);
+    backdrop-filter: none;
+  }
+}

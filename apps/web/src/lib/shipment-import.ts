@@ -411,9 +411,13 @@ export async function parseShipmentFile(file: File): Promise<ShipmentImportCandi
   return candidates;
 }
 
+export function getShipmentTemplateHeaders(): string[] {
+  return IMPORT_COLUMNS.map((column) => column.label);
+}
+
 export async function downloadShipmentTemplate(): Promise<void> {
   const XLSX = await import('xlsx');
-  const headers = IMPORT_COLUMNS.map((column) => `${column.label}${column.required ? '*' : ''}`);
+  const headers = getShipmentTemplateHeaders();
   const sample = [
     '上海市',
     '上海市',

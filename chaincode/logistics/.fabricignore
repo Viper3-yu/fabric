@@ -1,4 +1,4 @@
-node_modules/
-test/
-coverage/
-*.tsbuildinfo
+.git/
+.go-cache/
+.go-mod/
+*_test.go

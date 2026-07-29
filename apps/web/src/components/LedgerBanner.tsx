@@ -5,11 +5,7 @@ import type { LedgerMode } from '../types';
 export function LedgerBanner({ mode, compact = false }: { mode: LedgerMode; compact?: boolean }) {
   if (compact) {
     return (
-      <Tag
-        type="gray"
-        className={`ledger-mode-tag is-${mode}`}
-        renderIcon={Blockchain}
-      >
+      <Tag type="gray" className={`ledger-mode-tag is-${mode}`} renderIcon={Blockchain}>
         {mode === 'fabric' ? 'Fabric 协作网络' : '演示记录'}
       </Tag>
     );

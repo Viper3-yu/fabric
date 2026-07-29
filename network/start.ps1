@@ -19,18 +19,13 @@ if ($LASTEXITCODE -ne 0) {
   throw "Docker Desktop is not running, or the current user cannot access Docker Engine."
 }
 
-$FabricVersionParts = $FabricVersion.Split(".")
-if ($FabricVersionParts.Count -lt 2) {
-  throw "FabricVersion must include at least a major and minor version."
-}
-$NodeEnvTag = "$($FabricVersionParts[0]).$($FabricVersionParts[1])"
-$NodeEnvImage = "hyperledger/fabric-nodeenv:$NodeEnvTag"
-docker image inspect $NodeEnvImage *> $null
+$GoChaincodeImage = "hyperledger/fabric-ccenv:$FabricVersion"
+docker image inspect $GoChaincodeImage *> $null
 if ($LASTEXITCODE -ne 0) {
-  Write-Host "Downloading the Fabric Node chaincode build image $NodeEnvImage..."
-  docker pull $NodeEnvImage
+  Write-Host "Downloading the Fabric Go chaincode build image $GoChaincodeImage..."
+  docker pull $GoChaincodeImage
   if ($LASTEXITCODE -ne 0) {
-    throw "The Fabric Node chaincode build image was not downloaded successfully."
+    throw "The Fabric Go chaincode build image was not downloaded successfully."
   }
 }
 
@@ -42,15 +37,15 @@ if (-not (Test-Path -LiteralPath (Join-Path $TestNetworkDir "network.sh"))) {
 $JqExe = & (Join-Path $NetworkDir "ensure-jq.ps1")
 Write-Host "Using project-local jq: $JqExe"
 
-$Pnpm = Get-Command pnpm -ErrorAction SilentlyContinue
-if (-not $Pnpm) {
-  throw "pnpm was not found. Install dependencies and make sure pnpm is on PATH."
+$Go = Get-Command go -ErrorAction SilentlyContinue
+if (-not $Go) {
+  throw "Go 1.23 or newer was not found. Install Go and make sure go is on PATH."
 }
 
-Write-Host "Building the TypeScript chaincode..."
+Write-Host "Testing and building the Go chaincode..."
 Push-Location $ProjectDir
 try {
-  pnpm --filter @jixin/chaincode build
+  go test ./chaincode/logistics/...
   if ($LASTEXITCODE -ne 0) { throw "Chaincode build failed." }
 }
 finally {

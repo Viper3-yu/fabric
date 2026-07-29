@@ -1,16 +1,17 @@
 # 迹信
 
-迹信是一个基于 Hyperledger Fabric 的可信物流追踪系统，包含 React 浏览器端、Express API、双组织 Fabric Gateway 接入、TypeScript 智能合约、演示账本和闭环自动化测试。
+迹信是一个基于 Hyperledger Fabric 的可信物流追踪系统。当前代码由 React/TypeScript 浏览器端、Go HTTP API、Go Fabric Gateway 适配器、Go 智能合约、持久化演示账本和闭环自动化测试组成。
 
-详细架构、状态机和课程要求映射见 [设计方案](docs/设计方案.md)。
+业务架构与状态机见 [设计方案](docs/设计方案.md)，Go 重构审查和精简后的文件职责见 [Go 重构审查报告](docs/Go重构审查报告.md)。
 
 ## 环境要求
 
+- Go 1.23 或更高版本
 - Node.js 20.12 或更高版本
 - pnpm 11
 - Fabric 模式额外需要已启动的 Docker Desktop，以及 Git for Windows 自带的 Git Bash
 
-可先检查本机环境：
+先检查本机环境：
 
 ```powershell
 pnpm doctor
@@ -25,15 +26,15 @@ pnpm install
 pnpm dev
 ```
 
-浏览器访问 <http://localhost:5173>。API 默认位于 <http://127.0.0.1:3001>。首次启动会在 `apps/api/data/demo-ledger.json` 创建持久化演示数据，页面和 API 均会明确显示“演示账本”；这些交易不能作为真实上链证明。
+浏览器访问 <http://localhost:5173>，API 默认位于 <http://127.0.0.1:3001>。首次启动会在 `apps/api/data/demo-ledger.json` 创建持久化演示数据。页面与 API 会明确显示“演示账本”；这些交易不能作为真实上链证明。
 
-需要单独补充演示数据时可运行：
+单独补充演示数据：
 
 ```powershell
 pnpm seed
 ```
 
-### 可登录账号
+### 演示账号
 
 | 角色     | 用户名     | 密码          | 主要操作                             |
 | -------- | ---------- | ------------- | ------------------------------------ |
@@ -42,11 +43,11 @@ pnpm seed
 | 收货方   | `receiver` | `receiver123` | 输入一次性签收码确认收货             |
 | 审计访客 | `auditor`  | `auditor123`  | 查看运单历史和交易证据               |
 
-推荐演示闭环：发货方建单并保存系统返回的 6 位签收码；承运方依次接单、揽收、更新节点、处理异常并送达；收货方用签收码确认收货；最后使用公开查询页核对脱敏轨迹和交易历史。
+推荐闭环：发货方建单并保存系统返回的 6 位签收码；承运方依次接单、揽收、更新节点、处理异常并送达；收货方用签收码确认收货；最后使用公开查询页核对脱敏轨迹和交易历史。
 
 ## Hyperledger Fabric 模式
 
-以下命令在 Windows PowerShell 中运行。脚本优先使用 Git for Windows 的 `bin/bash.exe`（找不到时才使用同一 Git 安装内的 `usr/bin/bash.exe`），不会误用 WSL 的 `bash.exe`。
+以下命令在 Windows PowerShell 中运行。脚本使用 Git for Windows 的 `bin/bash.exe`，部署 `chaincode/logistics` 中的 Go 链码。
 
 首次准备 Fabric 二进制、镜像和官方测试网络：
 
@@ -54,15 +55,13 @@ pnpm seed
 pnpm fabric:bootstrap
 ```
 
-该命令会同时准备经过 SHA-256 校验的项目本地 `jq.exe` 和 Node 链码构建镜像，无需修改系统 PATH。
-
-启动双组织网络、创建 `logisticschannel`、部署链码，并生成 `apps/api/.env.fabric`：
+启动双组织网络、创建 `logisticschannel`、部署 `logistics` Go 链码，并生成 `apps/api/.env.fabric`：
 
 ```powershell
 pnpm fabric:up
 ```
 
-为 API 指定生成的环境文件，并设置本次运行的 JWT 密钥：
+设置 API 环境文件和本次运行的 JWT 密钥：
 
 ```powershell
 $env:ENV_FILE = (Resolve-Path ".\apps\api\.env.fabric").Path
@@ -70,9 +69,7 @@ $env:JWT_SECRET = "$([guid]::NewGuid())$([guid]::NewGuid())"
 pnpm dev
 ```
 
-API 会在启动时读取 `ENV_FILE`；进程环境中已显式设置的变量保持优先。
-
-API 启动日志应显示 `ledger=fabric`。也可访问 <http://127.0.0.1:3001/api/network>，确认 `mode` 为 `fabric` 且 `health.status` 为 `ok`。所有建单和状态变更响应都会返回 Fabric `transactionId`；签收码通过 transient data 提交，不写入区块或事件。
+访问 <http://127.0.0.1:3001/api/network>，确认 `mode` 为 `fabric` 且 `health.status` 为 `ok`。所有修改响应都会返回 Fabric `transactionId`；签收码通过 transient data 提交，不写入交易参数、区块状态或链码事件。
 
 停止测试网络：
 
@@ -80,31 +77,29 @@ API 启动日志应显示 `ledger=fabric`。也可访问 <http://127.0.0.1:3001/
 pnpm fabric:down
 ```
 
-若要在同一 PowerShell 会话中切回演示模式，请先清理 Fabric 启动变量：
+`apps/api/.env.fabric` 含本机证书和私钥路径，已被 Git 忽略，不得提交。课程测试网络不是生产网络模板。
 
-```powershell
-Remove-Item Env:ENV_FILE -ErrorAction SilentlyContinue
-Remove-Item Env:JWT_SECRET -ErrorAction SilentlyContinue
-```
-
-`apps/api/.env.fabric` 含本机证书和密钥路径，已被 Git 忽略，不应提交或复制到其他机器。Fabric 测试网络用于课程验收，不是生产网络模板。
-
-## 构建与测试
+## 构建、测试与格式
 
 ```powershell
 pnpm build
 pnpm test
 pnpm test:closed-loop
 pnpm typecheck
+pnpm lint
+pnpm format:check
 ```
 
-在未安装 Docker 的机器上可以完成演示闭环、构建和自动化测试，但无法声称已完成真实 Fabric 容器网络验证。
+这些命令同时覆盖 React/TypeScript 前端、Go API 和 Go chaincode。在没有 Docker 的机器上可以完成演示闭环、编译和单元测试，但不能据此声称完成真实 Fabric 网络交易验证。
 
 ## 目录
 
-- `apps/web`：浏览器端
-- `apps/api`：JWT/RBAC API、演示账本和 Fabric Gateway 适配器
-- `packages/shared`：前后端共享领域类型
-- `chaincode/logistics`：物流智能合约
-- `network`：Fabric 官方测试网络启动与环境生成脚本
-- `docs`：设计方案和课程要求说明
+- `apps/web`：React 浏览器端。
+- `apps/api`：Go API、JWT/RBAC、演示账本和 Fabric Gateway 适配器。
+- `packages/shared`：前端使用的 TypeScript API/领域类型。
+- `chaincode/logistics`：Go 智能合约及唯一的 Go 物流 JSON 模型。
+- `network`：Fabric 官方测试网络启动、部署与环境生成脚本。
+- `scripts`：环境和格式检查脚本。
+- `docs`：设计、验收、迁移审查和项目说明。
+
+Go workspace 位于 `go.work`；API 与链码分别拥有独立 `go.mod`，因此链码目录可以被 Fabric 单独打包。
