@@ -9,6 +9,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 TEST_NETWORK_DIR="${SCRIPT_DIR}/fabric-samples/test-network"
 export PATH="${SCRIPT_DIR}/bin:${PATH}"
+# Fabric's deployCC helper vendors dependencies from the chaincode module.
+# Disable the repository-level workspace for that module-local operation.
+export GOWORK=off
 FABRIC_VERSION="${JIXIN_FABRIC_VERSION:-2.5.16}"
 FABRIC_CA_VERSION="${JIXIN_FABRIC_CA_VERSION:-1.5.15}"
 CHANNEL_NAME="${JIXIN_CHANNEL_NAME:-logisticschannel}"
@@ -84,7 +87,7 @@ fi
   -c "${CHANNEL_NAME}" \
   -ccn "${CHAINCODE_NAME}" \
   -ccp "${CHAINCODE_DIR}" \
-  -ccl typescript \
+  -ccl go \
   -ccv 1.0 \
   -ccs 1
 

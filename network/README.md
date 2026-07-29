@@ -6,7 +6,7 @@
 
 - Docker Desktop 已安装并运行
 - Git for Windows 自带的 Git Bash 可用
-- Node.js 20+ 和 pnpm 可用
+- Go 1.23+、Node.js 20+ 和 pnpm 可用
 
 ## 启动
 
@@ -15,7 +15,7 @@ pnpm fabric:bootstrap
 pnpm fabric:up
 ```
 
-`fabric:bootstrap` 使用官方安装脚本下载 Fabric 2.5 LTS 的 Docker 镜像、CLI 二进制和 samples。`fabric:up` 创建 `logisticschannel`，启动 Org1、Org2、orderer、CA 和 CouchDB，随后部署本项目 `logistics` TypeScript 链码。
+`fabric:bootstrap` 使用官方安装脚本下载 Fabric 2.5 LTS 的 Docker 镜像、CLI 二进制和 samples。`fabric:up` 创建 `logisticschannel`，启动 Org1、Org2、orderer、CA 和 CouchDB，随后部署本项目 `logistics` Go 链码。
 
 脚本结束后会生成 `apps/api/.env.fabric`。将其中变量和应用密钥一起载入，再启动 API。
 

@@ -3,6 +3,8 @@ node_modules.interrupted/
 .pnpm-store/
 .playwright-cli/
 dist/
+bin/
+*.exe
 *.tsbuildinfo
 coverage/
 .vite/
@@ -10,6 +12,8 @@ coverage/
 !.env.example
 *.log
 tmp/
+.go-cache/
+.go-mod/
 data/demo-ledger.json
 apps/api/data/demo-ledger.json
 network/fabric-samples/
@@ -21,8 +25,4 @@ network/connection-profiles/
 playwright-report/
 test-results/
 .codegraph/
-output/playwright/*
-!output/playwright/closed-loop-received.png
-!output/playwright/public-closed-loop-desktop.png
-!output/playwright/public-closed-loop.png
-!output/playwright/public-track-mobile-top.png
+output/

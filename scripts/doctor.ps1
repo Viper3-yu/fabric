@@ -1,4 +1,5 @@
 $checks = @(
+  @{ Name = "Go 1.23+"; Command = "go"; Args = @("version"); Required = $true },
   @{ Name = "Node.js 20+"; Command = "node"; Args = @("--version"); Required = $true },
   @{ Name = "pnpm"; Command = "pnpm"; Args = @("--version"); Required = $true },
   @{ Name = "Git"; Command = "git"; Args = @("--version"); Required = $true },

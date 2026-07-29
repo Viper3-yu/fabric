@@ -138,7 +138,8 @@ export function ShipmentRouteMap({ shipment }: ShipmentRouteMapProps) {
       <footer>
         <Information size={16} aria-hidden="true" />
         <span>
-          地图按运单城市和链上节点定位；虚线表示节点间直线关系，数字不是道路里程。当前尚未接入车辆 GPS。
+          地图按运单城市和链上节点定位；虚线表示节点间直线关系，数字不是道路里程。当前尚未接入车辆
+          GPS。
         </span>
       </footer>
     </section>

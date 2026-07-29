@@ -1,31 +1,39 @@
 import { describe, expect, it } from 'vitest';
-import { parseImportRecords, parseShipmentFile } from './shipment-import';
+import {
+  getShipmentTemplateHeaders,
+  parseImportRecords,
+  parseShipmentFile,
+} from './shipment-import';
 
 const validRecord = {
-  '发货省*': '上海市',
-  '发货市*': '上海市',
+  发货省: '上海市',
+  发货市: '上海市',
   发货区县: '浦东新区',
-  '发货详细地址*': '张江路 88 号',
-  '发货联系人*': '周敏',
-  '发货联系电话*': '138 0013 8000',
-  '收货省*': '江苏省',
-  '收货市*': '南京市',
+  发货详细地址: '张江路 88 号',
+  发货联系人: '周敏',
+  发货联系电话: '138 0013 8000',
+  收货省: '江苏省',
+  收货市: '南京市',
   收货区县: '江宁区',
-  '收货详细地址*': '秣周东路 12 号',
-  '收货联系人*': '王宁',
-  '收货联系电话*': '139 0013 9000',
-  '货物名称*': '医用耗材',
-  '货物类别*': '医疗物资',
-  '件数*': '24',
-  '重量kg*': '186.5',
+  收货详细地址: '秣周东路 12 号',
+  收货联系人: '王宁',
+  收货联系电话: '139 0013 9000',
+  货物名称: '医用耗材',
+  货物类别: '医疗物资',
+  件数: '24',
+  重量kg: '186.5',
   货物说明: '防潮',
-  '预计送达日期*': '2026/8/6',
+  预计送达日期: '2026/8/6',
   '温控下限℃': '2',
   '温控上限℃': '8',
   文件核对编号: '',
 };
 
 describe('parseImportRecords', () => {
+  it('builds a downloadable template without required-field asterisks', () => {
+    expect(getShipmentTemplateHeaders()).not.toContainEqual(expect.stringMatching(/[*＊]/));
+  });
+
   it('maps the downloadable Chinese template into create-shipment input', () => {
     const candidate = parseImportRecords([validRecord])[0]!;
 
@@ -44,8 +52,8 @@ describe('parseImportRecords', () => {
     const candidate = parseImportRecords([
       {
         ...validRecord,
-        '件数*': '2.5',
-        '预计送达日期*': '2026-02-31',
+        件数: '2.5',
+        预计送达日期: '2026-02-31',
         '温控下限℃': '8',
         '温控上限℃': '2',
       },
@@ -68,7 +76,7 @@ describe('parseImportRecords', () => {
     const csv = [
       Object.keys(validRecord).join(','),
       Object.values(validRecord).join(','),
-      Object.values({ ...validRecord, '预计送达日期*': '2026-02-31' }).join(','),
+      Object.values({ ...validRecord, 预计送达日期: '2026-02-31' }).join(','),
     ].join('\r\n');
     const bytes = new TextEncoder().encode(csv);
     const file = {

@@ -51,18 +51,13 @@ if ($LASTEXITCODE -ne 0) {
   throw "The Fabric peer Docker image was not downloaded successfully."
 }
 
-$FabricVersionParts = $FabricVersion.Split(".")
-if ($FabricVersionParts.Count -lt 2) {
-  throw "FabricVersion must include at least a major and minor version."
-}
-$NodeEnvTag = "$($FabricVersionParts[0]).$($FabricVersionParts[1])"
-$NodeEnvImage = "hyperledger/fabric-nodeenv:$NodeEnvTag"
-docker image inspect $NodeEnvImage *> $null
+$GoChaincodeImage = "hyperledger/fabric-ccenv:$FabricVersion"
+docker image inspect $GoChaincodeImage *> $null
 if ($LASTEXITCODE -ne 0) {
-  Write-Host "Downloading the Fabric Node chaincode build image $NodeEnvImage..."
-  docker pull $NodeEnvImage
+  Write-Host "Downloading the Fabric Go chaincode build image $GoChaincodeImage..."
+  docker pull $GoChaincodeImage
   if ($LASTEXITCODE -ne 0) {
-    throw "The Fabric Node chaincode build image was not downloaded successfully."
+    throw "The Fabric Go chaincode build image was not downloaded successfully."
   }
 }
 

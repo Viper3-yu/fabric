@@ -5,8 +5,7 @@
  */
 
 .app-shell {
-  --jixin-font-ui:
-    'Geist Variable', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, sans-serif;
+  --jixin-font-ui: 'Geist Variable', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, sans-serif;
   --jixin-font-data:
     'Geist Variable', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, sans-serif;
   --jixin-accent: #23624d;

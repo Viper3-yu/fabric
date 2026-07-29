@@ -272,7 +272,6 @@ export function DashboardPage() {
             </div>
           </article>
         ) : null}
-
       </section>
 
       <section
