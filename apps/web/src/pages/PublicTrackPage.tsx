@@ -139,7 +139,6 @@ function RecordJourney() {
   return (
     <section className="record-journey" aria-labelledby="record-journey-title" data-motion-pin>
       <div className="record-journey__heading" data-pin-heading>
-        <p className="eyebrow">系统怎么记住一趟运输</p>
         <h2 id="record-journey-title">每一步都有记录 来龙去脉一看就懂</h2>
         <p className="record-journey__scrub" aria-label="运输过程中的关键动作都会被系统按顺序保存">
           {[
@@ -294,7 +293,6 @@ export function PublicTrackPage() {
             </Form>
             <div className="public-hero__secondary" data-reveal>
               <Link to="/verify">输入文件核对编号 查看是否一致</Link>
-              <span>不用登录，也不会显示完整个人信息</span>
             </div>
             {error ? (
               <InlineNotification
@@ -425,7 +423,7 @@ export function PublicTrackPage() {
                     kind="tertiary"
                     renderIcon={ArrowRight}
                   >
-                    核对完整记录
+                    开始核对记录
                   </Button>
                 </Tile>
               </aside>
@@ -440,7 +438,6 @@ export function PublicTrackPage() {
             <section className="chain-story" aria-labelledby="chain-story-title">
               <div className="chain-story__intro">
                 <div>
-                  <p className="eyebrow">过程说得清，隐私也守得住</p>
                   <h2 id="chain-story-title">想查的过程都能看到 隐私默认隐藏</h2>
                   <p className="chain-story__lead" data-scrub-copy>
                     运输过程和核对编号可以查询；完整文件、证件和联系方式仍由业务方保管，不会出现在公开页面。
