@@ -1756,7 +1756,7 @@ p {
   box-shadow:
     0 0 0 3px color-mix(in srgb, var(--jixin-signal) 24%, transparent),
     0 1.5rem 5rem rgba(12, 31, 22, 0.2);
-  transform: translateY(-3px);
+  transform: translateY(-1px);
 }
 
 .public-search .cds--search-input,
@@ -2839,7 +2839,7 @@ p {
     'visual'
     'proof';
   gap: clamp(2rem, 4vw, 3rem);
-  padding: 7rem var(--jixin-gutter) 3rem;
+  padding: 6rem var(--jixin-gutter) 3rem;
   text-align: center;
 }
 
@@ -3534,4 +3534,33 @@ p {
   .shipment-progress__stages::after {
     transition: none;
   }
+}
+
+/*
+ * Premium restraint layer
+ * 去掉 AI 味的背景光斑与无限循环动画，让页面安静、克制、更像企业级产品。
+ */
+.public-hero::after {
+  content: none;
+}
+
+.public-hero__visual::before {
+  content: none;
+}
+
+.detail-route__line span::after {
+  content: none;
+  animation: none;
+}
+
+.detail-record-health .network-pulse {
+  animation: none;
+}
+
+.record-step:hover {
+  transform: translateY(-3px);
+}
+
+.hero-proof > div:hover {
+  transform: translateY(-2px);
 }

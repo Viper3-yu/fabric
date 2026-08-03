@@ -2583,7 +2583,6 @@ body {
   stroke-dasharray: 0.035 0.025;
   stroke-linecap: round;
   stroke-width: 0.5;
-  animation: route-dash 9s linear infinite;
 }
 
 .route-scene__node {
@@ -2607,7 +2606,6 @@ body {
   inset: 0 auto 0 -10%;
   width: 14%;
   background: linear-gradient(90deg, transparent, rgba(114, 224, 181, 0.07), transparent);
-  animation: route-scan 6.5s ease-in-out infinite;
 }
 
 @keyframes route-dash {
