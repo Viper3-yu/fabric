@@ -494,8 +494,13 @@ export function PublicTrackPage() {
         ) : null}
       </main>
       <footer className="public-footer">
-        <span>迹信可信物流追踪</span>
-        <span>Hyperledger Fabric 应用实践</span>
+        <span className="public-footer__brand">迹信可信物流追踪</span>
+        <nav className="public-footer__nav" aria-label="页脚导航">
+          <Link to="/track">物流查询</Link>
+          <Link to="/verify">记录核对</Link>
+          <Link to="/login">业务登录</Link>
+        </nav>
+        <span className="mono">Hyperledger Fabric 应用实践</span>
       </footer>
     </div>
   );

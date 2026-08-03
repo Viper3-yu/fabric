@@ -8,7 +8,7 @@ import {
   WarningAltFilled,
 } from '@carbon/icons-react';
 import type { IntegrityResult } from '@jixin/shared';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { LedgerBanner } from '../components/LedgerBanner';
 import { PublicHeader } from '../components/PublicHeader';
 import { StatusTag } from '../components/StatusTag';
@@ -184,7 +184,12 @@ export function VerifyPage() {
         ) : null}
       </main>
       <footer className="public-footer">
-        <span>迹信可信物流追踪</span>
+        <span className="public-footer__brand">迹信可信物流追踪</span>
+        <nav className="public-footer__nav" aria-label="页脚导航">
+          <Link to="/track">物流查询</Link>
+          <Link to="/verify">记录核对</Link>
+          <Link to="/login">业务登录</Link>
+        </nav>
         <span>公开检查结果不会显示完整个人信息</span>
       </footer>
     </div>

@@ -3564,3 +3564,179 @@ p {
 .hero-proof > div:hover {
   transform: translateY(-2px);
 }
+
+/*
+ * Phase 2 — asymmetric premium layout
+ * hero 改为左文案右进度面板的非对称分栏，hero-proof 恢复 7/5 非对称 bento，
+ * 页脚升级为三栏结构，登录左栏改用深色品牌面板。
+ */
+.public-footer {
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+  padding: 2.25rem 0 2.5rem;
+}
+
+.public-footer__brand {
+  color: var(--jixin-ink);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.public-footer__nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.public-footer__nav a {
+  color: var(--jixin-ink-soft);
+  text-decoration: none;
+  transition: color var(--motion-fast) var(--ease-standard);
+}
+
+.public-footer__nav a:hover {
+  color: var(--jixin-accent);
+}
+
+.verify-form-card {
+  box-shadow: 0 1.25rem 3rem rgba(12, 31, 22, 0.08);
+}
+
+.verify-explainer__index {
+  color: var(--jixin-ink);
+  font-family: var(--jixin-font-data);
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+@media (prefers-color-scheme: light) {
+  .login-intro {
+    color: #edf5f1;
+    background:
+      radial-gradient(circle at 88% 6%, rgba(98, 193, 147, 0.16), transparent 32rem),
+      var(--jixin-dark);
+  }
+
+  .login-intro::after {
+    opacity: 0.55;
+    background-image:
+      linear-gradient(rgba(226, 241, 233, 0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(226, 241, 233, 0.07) 1px, transparent 1px);
+  }
+
+  .login-brand,
+  .login-brand__descriptor {
+    color: #edf5f1;
+  }
+
+  .login-intro .eyebrow {
+    color: #75d3aa;
+  }
+
+  .login-intro h1 {
+    color: #f2f9f5;
+  }
+
+  .login-lead {
+    color: #b3c4bb;
+  }
+
+  .public-entry {
+    color: #cfe8dc;
+  }
+
+  .public-entry:hover {
+    color: #ffffff;
+  }
+
+  .login-intro__footer > span {
+    color: #8aa094;
+  }
+}
+
+@media (min-width: 1024px) {
+  .public-hero {
+    grid-template-columns: minmax(0, 1.02fr) minmax(25rem, 0.82fr);
+    grid-template-areas:
+      'content visual'
+      'proof proof';
+    align-items: center;
+    gap: 2.5rem clamp(3rem, 5vw, 5rem);
+    padding-top: 5.5rem;
+    text-align: left;
+  }
+
+  .public-hero__content {
+    justify-items: start;
+    max-width: 40rem;
+    text-align: left;
+  }
+
+  .public-hero h1 {
+    max-width: none;
+    text-align: left;
+    font-size: clamp(3.1rem, 4.4vw, 4.5rem);
+  }
+
+  .public-hero__content > p:not(.eyebrow) {
+    margin-inline: 0;
+  }
+
+  .public-search {
+    width: 100%;
+  }
+
+  .public-hero__secondary {
+    justify-content: flex-start;
+  }
+
+  .public-hero__progress {
+    width: 100%;
+    margin-inline: 0;
+  }
+
+  .hero-proof {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(4.25rem, auto));
+  }
+
+  .hero-proof > div:nth-child(1) {
+    grid-row: span 2;
+    grid-column: span 7;
+    align-content: center;
+    color: #edf7f2;
+    background:
+      radial-gradient(circle at 84% 12%, rgba(98, 193, 147, 0.22), transparent 42%),
+      var(--jixin-dark);
+  }
+
+  .hero-proof > div:nth-child(1) svg {
+    color: #7ad3ad;
+  }
+
+  .hero-proof > div:nth-child(1) span {
+    color: #a9bdb2;
+  }
+
+  .hero-proof > div:nth-child(1) strong {
+    color: #edf7f2;
+  }
+
+  .hero-proof > div:nth-child(1):hover {
+    background-color: var(--jixin-dark-raised);
+  }
+
+  .hero-proof > div:nth-child(2),
+  .hero-proof > div:nth-child(3) {
+    grid-column: span 5;
+  }
+
+  .hero-proof > div:nth-child(2) {
+    border-bottom: 1px solid var(--jixin-border);
+  }
+
+  .hero-proof > div + div {
+    border-left: 1px solid var(--jixin-border);
+  }
+}
