@@ -45,11 +45,8 @@
     radial-gradient(circle at 68% 36%, rgba(35, 98, 77, 0.16), transparent 34%);
 }
 
-.login-intro {
-  background:
-    linear-gradient(145deg, rgba(228, 237, 232, 0.9), rgba(228, 237, 232, 0.68)),
-    url('/logistics-field.svg') center / cover no-repeat;
-}
+/* .login-intro 的背景由 visual-system.css 的深色品牌面板规则负责，
+   不在此处覆盖，避免浅色背景与浅色文字叠加导致不可读。 */
 
 .login-panel {
   background: color-mix(in srgb, var(--jixin-canvas) 88%, transparent);
