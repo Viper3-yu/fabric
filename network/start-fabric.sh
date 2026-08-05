@@ -12,11 +12,24 @@ export PATH="${SCRIPT_DIR}/bin:${PATH}"
 # Fabric's deployCC helper vendors dependencies from the chaincode module.
 # Disable the repository-level workspace for that module-local operation.
 export GOWORK=off
+# proxy.golang.org 在本机网络不可达；链码依赖 vendoring 需要国内镜像，
+# 否则 vendor 目录不完整，peer 容器内构建链码会失败。
+export GOPROXY="${GOPROXY:-https://goproxy.cn,direct}"
+export GOSUMDB="${GOSUMDB:-sum.golang.google.cn}"
 FABRIC_VERSION="${JIXIN_FABRIC_VERSION:-2.5.16}"
 FABRIC_CA_VERSION="${JIXIN_FABRIC_CA_VERSION:-1.5.15}"
 CHANNEL_NAME="${JIXIN_CHANNEL_NAME:-logisticschannel}"
 CHAINCODE_NAME="${JIXIN_CHAINCODE_NAME:-logistics}"
 CHAINCODE_DIR="${PROJECT_DIR}/chaincode/logistics"
+
+# 官方 test-network 脚本中大量未加引号的路径展开（pushd ${ROOTDIR}、
+# . ${TEST_NETWORK_HOME}/scripts/utils.sh）无法处理含空格的目录。
+# 若项目路径含空格，统一切换到 8.3 短路径运行整个部署。
+if [[ "${TEST_NETWORK_DIR}" == *" "* ]] && command -v cygpath >/dev/null 2>&1; then
+  TEST_NETWORK_DIR="$(cygpath -u "$(cygpath -s -w "${TEST_NETWORK_DIR}")")"
+  CHAINCODE_DIR="$(cygpath -u "$(cygpath -s -w "${CHAINCODE_DIR}")")"
+fi
+export TEST_NETWORK_HOME="${TEST_NETWORK_DIR}"
 
 if [[ ! -f "${TEST_NETWORK_DIR}/network.sh" ]]; then
   echo "未找到 fabric-samples/test-network/network.sh，请先运行 bootstrap。" >&2
@@ -24,6 +37,8 @@ if [[ ! -f "${TEST_NETWORK_DIR}/network.sh" ]]; then
 fi
 
 cd "${TEST_NETWORK_DIR}"
+# 确保 PWD 与 ROOTDIR 解析后不含空格：短路径目录本身无空格。
+pwd
 if ! ./network.sh down; then
   echo "清理命令返回非零状态；若网络尚未启动，这是可忽略的空环境提示。" >&2
 fi
