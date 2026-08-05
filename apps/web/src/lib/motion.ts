@@ -26,10 +26,10 @@ export function useCinematicMotion(
       const entrance = gsap.timeline({ defaults: { ease: 'power3.out' } });
       if (heroItems.length) {
         entrance.from(heroItems, {
-          y: 44,
+          y: 28,
           opacity: 0,
-          duration: 0.84,
-          stagger: 0.1,
+          duration: 0.62,
+          stagger: 0.08,
           clearProps: 'transform,opacity',
         });
       }
@@ -37,21 +37,21 @@ export function useCinematicMotion(
         entrance.from(
           bentoCards,
           {
-            y: 30,
+            y: 20,
             opacity: 0,
-            duration: 0.54,
-            stagger: 0.08,
+            duration: 0.45,
+            stagger: 0.06,
             clearProps: 'transform,opacity',
           },
-          heroItems.length ? '-=0.32' : 0,
+          heroItems.length ? '-=0.28' : 0,
         );
       }
 
       timelineItems.forEach((item, index) => {
         gsap.from(item, {
-          x: index % 2 ? 28 : -18,
+          x: index % 2 ? 16 : -10,
           opacity: 0,
-          duration: 0.62,
+          duration: 0.5,
           ease: 'power3.out',
           clearProps: 'transform,opacity',
           scrollTrigger: {
@@ -89,7 +89,7 @@ export function useCinematicMotion(
                 trigger: image,
                 start: 'top 92%',
                 end: 'top 52%',
-                scrub: 0.65,
+                scrub: 0.5,
               },
             },
           );
@@ -107,7 +107,7 @@ export function useCinematicMotion(
                 trigger: copy,
                 start: 'top 90%',
                 end: 'top 56%',
-                scrub: 0.65,
+                scrub: 0.5,
               },
             },
           );
@@ -127,7 +127,7 @@ export function useCinematicMotion(
                 trigger: scrubTrigger,
                 start: 'top 78%',
                 end: 'bottom 38%',
-                scrub: 0.75,
+                scrub: 0.6,
               },
             },
           );
@@ -157,7 +157,7 @@ export function useCinematicMotion(
           cards.forEach((card) => {
             gsap.fromTo(
               card,
-              { x: 92, scale: 0.94, opacity: 0.18 },
+              { x: 68, scale: 0.96, opacity: 0.22 },
               {
                 x: 0,
                 scale: 1,
@@ -167,7 +167,7 @@ export function useCinematicMotion(
                   trigger: card,
                   start: 'top 88%',
                   end: 'top 48%',
-                  scrub: 0.65,
+                  scrub: 0.5,
                 },
               },
             );

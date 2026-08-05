@@ -1986,7 +1986,7 @@ p {
   transition:
     border-color var(--motion-panel) var(--ease-standard),
     box-shadow var(--motion-page) var(--ease-emphasis),
-    transform 0.7s var(--ease-emphasis);
+    transform 0.5s var(--ease-emphasis);
 }
 
 .record-step::after {
@@ -2098,7 +2098,7 @@ p {
 
 .chain-accordion__item {
   transition:
-    flex 0.72s var(--ease-emphasis),
+    flex 0.52s var(--ease-emphasis),
     background-color var(--motion-panel) var(--ease-standard),
     transform var(--motion-page) var(--ease-emphasis);
 }
@@ -2249,7 +2249,7 @@ p {
   padding: 1.25rem 1.4rem;
   transition:
     background-color var(--motion-panel) var(--ease-standard),
-    transform 0.6s var(--ease-emphasis);
+    transform 0.42s var(--ease-emphasis);
 }
 
 .detail-record-health article + article {
