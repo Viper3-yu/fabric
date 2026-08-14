@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Viper3-yu/fabric/apps/api/internal/apperror"
@@ -20,6 +21,7 @@ import (
 	"github.com/hyperledger/fabric-gateway/pkg/identity"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/keepalive"
 )
 
 type connectionProfile struct {
@@ -49,10 +51,23 @@ type resolvedConnection struct {
 type Fabric struct {
 	config  config.FabricConfig
 	profile *connectionProfile
+
+	mu     sync.Mutex
+	conns  map[string]*cachedConnection
+	closed bool
+}
+
+// cachedConnection keeps one gateway, gRPC connection and identity per
+// organization. A Fabric gateway is not safe to share across identities, so
+// the cache key is the organization MSPID: one entry for Org1, one for Org2.
+type cachedConnection struct {
+	resolved   resolvedConnection
+	gateway    *client.Gateway
+	connection *grpc.ClientConn
 }
 
 func NewFabric(cfg config.FabricConfig) (*Fabric, error) {
-	fabric := &Fabric{config: cfg}
+	fabric := &Fabric{config: cfg, conns: make(map[string]*cachedConnection)}
 	if cfg.ConnectionProfilePath != "" {
 		content, err := os.ReadFile(cfg.ConnectionProfilePath)
 		if err != nil {
@@ -347,22 +362,77 @@ func (f *Fabric) submit(
 }
 
 func (f *Fabric) withContract(actor *model.User, operation func(*client.Contract) error) error {
-	resolved, err := f.resolveConnection(f.orgFor(actor))
+	cached, err := f.connectionFor(f.orgFor(actor))
 	if err != nil {
 		return err
 	}
-	gateway, connection, err := connectGateway(resolved)
-	if err != nil {
-		return mapFabricError(err)
-	}
-	defer gateway.Close()
-	defer connection.Close()
-
-	contract := gateway.GetNetwork(f.config.ChannelName).GetContract(f.config.ChaincodeName)
+	contract := cached.gateway.GetNetwork(f.config.ChannelName).GetContract(f.config.ChaincodeName)
 	if err := operation(contract); err != nil {
 		return mapFabricError(err)
 	}
 	return nil
+}
+
+// connectionFor returns the cached gateway for one organization, creating it
+// lazily on first use. Certificates and private keys are read and parsed only
+// once per organization instead of on every request.
+func (f *Fabric) connectionFor(org config.OrgConfig) (*cachedConnection, error) {
+	f.mu.Lock()
+	if f.closed {
+		f.mu.Unlock()
+		return nil, apperror.New(503, "FABRIC_CLOSED", "Fabric connections are closed")
+	}
+	if cached, ok := f.conns[org.MSPID]; ok {
+		f.mu.Unlock()
+		return cached, nil
+	}
+	f.mu.Unlock()
+
+	resolved, err := f.resolveConnection(org)
+	if err != nil {
+		return nil, err
+	}
+	gateway, connection, err := connectGateway(resolved)
+	if err != nil {
+		return nil, mapFabricError(err)
+	}
+
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.closed {
+		gateway.Close()
+		_ = connection.Close()
+		return nil, apperror.New(503, "FABRIC_CLOSED", "Fabric connections are closed")
+	}
+	if existing, ok := f.conns[org.MSPID]; ok {
+		// A concurrent request won the race and connected first.
+		gateway.Close()
+		_ = connection.Close()
+		return existing, nil
+	}
+	cached := &cachedConnection{resolved: resolved, gateway: gateway, connection: connection}
+	f.conns[org.MSPID] = cached
+	return cached, nil
+}
+
+// Close releases every cached gateway and gRPC connection. It is safe to call
+// multiple times; after Close no new connections are created.
+func (f *Fabric) Close() error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.closed {
+		return nil
+	}
+	f.closed = true
+	var firstErr error
+	for mspid, cached := range f.conns {
+		cached.gateway.Close()
+		if err := cached.connection.Close(); err != nil && firstErr == nil {
+			firstErr = err
+		}
+		delete(f.conns, mspid)
+	}
+	return firstErr
 }
 
 func (f *Fabric) orgFor(actor *model.User) config.OrgConfig {
@@ -478,6 +548,14 @@ func connectGateway(resolved resolvedConnection) (*client.Gateway, *grpc.ClientC
 	connection, err := grpc.NewClient(
 		resolved.Endpoint,
 		grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(pool, resolved.HostAlias)),
+		// The connection now lives for the process lifetime; keepalive lets
+		// grpc detect dead peers (network restart, NAT timeout) and reconnect
+		// instead of failing every request with an EOF.
+		grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:                30 * time.Second,
+			Timeout:             10 * time.Second,
+			PermitWithoutStream: true,
+		}),
 	)
 	if err != nil {
 		return nil, nil, err

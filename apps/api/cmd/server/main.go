@@ -14,6 +14,7 @@ import (
 	"github.com/Viper3-yu/fabric/apps/api/internal/config"
 	"github.com/Viper3-yu/fabric/apps/api/internal/httpapi"
 	"github.com/Viper3-yu/fabric/apps/api/internal/ledger"
+	"github.com/Viper3-yu/fabric/apps/api/internal/users"
 )
 
 func main() {
@@ -21,10 +22,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	users.Configure(cfg.DemoPasswords, cfg.DemoPasswordHashes)
 	store, err := createLedger(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer func() {
+		if err := store.Close(); err != nil {
+			log.Printf("close ledger: %v", err)
+		}
+	}()
 	server := &http.Server{
 		Addr:              cfg.Host + ":" + fmt.Sprint(cfg.Port),
 		Handler:           httpapi.New(cfg, store),

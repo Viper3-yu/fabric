@@ -43,6 +43,8 @@ pnpm seed
 | 收货方   | `receiver` | `receiver123` | 输入一次性签收码确认收货             |
 | 审计访客 | `auditor`  | `auditor123`  | 查看运单历史和交易证据               |
 
+上表密码是开发与课程演示回退值。部署时用 `DEMO_PASSWORD_<账号>` 覆盖明文密码，或用 `DEMO_PASSWORD_HASH_<账号>` 注入 bcrypt 哈希（哈希优先，`NODE_ENV=production` 必须配置），生成哈希：`go run ./apps/api/cmd/hash-password`。详见 `apps/api/.env.example`。
+
 推荐闭环：发货方建单并保存系统返回的 6 位签收码；承运方依次接单、揽收、更新节点、处理异常并送达；收货方用签收码确认收货；最后使用公开查询页核对脱敏轨迹和交易历史。
 
 ## Hyperledger Fabric 模式
@@ -85,12 +87,13 @@ pnpm fabric:down
 pnpm build
 pnpm test
 pnpm test:closed-loop
+pnpm test:fabric
 pnpm typecheck
 pnpm lint
 pnpm format:check
 ```
 
-这些命令同时覆盖 React/TypeScript 前端、Go API 和 Go chaincode。在没有 Docker 的机器上可以完成演示闭环、编译和单元测试，但不能据此声称完成真实 Fabric 网络交易验证。
+这些命令同时覆盖 React/TypeScript 前端、Go API 和 Go chaincode。在没有 Docker 的机器上可以完成演示闭环、编译和单元测试，但不能据此声称完成真实 Fabric 网络交易验证。`pnpm test:fabric` 在测试网络运行中执行建单到签收的真实链上闭环（`TestFabricClosedLoopIntegration`），无 Docker 时自动跳过，不影响 CI。
 
 ## 目录
 

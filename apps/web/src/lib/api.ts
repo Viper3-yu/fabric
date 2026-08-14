@@ -5,7 +5,6 @@ import type {
   Shipment,
   ShipmentHistoryEntry,
 } from '@jixin/shared';
-import { getToken } from './storage';
 import type {
   ApiEnvelope,
   CreateShipmentInput,
@@ -59,22 +58,16 @@ export function getErrorMessage(error: unknown): string {
   return toMessage(error);
 }
 
-async function request<T>(
-  path: string,
-  init: RequestInit = {},
-  authenticated = true,
-): Promise<ApiEnvelope<T>> {
+async function request<T>(path: string, init: RequestInit = {}): Promise<ApiEnvelope<T>> {
   const headers = new Headers(init.headers);
   headers.set('Accept', 'application/json');
   if (init.body) headers.set('Content-Type', 'application/json');
-  if (authenticated) {
-    const token = getToken();
-    if (token) headers.set('Authorization', `Bearer ${token}`);
-  }
 
   let response: Response;
   try {
-    response = await fetch(`${API_BASE}${path}`, { ...init, headers });
+    // The session JWT travels in the httpOnly cookie set by /api/auth/login;
+    // credentials: 'include' sends it on same-origin and cross-origin calls.
+    response = await fetch(`${API_BASE}${path}`, { ...init, headers, credentials: 'include' });
   } catch (caught) {
     // A caller aborting its own request is normal (fast navigation/filter
     // changes); surface the AbortError instead of a misleading network error.
@@ -94,7 +87,14 @@ async function request<T>(
       response.status,
       failure?.error?.requestId,
     );
-    if (response.status === 401 && authenticated) {
+    // A 401 on any protected call means the session cookie expired or was
+    // revoked; login itself 401s on bad credentials and public endpoints
+    // never require auth, so those two are excluded.
+    if (
+      response.status === 401 &&
+      !path.startsWith('/auth/login') &&
+      !path.startsWith('/public/')
+    ) {
       window.dispatchEvent(new Event('jixin:unauthorized'));
     }
     throw error;
@@ -122,11 +122,11 @@ function buildQuery(filters: ShipmentFilters): string {
 export const api = {
   auth: {
     login: (username: string, password: string) =>
-      request<LoginResult>(
-        '/auth/login',
-        { method: 'POST', body: JSON.stringify({ username, password }) },
-        false,
-      ),
+      request<LoginResult>('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ username, password }),
+      }),
+    logout: () => request<{ loggedOut: boolean }>('/auth/logout', { method: 'POST' }),
     me: (signal?: AbortSignal) =>
       request<AppUser | { user: AppUser; ledgerMode?: 'fabric' | 'demo' }>(
         '/auth/me',
@@ -163,16 +163,11 @@ export const api = {
   },
   public: {
     track: (trackingNumber: string, signal?: AbortSignal) =>
-      request<Shipment>(
-        `/public/track/${encodeURIComponent(trackingNumber)}`,
-        withSignal(signal),
-        false,
-      ),
+      request<Shipment>(`/public/track/${encodeURIComponent(trackingNumber)}`, withSignal(signal)),
     history: (trackingNumber: string, signal?: AbortSignal) =>
       request<ShipmentHistoryEntry[]>(
         `/public/track/${encodeURIComponent(trackingNumber)}/history`,
         withSignal(signal),
-        false,
       ),
     verify: (trackingNumber: string, evidenceHash?: string, signal?: AbortSignal) => {
       const body: { trackingNumber: string; evidenceHash?: string } = { trackingNumber };
@@ -180,7 +175,6 @@ export const api = {
       return request<IntegrityResult>(
         '/public/verify',
         withSignal(signal, { method: 'POST', body: JSON.stringify(body) }),
-        false,
       );
     },
   },
