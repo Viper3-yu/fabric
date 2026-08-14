@@ -55,27 +55,8 @@
 
 .app-shell,
 .app-shell .app-main {
+  /* 后台只保留画布底色：高密度操作区不叠加路线底图与网格，保证表格与证据面板的可读性 */
   background-color: var(--jixin-canvas);
-}
-
-.app-shell .app-main {
-  background-image:
-    url('/logistics-field.svg'),
-    radial-gradient(circle at 86% 10%, rgba(85, 189, 146, 0.13), transparent 28rem),
-    linear-gradient(rgba(20, 33, 28, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(20, 33, 28, 0.025) 1px, transparent 1px);
-  background-repeat: no-repeat, no-repeat, repeat, repeat;
-  background-position:
-    center -8rem,
-    right top,
-    left top,
-    left top;
-  background-size:
-    min(100rem, 112vw) auto,
-    auto,
-    5rem 5rem,
-    5rem 5rem;
-  background-attachment: fixed;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -94,14 +75,6 @@
     background:
       linear-gradient(145deg, rgba(28, 42, 36, 0.92), rgba(28, 42, 36, 0.72)),
       url('/logistics-field.svg') center / cover no-repeat;
-  }
-
-  .app-shell .app-main {
-    background-image:
-      url('/logistics-field.svg'),
-      radial-gradient(circle at 86% 10%, rgba(104, 201, 161, 0.11), transparent 28rem),
-      linear-gradient(rgba(226, 239, 232, 0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(226, 239, 232, 0.025) 1px, transparent 1px);
   }
 }
 
@@ -124,20 +97,6 @@
     background-attachment: scroll;
   }
 
-  .app-shell .app-main {
-    background-size:
-      70rem auto,
-      auto,
-      4rem 4rem,
-      4rem 4rem;
-    background-position:
-      center top,
-      center top,
-      left top,
-      left top;
-    background-attachment: scroll;
-  }
-
   .login-panel {
     backdrop-filter: none;
   }
@@ -152,18 +111,9 @@
 
 /*
  * Motion + density refinement layer
- * 动效整体提速并保持曲线一致；工作台组件收紧间距，信息密度更高。
- * 该文件最后加载，仅在不影响登录品牌面板的前提下做覆盖。
+ * 动效时长继承 visual-system.css 的令牌阶梯（80/120/180/240/360/520ms），
+ * 此处只做工作台组件的间距密度覆盖。
  */
-
-:root {
-  --motion-instant: 70ms;
-  --motion-fast: 110ms;
-  --motion-control: 160ms;
-  --motion-panel: 210ms;
-  --motion-page: 300ms;
-  --motion-hero: 440ms;
-}
 
 /* Route change entrance */
 @keyframes jixin-page-enter {

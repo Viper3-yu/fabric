@@ -5,38 +5,7 @@
  */
 
 .app-shell {
-  --jixin-font-ui: 'Geist Variable', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, sans-serif;
-  --jixin-font-data:
-    'Geist Variable', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, sans-serif;
-  --jixin-accent: #23624d;
-  --jixin-accent-hover: #174a39;
-  --jixin-accent-soft: #e1ebe6;
-  --jixin-canvas: #eef1ef;
-  --jixin-surface: #f5f7f6;
-  --jixin-surface-raised: #fbfcfb;
-  --jixin-surface-muted: #e7ebe8;
-  --jixin-panel-soft: #e8eeeb;
-  --jixin-panel-strong: #dbe4df;
-  --jixin-ink: #17201c;
-  --jixin-ink-soft: #58635d;
-  --jixin-border: #c8d0cc;
-  --jixin-border-strong: #8f9d96;
-  --jixin-card-radius: 0.125rem;
-  --jixin-control-radius: 0.125rem;
-  --jixin-nav: #fbfcfb;
-  --jixin-shadow: 0 0.75rem 2rem rgba(21, 45, 35, 0.12);
-  --cds-background: var(--jixin-canvas);
-  --cds-layer: var(--jixin-surface-raised);
-  --cds-layer-01: var(--jixin-surface-raised);
-  --cds-field: #ffffff;
-  --cds-field-01: #ffffff;
-  --cds-text-primary: var(--jixin-ink);
-  --cds-text-secondary: var(--jixin-ink-soft);
-  --cds-border-subtle: var(--jixin-border);
-  --cds-border-subtle-01: var(--jixin-border);
-  --cds-button-primary: var(--jixin-accent);
-  --cds-button-primary-hover: var(--jixin-accent-hover);
-  --cds-focus: #23765a;
+  /* 令牌继承自 visual-system.css 的唯一令牌层，不再局部覆盖颜色、圆角与字体 */
   min-height: 100dvh;
   color: var(--jixin-ink);
   background: var(--jixin-canvas);
@@ -1496,19 +1465,7 @@
 
 @media (prefers-color-scheme: dark) {
   .app-shell {
-    --jixin-accent: #68b695;
-    --jixin-accent-hover: #82c5a8;
-    --jixin-accent-soft: #203b30;
-    --jixin-canvas: #111815;
-    --jixin-surface: #151e1a;
-    --jixin-surface-raised: #19231e;
-    --jixin-surface-muted: #222e28;
-    --jixin-panel-soft: #1d2c25;
-    --jixin-panel-strong: #263a31;
-    --jixin-ink: #e9f0ec;
-    --jixin-ink-soft: #a5b4ac;
-    --jixin-border: #36463e;
-    --jixin-border-strong: #607269;
+    /* 暗色令牌与唯一令牌层保持一致，仅补足后台需要的字段底色 */
     --cds-field: #202b26;
     --cds-field-01: #202b26;
   }
@@ -1520,12 +1477,12 @@
   .app-shell .cds--date-picker__input,
   .app-shell .cds--select-input,
   .app-shell .cds--text-area {
-    background: #202b26;
+    background: var(--cds-field);
   }
 
   .app-shell .cds--data-table th {
-    color: #c0ccc6;
-    background: #25332c;
+    color: var(--jixin-ink-soft);
+    background: var(--jixin-surface-muted);
   }
 
   .app-shell .dashboard-focus__heading {
