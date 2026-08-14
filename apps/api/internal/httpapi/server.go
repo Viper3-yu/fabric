@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -42,9 +43,10 @@ var publicEventDescriptions = map[string]string{
 }
 
 type API struct {
-	config config.Config
-	ledger ledger.Ledger
-	mux    *http.ServeMux
+	config   config.Config
+	ledger   ledger.Ledger
+	mux      *http.ServeMux
+	throttle loginThrottle
 }
 
 func New(cfg config.Config, store ledger.Ledger) http.Handler {
@@ -93,8 +95,8 @@ func (a *API) middleware(next http.Handler) http.Handler {
 		}()
 
 		requestID := strings.TrimSpace(request.Header.Get("x-request-id"))
-		if len(requestID) > 100 {
-			requestID = requestID[:100]
+		if runes := []rune(requestID); len(runes) > 100 {
+			requestID = string(runes[:100])
 		}
 		if requestID == "" {
 			requestID = randomID()
@@ -117,6 +119,7 @@ func (a *API) middleware(next http.Handler) http.Handler {
 		if request.Method == http.MethodOptions {
 			response.Header().Set("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
 			response.Header().Set("Access-Control-Allow-Headers", "authorization,content-type,x-request-id")
+			response.Header().Set("Access-Control-Max-Age", "600")
 			response.WriteHeader(http.StatusNoContent)
 			return
 		}
@@ -132,7 +135,7 @@ func (a *API) handleHealth(response http.ResponseWriter, request *http.Request) 
 	}
 	a.sendSuccess(response, request, map[string]any{
 		"status": health.Status, "service": "jixin-api",
-		"timestamp": time.Now().UTC().Format(time.RFC3339Nano), "ledger": health,
+		"timestamp": time.Now().UTC().Format(time.RFC3339Nano), "ledger": publicHealth(health),
 	}, status)
 }
 
@@ -141,8 +144,15 @@ func (a *API) handleNetwork(response http.ResponseWriter, request *http.Request)
 	a.sendSuccess(response, request, map[string]any{
 		"mode": mode, "isDemo": mode == "demo",
 		"label":  map[bool]string{true: "演示账本", false: "Hyperledger Fabric"}[mode == "demo"],
-		"health": a.ledger.Health(request.Context()),
+		"health": publicHealth(a.ledger.Health(request.Context())),
 	}, http.StatusOK)
+}
+
+// publicHealth drops ledger diagnostics (gRPC errors may embed peer endpoints
+// or local paths); the API log keeps the full detail.
+func publicHealth(health ledger.Health) ledger.Health {
+	health.Details = ""
+	return health
 }
 
 func (a *API) handleLogin(response http.ResponseWriter, request *http.Request) {
@@ -155,11 +165,20 @@ func (a *API) handleLogin(response http.ResponseWriter, request *http.Request) {
 		a.writeError(response, request, err)
 		return
 	}
+	if a.throttle.locked(body.Username) {
+		a.writeError(response, request, apperror.New(
+			429, "TOO_MANY_ATTEMPTS",
+			"Too many failed sign-in attempts; wait briefly and try again",
+		))
+		return
+	}
 	user, err := auth.Authenticate(body.Username, body.Password)
 	if err != nil {
+		a.throttle.recordFailure(body.Username)
 		a.writeError(response, request, err)
 		return
 	}
+	a.throttle.recordSuccess(body.Username)
 	token, err := auth.CreateToken(user, a.config.JWTSecret, a.config.JWTExpiresIn)
 	if err != nil {
 		a.writeError(response, request, err)
@@ -168,6 +187,60 @@ func (a *API) handleLogin(response http.ResponseWriter, request *http.Request) {
 	a.sendSuccess(response, request, map[string]any{
 		"token": token, "user": user, "ledgerMode": a.ledger.Mode(),
 	}, http.StatusOK)
+}
+
+const (
+	loginMaxFailures  = 5
+	loginLockDuration = 30 * time.Second
+)
+
+type loginAttempt struct {
+	failures    int
+	lockedUntil time.Time
+}
+
+type loginThrottle struct {
+	mu       sync.Mutex
+	attempts map[string]*loginAttempt
+}
+
+func (t *loginThrottle) locked(username string) bool {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	attempt, ok := t.attempts[username]
+	if !ok {
+		return false
+	}
+	if attempt.lockedUntil.After(time.Now()) {
+		return true
+	}
+	if !attempt.lockedUntil.IsZero() {
+		delete(t.attempts, username)
+	}
+	return false
+}
+
+func (t *loginThrottle) recordFailure(username string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.attempts == nil {
+		t.attempts = make(map[string]*loginAttempt)
+	}
+	attempt, ok := t.attempts[username]
+	if !ok {
+		attempt = &loginAttempt{}
+		t.attempts[username] = attempt
+	}
+	attempt.failures++
+	if attempt.failures >= loginMaxFailures {
+		attempt.lockedUntil = time.Now().Add(loginLockDuration)
+	}
+}
+
+func (t *loginThrottle) recordSuccess(username string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	delete(t.attempts, username)
 }
 
 func (a *API) handleMe(response http.ResponseWriter, request *http.Request, user model.User) {
@@ -406,6 +479,10 @@ func (a *API) handlePublicTrack(response http.ResponseWriter, request *http.Requ
 		a.writeError(response, request, err)
 		return
 	}
+	if !validTrackingNumber(number) {
+		a.writeError(response, request, invalidTrackingError())
+		return
+	}
 	shipment, err := a.findByTracking(request.Context(), number)
 	if err != nil {
 		a.writeError(response, request, err)
@@ -418,6 +495,10 @@ func (a *API) handlePublicHistory(response http.ResponseWriter, request *http.Re
 	number, err := pathValue(request, "trackingNumber", 4, 100)
 	if err != nil {
 		a.writeError(response, request, err)
+		return
+	}
+	if !validTrackingNumber(number) {
+		a.writeError(response, request, invalidTrackingError())
 		return
 	}
 	shipment, err := a.findByTracking(request.Context(), number)
@@ -777,11 +858,11 @@ func sixDigitCode() (string, error) {
 }
 
 func trackingNumber() string {
-	value, err := rand.Int(rand.Reader, big.NewInt(1000000))
+	value, err := rand.Int(rand.Reader, big.NewInt(100000000))
 	if err != nil {
-		value = big.NewInt(time.Now().UnixNano() % 1000000)
+		value = big.NewInt(time.Now().UnixNano() % 100000000)
 	}
-	return "JX" + time.Now().UTC().Format("20060102") + fmt.Sprintf("%06d", value.Int64())
+	return "JX" + time.Now().UTC().Format("20060102") + fmt.Sprintf("%08d", value.Int64())
 }
 
 func randomID() string {

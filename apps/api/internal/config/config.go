@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -78,6 +79,12 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("JWT_SECRET with at least 16 characters is required in Fabric mode and production")
 	}
 	if jwtSecret == "" {
+		if environment != "test" {
+			log.Printf(
+				"[jixin-api] JWT_SECRET is not set; falling back to a built-in demo secret. %s",
+				"Anyone with this public repository can forge tokens for this deployment.",
+			)
+		}
 		jwtSecret = "demo-only-jixin-secret-change-me"
 	}
 

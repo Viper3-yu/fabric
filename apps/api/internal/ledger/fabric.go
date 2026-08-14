@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -32,7 +33,7 @@ type connectionProfile struct {
 			Path string      `json:"path"`
 			PEM  interface{} `json:"pem"`
 		} `json:"tlsCACerts"`
-		GRPCOptions map[string]string `json:"grpcOptions"`
+		GRPCOptions map[string]any `json:"grpcOptions"`
 	} `json:"peers"`
 }
 
@@ -79,6 +80,7 @@ func (f *Fabric) Health(ctx context.Context) Health {
 	if err != nil {
 		result.Status = "degraded"
 		result.Details = err.Error()
+		log.Printf("fabric health degraded: %v", err)
 		return result
 	}
 	result.Status = "ok"
@@ -397,8 +399,8 @@ func (f *Fabric) resolveConnection(org config.OrgConfig) (resolvedConnection, er
 			endpoint = first(endpoint, peer.URL)
 			hostAlias = first(
 				hostAlias,
-				peer.GRPCOptions["ssl-target-name-override"],
-				peer.GRPCOptions["grpc.ssl_target_name_override"],
+				grpcOptionString(peer.GRPCOptions, "ssl-target-name-override"),
+				grpcOptionString(peer.GRPCOptions, "grpc.ssl_target_name_override"),
 				peerName,
 			)
 			if tlsPath == "" && peer.TLSCACerts.Path != "" {
@@ -528,16 +530,28 @@ func mapFabricError(err error) error {
 		return err
 	}
 	message := err.Error()
+	// The raw gateway error can embed peer endpoints and local file paths;
+	// keep it in the server log and never send it to the client.
+	log.Printf("fabric gateway error: %v", err)
 	switch {
 	case containsFold(message, "does not exist", "not found"):
 		return apperror.New(404, "SHIPMENT_NOT_FOUND", "Shipment was not found on the Fabric ledger")
 	case containsFold(message, "not authorized", "forbidden", "msp", "access denied"):
-		return apperror.WithDetails(403, "FABRIC_FORBIDDEN", "Fabric rejected the submitting identity", message)
+		return apperror.New(403, "FABRIC_FORBIDDEN", "Fabric rejected the submitting identity")
 	case containsFold(message, "state", "expected", "already", "must be", "current status"):
-		return apperror.WithDetails(409, "FABRIC_STATE_REJECTED", "Fabric rejected the shipment state transition", message)
+		return apperror.New(409, "FABRIC_STATE_REJECTED", "Fabric rejected the shipment state transition")
 	default:
-		return apperror.WithDetails(502, "FABRIC_GATEWAY_ERROR", "Fabric Gateway request failed", message)
+		return apperror.New(502, "FABRIC_GATEWAY_ERROR", "Fabric Gateway request failed")
 	}
+}
+
+func grpcOptionString(options map[string]any, keys ...string) string {
+	for _, key := range keys {
+		if value, ok := options[key].(string); ok {
+			return value
+		}
+	}
+	return ""
 }
 
 func decodeFabricJSON(content []byte, operation string, target any) error {

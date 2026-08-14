@@ -16,8 +16,10 @@ import (
 )
 
 var (
-	sha256Pattern = regexp.MustCompile(`^[a-fA-F0-9]{64}$`)
-	phonePattern  = regexp.MustCompile(`^[+\d][\d\s-]+$`)
+	sha256Pattern       = regexp.MustCompile(`^[a-fA-F0-9]{64}$`)
+	phonePattern        = regexp.MustCompile(`^[+\d][\d\s-]+$`)
+	trackingPattern     = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]*$`)
+	deliveryCodePattern = regexp.MustCompile(`^\d{6}$`)
 )
 
 type flexibleFloat float64
@@ -221,7 +223,7 @@ func validateAction(action string, body *actionBody) error {
 	if requiredEvidence && body.EvidenceHash == "" {
 		return validationError(fmt.Errorf("evidenceHash is required"))
 	}
-	if action == "confirm" && !regexp.MustCompile(`^\d{6}$`).MatchString(body.DeliveryCode) {
+	if action == "confirm" && !deliveryCodePattern.MatchString(body.DeliveryCode) {
 		return validationError(fmt.Errorf("deliveryCode must contain 6 digits"))
 	}
 	if action == "cancel" && body.Reason != "" {
@@ -238,10 +240,25 @@ func validateVerify(body *verifyBody) error {
 	if err := length(body.TrackingNumber, 4, 100, "trackingNumber"); err != nil {
 		return validationError(err)
 	}
+	if !validTrackingNumber(body.TrackingNumber) {
+		return invalidTrackingError()
+	}
 	if body.EvidenceHash != "" && !sha256Pattern.MatchString(body.EvidenceHash) {
 		return validationError(fmt.Errorf("evidenceHash must be a 64-character SHA-256 hex digest"))
 	}
 	return nil
+}
+
+// validTrackingNumber mirrors the chaincode identifier rule so an invalid
+// number is rejected as a 400 here instead of surfacing as a gateway 502.
+func validTrackingNumber(value string) bool {
+	return trackingPattern.MatchString(value)
+}
+
+func invalidTrackingError() error {
+	return validationError(fmt.Errorf(
+		"trackingNumber may only contain letters, numbers, dot, underscore, colon, or hyphen",
+	))
 }
 
 func validateAddress(address *addressBody, field string) error {

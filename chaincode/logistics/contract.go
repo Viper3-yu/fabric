@@ -101,7 +101,7 @@ func (c *LogisticsContract) CreateShipment(
 	}
 	description := input.Description
 	if description == "" {
-		description = "Shipment created"
+		description = "发货方创建运单"
 	}
 	created := model.ShipmentEvent{
 		Sequence: 1, Type: model.EventCreated, Location: location, Description: description,
@@ -166,7 +166,7 @@ func (c *LogisticsContract) AcceptShipment(
 	timestamp, event, err := buildEvent(
 		ctx, shipment, model.EventAccepted, input,
 		fallback(input.Location, shipment.LastLocation),
-		fallback(input.Description, "Carrier accepted the shipment"),
+		fallback(input.Description, "承运方已接单"),
 	)
 	if err != nil {
 		return "", err
@@ -210,7 +210,7 @@ func (c *LogisticsContract) PickupShipment(
 	}
 	timestamp, event, err := buildEvent(
 		ctx, shipment, model.EventPickedUp, input, input.Location,
-		fallback(input.Description, "Shipment picked up"),
+		fallback(input.Description, "承运方完成揽收"),
 	)
 	if err != nil {
 		return "", err
@@ -275,7 +275,7 @@ func (c *LogisticsContract) AddCheckpoint(
 			Sequence: len(shipment.Events) + 2, Type: model.EventExceptionReported,
 			Location: input.Location,
 			Description: fmt.Sprintf(
-				"Temperature %g C is outside allowed range %g..%g C",
+				"温度 %g°C 超出 %g~%g°C 设定范围",
 				*input.Temperature, shipment.TemperatureRange.Min, shipment.TemperatureRange.Max,
 			),
 			ActorID: input.ActorID, ActorName: input.ActorName, MSPID: mspID,
@@ -344,7 +344,7 @@ func (c *LogisticsContract) MarkDelivered(
 	}
 	timestamp, event, err := buildEvent(
 		ctx, shipment, model.EventDelivered, input, input.Location,
-		fallback(input.Description, "Shipment delivered"),
+		fallback(input.Description, "货物已送达，等待收货方确认"),
 	)
 	if err != nil {
 		return "", err
@@ -392,7 +392,7 @@ func (c *LogisticsContract) ConfirmReceipt(
 	timestamp, event, err := buildEvent(
 		ctx, shipment, model.EventReceived, input,
 		fallback(input.Location, shipment.LastLocation),
-		fallback(input.Description, "Recipient confirmed receipt"),
+		fallback(input.Description, "收货方已确认收货"),
 	)
 	if err != nil {
 		return "", err
@@ -432,7 +432,7 @@ func (c *LogisticsContract) CancelShipment(
 	timestamp, event, err := buildEvent(
 		ctx, shipment, model.EventCancelled, input,
 		fallback(input.Location, shipment.LastLocation),
-		fallback(input.Description, "Shipment cancelled"),
+		fallback(input.Description, "发货方取消运单"),
 	)
 	if err != nil {
 		return "", err
@@ -494,6 +494,16 @@ func (c *LogisticsContract) GetAllShipments(
 	return string(content), err
 }
 
+// historyRecord captures one GetHistoryForKey item before formatting so the
+// entries can be ordered deterministically regardless of iterator order.
+type historyRecord struct {
+	TxID     string
+	Seconds  int64
+	Nanos    int32
+	IsDelete bool
+	Value    []byte
+}
+
 func (c *LogisticsContract) GetShipmentHistory(
 	ctx contractapi.TransactionContextInterface,
 	shipmentIDOrTrackingNumber string,
@@ -507,30 +517,58 @@ func (c *LogisticsContract) GetShipmentHistory(
 		return "", err
 	}
 	defer iterator.Close()
-	history := make([]model.ShipmentHistoryEntry, 0)
+	// Fabric returns history from newest to oldest; collect first, then sort
+	// oldest to newest so demo and Fabric ledgers expose the same order.
+	records := make([]historyRecord, 0)
 	for iterator.HasNext() {
 		item, err := iterator.Next()
 		if err != nil {
 			return "", err
 		}
-		timestamp, err := formatTimestamp(item.Timestamp.Seconds, int32(item.Timestamp.Nanos))
+		records = append(records, historyRecord{
+			TxID: item.TxId, Seconds: item.Timestamp.Seconds, Nanos: int32(item.Timestamp.Nanos),
+			IsDelete: item.IsDelete, Value: item.Value,
+		})
+	}
+	history, err := buildHistoryEntries(records, key)
+	if err != nil {
+		return "", err
+	}
+	content, err := json.Marshal(history)
+	return string(content), err
+}
+
+func buildHistoryEntries(records []historyRecord, key string) ([]model.ShipmentHistoryEntry, error) {
+	sorted := make([]historyRecord, len(records))
+	copy(sorted, records)
+	sort.SliceStable(sorted, func(i, j int) bool {
+		if sorted[i].Seconds != sorted[j].Seconds {
+			return sorted[i].Seconds < sorted[j].Seconds
+		}
+		if sorted[i].Nanos != sorted[j].Nanos {
+			return sorted[i].Nanos < sorted[j].Nanos
+		}
+		return sorted[i].TxID < sorted[j].TxID
+	})
+	history := make([]model.ShipmentHistoryEntry, 0, len(sorted))
+	for _, record := range sorted {
+		timestamp, err := formatTimestamp(record.Seconds, record.Nanos)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		entry := model.ShipmentHistoryEntry{
-			TxID: item.TxId, Timestamp: timestamp, IsDelete: item.IsDelete,
+			TxID: record.TxID, Timestamp: timestamp, IsDelete: record.IsDelete,
 		}
-		if !item.IsDelete {
-			shipment, err := decodeShipment(item.Value, key)
+		if !record.IsDelete {
+			shipment, err := decodeShipment(record.Value, key)
 			if err != nil {
-				return "", err
+				return nil, err
 			}
 			entry.Value = &shipment
 		}
 		history = append(history, entry)
 	}
-	content, err := json.Marshal(history)
-	return string(content), err
+	return history, nil
 }
 
 func (c *LogisticsContract) carrierMutation(

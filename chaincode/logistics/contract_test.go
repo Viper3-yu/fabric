@@ -226,6 +226,52 @@ func TestLogisticsContractAuthorizationAndQueries(t *testing.T) {
 	}
 }
 
+func TestBuildHistoryEntriesSortsOldestFirst(t *testing.T) {
+	shipment := func(id string, status string) []byte {
+		content, _ := json.Marshal(model.Shipment{DocType: "shipment", ID: id, Status: status})
+		return content
+	}
+	// Fabric's GetHistoryForKey returns results newest to oldest; feed the
+	// records in that order to prove the output is oldest to newest.
+	records := []historyRecord{
+		{TxID: "tx-newest", Seconds: 3000, Value: shipment("shipment-001", "RECEIVED")},
+		{TxID: "tx-middle", Seconds: 2000, Value: shipment("shipment-001", "PICKED_UP")},
+		{TxID: "tx-oldest", Seconds: 1000, Value: shipment("shipment-001", "CREATED")},
+	}
+	history, err := buildHistoryEntries(records, "SHIPMENT:shipment-001")
+	if err != nil {
+		t.Fatalf("build history: %v", err)
+	}
+	if len(history) != 3 {
+		t.Fatalf("history length = %d", len(history))
+	}
+	wantOrder := []string{"tx-oldest", "tx-middle", "tx-newest"}
+	for index, want := range wantOrder {
+		if history[index].TxID != want {
+			t.Fatalf("entry %d txId = %s, want %s", index, history[index].TxID, want)
+		}
+		if history[index].Value == nil || history[index].Value.ID != "shipment-001" {
+			t.Fatalf("entry %d value missing: %#v", index, history[index])
+		}
+	}
+	if history[0].Timestamp != "1970-01-01T00:16:40.000Z" {
+		t.Fatalf("first timestamp = %s", history[0].Timestamp)
+	}
+
+	// Same-second records must still order deterministically by TxID.
+	sameSecond := []historyRecord{
+		{TxID: "tx-b", Seconds: 10, Nanos: 500, Value: shipment("shipment-001", "B")},
+		{TxID: "tx-a", Seconds: 10, Nanos: 500, Value: shipment("shipment-001", "A")},
+	}
+	ordered, err := buildHistoryEntries(sameSecond, "SHIPMENT:shipment-001")
+	if err != nil {
+		t.Fatalf("build same-second history: %v", err)
+	}
+	if ordered[0].TxID != "tx-a" || ordered[1].TxID != "tx-b" {
+		t.Fatalf("same-second order = %s, %s", ordered[0].TxID, ordered[1].TxID)
+	}
+}
+
 func createPayload() string {
 	return jsonText(createInputMap("shipment-001", "JX202607200001"))
 }
