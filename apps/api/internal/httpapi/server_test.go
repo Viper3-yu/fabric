@@ -245,3 +245,119 @@ func TestAuthorizationAndValidation(t *testing.T) {
 		t.Fatalf("invalid = %#v", invalid)
 	}
 }
+
+func TestCancelFlowAndPublicGuards(t *testing.T) {
+	api := newTestAPI(t)
+	defer api.close()
+	shipper := api.login("shipper")
+
+	created := api.request(http.MethodPost, "/api/shipments", shipper, shipmentBody(), http.StatusCreated)
+	shipment := created["data"].(map[string]any)["data"].(map[string]any)
+	id := shipment["id"].(string)
+
+	// A shipper cannot run carrier actions.
+	denied := api.request(
+		http.MethodPost, "/api/shipments/"+id+"/actions/accept", shipper,
+		map[string]any{"location": "上海"}, http.StatusForbidden,
+	)
+	if denied["error"].(map[string]any)["code"] != "FORBIDDEN" {
+		t.Fatalf("role guard = %#v", denied)
+	}
+
+	// Shipper cancels a pending shipment, the README-documented flow.
+	cancelled := api.request(
+		http.MethodPost, "/api/shipments/"+id+"/actions/cancel", shipper,
+		map[string]any{"reason": "客户临时取消"}, http.StatusOK,
+	)
+	if cancelled["data"].(map[string]any)["data"].(map[string]any)["status"] != "CANCELLED" {
+		t.Fatalf("cancel receipt = %#v", cancelled)
+	}
+	// Cancelling twice must conflict.
+	api.request(
+		http.MethodPost, "/api/shipments/"+id+"/actions/cancel", shipper,
+		map[string]any{"reason": "再次取消"}, http.StatusConflict,
+	)
+
+	// Invalid tracking characters are a 400, not a ledger error.
+	track := api.request(
+		http.MethodGet, "/api/public/track/JX%202099", "", nil, http.StatusBadRequest,
+	)
+	if track["error"].(map[string]any)["code"] != "VALIDATION_ERROR" {
+		t.Fatalf("invalid tracking = %#v", track)
+	}
+	verify := api.request(http.MethodPost, "/api/public/verify", "", map[string]string{
+		"trackingNumber": "JX/2099",
+	}, http.StatusBadRequest)
+	if verify["error"].(map[string]any)["code"] != "VALIDATION_ERROR" {
+		t.Fatalf("invalid verify tracking = %#v", verify)
+	}
+}
+
+func TestVerifyReportsContinuousDemoHistory(t *testing.T) {
+	api := newTestAPI(t)
+	defer api.close()
+	shipper := api.login("shipper")
+
+	created := api.request(http.MethodPost, "/api/shipments", shipper, shipmentBody(), http.StatusCreated)
+	shipment := created["data"].(map[string]any)["data"].(map[string]any)
+	id := shipment["id"].(string)
+	tracking := shipment["trackingNumber"].(string)
+	api.request(
+		http.MethodPost, "/api/shipments/"+id+"/actions/cancel", shipper,
+		map[string]any{}, http.StatusOK,
+	)
+
+	result := api.request(http.MethodPost, "/api/public/verify", "", map[string]string{
+		"trackingNumber": tracking,
+	}, http.StatusOK)
+	data := result["data"].(map[string]any)
+	if data["historyContinuous"] != true {
+		t.Fatalf("history continuity = %#v", data)
+	}
+	if data["verified"] != false {
+		t.Fatalf("demo mode must never report verified=true: %#v", data)
+	}
+	warnings, ok := data["warnings"].([]any)
+	if !ok || len(warnings) != 1 {
+		t.Fatalf("demo warning list = %#v", data["warnings"])
+	}
+}
+
+func TestLoginThrottleLocksAfterRepeatedFailures(t *testing.T) {
+	api := newTestAPI(t)
+	defer api.close()
+	for attempt := 0; attempt < 5; attempt++ {
+		api.request(http.MethodPost, "/api/auth/login", "", map[string]string{
+			"username": "shipper", "password": "wrong-password",
+		}, http.StatusUnauthorized)
+	}
+	locked := api.request(http.MethodPost, "/api/auth/login", "", map[string]string{
+		"username": "shipper", "password": "shipper123",
+	}, http.StatusTooManyRequests)
+	if locked["error"].(map[string]any)["code"] != "TOO_MANY_ATTEMPTS" {
+		t.Fatalf("locked login = %#v", locked)
+	}
+	// A different account is unaffected.
+	api.request(http.MethodPost, "/api/auth/login", "", map[string]string{
+		"username": "carrier", "password": "carrier123",
+	}, http.StatusOK)
+}
+
+func shipmentBody() map[string]any {
+	return map[string]any{
+		"origin": map[string]any{
+			"province": "上海市", "city": "上海市", "district": "浦东新区",
+			"detail": "张江物流园 3 号仓", "contactName": "王发货",
+			"contactPhone": "13800001111",
+		},
+		"destination": map[string]any{
+			"province": "浙江省", "city": "杭州市", "district": "西湖区",
+			"detail": "文三路 50 号", "contactName": "赵收货",
+			"contactPhone": "13900002222",
+		},
+		"goods": map[string]any{
+			"name": "演示货物", "category": "日用品", "quantity": 1, "weightKg": 1.2,
+		},
+		"expectedDeliveryDate": "2026-08-20",
+	}
+}

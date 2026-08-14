@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -85,12 +86,29 @@ func (d *Demo) persistLocked() error {
 		return err
 	}
 	content = append(content, '\n')
-	temporary := fmt.Sprintf("%s.%d.tmp", d.path, os.Getpid())
-	if err := os.WriteFile(temporary, content, 0o600); err != nil {
+	// A unique temp file avoids two processes (server + seed) clobbering the
+	// same name, and Sync-before-rename keeps the target file whole on crash.
+	temporary, err := os.CreateTemp(filepath.Dir(d.path), filepath.Base(d.path)+".*.tmp")
+	if err != nil {
 		return err
 	}
-	if err := os.Rename(temporary, d.path); err != nil {
-		_ = os.Remove(temporary)
+	temporaryName := temporary.Name()
+	defer os.Remove(temporaryName)
+	if _, err := temporary.Write(content); err != nil {
+		temporary.Close()
+		return err
+	}
+	if err := temporary.Sync(); err != nil {
+		temporary.Close()
+		return err
+	}
+	if err := temporary.Close(); err != nil {
+		return err
+	}
+	if err := os.Chmod(temporaryName, 0o600); err != nil {
+		return err
+	}
+	if err := os.Rename(temporaryName, d.path); err != nil {
 		return err
 	}
 	return nil
@@ -361,7 +379,8 @@ func (d *Demo) ConfirmReceipt(
 	return d.transition(id, actor, []string{"receiver"}, []string{model.StatusDelivered},
 		func(shipment *model.Shipment, txID, timestamp string) error {
 			sum := sha256.Sum256([]byte(command.DeliveryCode))
-			if hex.EncodeToString(sum[:]) != shipment.DeliveryCodeHash {
+			expected, err := hex.DecodeString(shipment.DeliveryCodeHash)
+			if err != nil || subtle.ConstantTimeCompare(sum[:], expected) != 1 {
 				return apperror.New(400, "INVALID_DELIVERY_CODE", "Delivery code is incorrect")
 			}
 			shipment.Status = model.StatusReceived
@@ -446,9 +465,9 @@ func (d *Demo) mutate(operation func() (model.LedgerReceipt, error)) (model.Ledg
 }
 
 func (d *Demo) addHistoryLocked(shipment model.Shipment, txID, timestamp string) {
-	copy := cloneShipment(shipment)
+	snapshot := cloneShipment(shipment)
 	d.state.Histories[shipment.ID] = append(d.state.Histories[shipment.ID], model.ShipmentHistoryEntry{
-		TxID: txID, Timestamp: timestamp, IsDelete: false, Value: &copy,
+		TxID: txID, Timestamp: timestamp, IsDelete: false, Value: &snapshot,
 	})
 }
 

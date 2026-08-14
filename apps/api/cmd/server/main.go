@@ -30,8 +30,11 @@ func main() {
 		Handler:           httpapi.New(cfg, store),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
-		WriteTimeout:      65 * time.Second,
-		IdleTimeout:       2 * time.Minute,
+		// Fabric commits can legally wait up to ~80s (endorse+submit+commit
+		// status); keep the write window above that so slow commits return a
+		// proper error instead of a truncated response.
+		WriteTimeout: 100 * time.Second,
+		IdleTimeout:  2 * time.Minute,
 	}
 
 	go func() {
