@@ -1,6 +1,6 @@
 module github.com/Viper3-yu/fabric/chaincode/logistics
 
-go 1.22.0
+go 1.23.0
 
 require (
 	github.com/golang/protobuf v1.5.3
