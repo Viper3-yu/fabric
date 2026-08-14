@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { Button, Form, InlineNotification, TextInput, Tile } from '@carbon/react';
 import {
   CheckmarkFilled,
@@ -17,29 +17,56 @@ import { formatDateTime } from '../lib/presentation';
 
 export function VerifyPage() {
   const [params, setParams] = useSearchParams();
-  const [trackingNumber, setTrackingNumber] = useState(params.get('trackingNumber') ?? '');
+  const urlTracking = params.get('trackingNumber') ?? '';
+  const [trackingNumber, setTrackingNumber] = useState(urlTracking);
   const [evidenceHash, setEvidenceHash] = useState('');
   const [result, setResult] = useState<IntegrityResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const searchController = useRef<AbortController | null>(null);
+  const lastChecked = useRef<string | null>(null);
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    const normalized = trackingNumber.trim().toUpperCase();
-    if (!normalized) return;
-    setTrackingNumber(normalized);
-    setParams({ trackingNumber: normalized });
+  const runVerify = useCallback(async (normalized: string, evidence: string) => {
+    searchController.current?.abort();
+    const controller = new AbortController();
+    searchController.current = controller;
+    lastChecked.current = normalized;
     setLoading(true);
     setError('');
     setResult(null);
     try {
-      const response = await api.public.verify(normalized, evidenceHash.trim() || undefined);
+      const response = await api.public.verify(
+        normalized,
+        evidence || undefined,
+        controller.signal,
+      );
+      if (controller.signal.aborted) return;
       setResult(response.data);
     } catch (caught) {
+      if (controller.signal.aborted) return;
       setError(getErrorMessage(caught));
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
+  }, []);
+
+  // React to back/forward navigation and direct /verify?trackingNumber=… links.
+  useEffect(() => {
+    const normalized = urlTracking.trim().toUpperCase();
+    if (!normalized || normalized === lastChecked.current) return;
+    setTrackingNumber(normalized);
+    void runVerify(normalized, '');
+  }, [urlTracking, runVerify]);
+
+  useEffect(() => () => searchController.current?.abort(), []);
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    const normalized = trackingNumber.trim().toUpperCase();
+    if (!normalized || loading) return;
+    setTrackingNumber(normalized);
+    setParams({ trackingNumber: normalized });
+    await runVerify(normalized, evidenceHash.trim());
   };
 
   return (

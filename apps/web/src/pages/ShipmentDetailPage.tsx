@@ -44,48 +44,63 @@ export function ShipmentDetailPage() {
   const [latestReceipt, setLatestReceipt] = useState<ShipmentReceipt | null>(
     routeState?.receipt ?? null,
   );
-
-  const load = useCallback(async () => {
-    if (!id) return;
-    setLoading(true);
-    setError('');
-    try {
-      const [shipmentResult, historyResult] = await Promise.all([
-        api.shipments.get(id),
-        api.shipments.history(id),
-      ]);
-      setShipment(shipmentResult.data);
-      setHistory(historyResult.data);
-    } catch (caught) {
-      setError(getErrorMessage(caught));
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    if (!id) return;
+    const controller = new AbortController();
+    const load = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const [shipmentResult, historyResult] = await Promise.all([
+          api.shipments.get(id, controller.signal),
+          api.shipments.history(id, controller.signal),
+        ]);
+        if (controller.signal.aborted) return;
+        setShipment(shipmentResult.data);
+        setHistory(historyResult.data);
+      } catch (caught) {
+        if (controller.signal.aborted) return;
+        setError(getErrorMessage(caught));
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
     void load();
-  }, [load]);
+    return () => controller.abort();
+  }, [id, reloadKey]);
+
+  const reload = useCallback(() => setReloadKey((current) => current + 1), []);
 
   const actions = useMemo(
     () => (shipment && user ? getAvailableActions(user.role, shipment.status) : []),
     [shipment, user],
   );
 
+  const newestHistory = useMemo(
+    () =>
+      [...history].sort(
+        (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+      ),
+    [history],
+  );
+
   const handleActionSuccess = (receipt: ShipmentReceipt) => {
     setShipment(receipt.data);
     setLatestReceipt(receipt);
     setActiveAction(null);
-    void api.shipments.history(receipt.data.id).then(({ data }) => setHistory(data));
+    // A stale history list is acceptable if this refresh fails; the receipt
+    // above already reflects the committed change.
+    api.shipments
+      .history(receipt.data.id)
+      .then(({ data }) => setHistory(data))
+      .catch(() => undefined);
   };
 
   if (loading && !shipment) return <PageSkeleton rows={4} />;
-  if (error && !shipment) return <ErrorState message={error} onRetry={() => void load()} />;
+  if (error && !shipment) return <ErrorState message={error} onRetry={reload} />;
   if (!shipment || !user) return null;
-
-  const newestHistory = [...history].sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-  );
 
   return (
     <div className="page shipment-detail-page">
@@ -138,7 +153,7 @@ export function ShipmentDetailPage() {
           lowContrast
           title="这次操作已经记下"
           subtitle={`系统记录编号：${latestReceipt.transactionId}`}
-          hideCloseButton
+          onCloseButtonClick={() => setLatestReceipt(null)}
         />
       ) : null}
 
