@@ -158,17 +158,14 @@ p {
 }
 
 .page-header h1,
-.dashboard-hero h1,
 .section-heading h2,
 .dashboard-recent__heading h2,
 .login-panel__heading h2,
-.form-section h2,
-.chain-accordion__trigger strong {
+.form-section h2 {
   font-family: var(--jixin-font-ui);
 }
 
 .dashboard-kpis strong,
-.bento-card__heading .mono,
 .public-summary-grid .mono,
 .detail-summary .mono,
 .verify-metrics .mono,
@@ -268,7 +265,6 @@ p {
 }
 
 /* Navigation */
-.app-nav,
 .public-nav {
   top: 0;
   width: 100%;
@@ -284,8 +280,6 @@ p {
   backdrop-filter: blur(12px) saturate(110%);
 }
 
-.app-nav__link,
-.app-nav__public,
 .public-nav__links a,
 .public-nav__verify,
 .public-nav__login,
@@ -294,30 +288,24 @@ p {
   border-radius: var(--jixin-control-radius);
 }
 
-.app-nav__link,
-.app-nav__public,
 .public-nav__links a,
 .public-nav__verify {
   position: relative;
   background: transparent;
 }
 
-.app-nav__link:hover,
-.app-nav__public:hover,
 .public-nav__links a:hover,
 .public-nav__verify:hover {
   color: var(--jixin-ink) !important;
   background: var(--jixin-surface-muted);
 }
 
-.app-nav__link.is-active,
 .public-nav__links a.active {
   color: var(--jixin-accent) !important;
   background: transparent;
   box-shadow: inset 0 -2px 0 var(--jixin-accent);
 }
 
-.app-nav__tools .cds--tag,
 .icon-button {
   background: transparent;
 }
@@ -372,7 +360,6 @@ p {
 .form-section,
 .detail-header,
 .public-route-band,
-.detail-route,
 .public-summary-grid,
 .detail-summary,
 .verify-metrics,
@@ -386,7 +373,6 @@ p {
 .recent-shipments-mobile article,
 .verify-form-card,
 .verify-result,
-.login-route,
 .demo-account,
 .form-submit-bar {
   border-color: var(--jixin-border);
@@ -521,12 +507,6 @@ p {
   line-height: 1.08;
 }
 
-.public-title__lead,
-.public-title__tail {
-  display: block;
-  white-space: nowrap;
-}
-
 .public-title__tail {
   color: var(--jixin-accent);
 }
@@ -556,7 +536,6 @@ p {
   min-width: 9.5rem;
 }
 
-.public-hero__visual figcaption span,
 .hero-proof {
   border-radius: 0;
 }
@@ -608,11 +587,6 @@ p {
   margin: 0;
   color: var(--jixin-ink-soft);
   line-height: 1.7;
-}
-
-.chain-accordion__item.is-active {
-  flex: 1.8;
-  background: var(--jixin-panel-soft);
 }
 
 @keyframes panel-confirm {
@@ -681,7 +655,6 @@ p {
   padding-top: 0.75rem;
 }
 
-.dashboard-hero__action .cds--btn,
 .dashboard-kpis {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -719,12 +692,6 @@ p {
   color: var(--jixin-danger);
 }
 
-.bento-card {
-  border-radius: 0;
-}
-
-.bento-card--overview .bento-card__heading > div > span,
-.bento-card--overview .bento-card__heading > div > strong,
 .network-pulse {
   box-shadow: none;
 }
@@ -868,11 +835,6 @@ p {
 
 /* Fine pointer hover */
 @media (hover: hover) and (pointer: fine) {
-  .chain-accordion__item:not(.is-active):hover {
-    background: var(--jixin-surface);
-  }
-
-  .bento-card__link:hover svg,
   .page-back-button.cds--btn:hover svg {
     transform: translateX(2px);
   }
@@ -903,7 +865,6 @@ p {
 }
 
 @media (max-width: 768px) {
-  .app-nav,
   .public-nav {
     top: 0;
     width: 100%;
@@ -988,11 +949,6 @@ p {
     justify-items: start;
     padding: 0.75rem 1rem;
     text-align: left;
-  }
-
-  .hero-proof > div + div {
-    border-top: 1px solid var(--jixin-border);
-    border-left: 0;
   }
 
   .chain-story,
@@ -1110,7 +1066,6 @@ p {
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .app-nav,
   .public-nav,
   .form-submit-bar {
     background: var(--jixin-surface-raised);
@@ -1119,8 +1074,7 @@ p {
 }
 
 /* V3 — cinematic logistics record system */
-.public-nav,
-.app-nav {
+.public-nav {
   font-family: var(--jixin-font-ui);
   letter-spacing: -0.012em;
 }
@@ -1131,8 +1085,7 @@ p {
   letter-spacing: -0.045em;
 }
 
-.public-nav__brand > span:last-child,
-.app-nav__product {
+.public-nav__brand > span:last-child {
   letter-spacing: 0.035em;
 }
 
@@ -1557,10 +1510,6 @@ p {
   letter-spacing: -0.047em;
 }
 
-.chain-accordion__item:not(.is-active):hover {
-  transform: translateY(-5px);
-}
-
 .role-voices {
   min-height: 30rem;
   box-shadow: 0 2rem 6rem rgba(4, 16, 10, 0.22);
@@ -1585,16 +1534,14 @@ p {
   }
 }
 
-.dashboard-kpis article,
-.bento-card {
+.dashboard-kpis article {
   transition:
     border-color var(--motion-control) var(--ease-standard),
     box-shadow 0.6s var(--ease-emphasis),
     transform 0.6s var(--ease-emphasis);
 }
 
-.dashboard-kpis article:hover,
-.bento-card:hover {
+.dashboard-kpis article:hover {
   z-index: 2;
   border-color: var(--jixin-border-strong);
   box-shadow: 0 1.4rem 3.4rem rgba(10, 27, 18, 0.14);
@@ -1796,11 +1743,6 @@ p {
     font-size: clamp(2.75rem, 13vw, 4rem);
     letter-spacing: -0.052em;
     line-height: 0.98;
-  }
-
-  .public-title__lead,
-  .public-title__tail {
-    white-space: normal;
   }
 
   .public-title__tail::after {
@@ -2303,10 +2245,6 @@ p {
   padding: 1.25rem;
 }
 
-.record-step:hover {
-  transform: translateY(-3px);
-}
-
 .record-step > p:first-of-type {
   margin-top: 0.6rem;
 }
@@ -2521,10 +2459,6 @@ p {
   padding: 0.875rem 1rem;
 }
 
-.bento-card--overview,
-.bento-card--attention,
-.dashboard-bento:not(.has-attention) .bento-card--overview,
-.bento-card--attention,
 .login-panel__inner {
   padding-block: clamp(2rem, 4vw, 3rem);
 }

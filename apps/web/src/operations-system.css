@@ -349,7 +349,6 @@
 .app-shell .content-section,
 .app-shell .detail-card,
 .app-shell .detail-header,
-.app-shell .detail-route,
 .app-shell .detail-summary,
 .app-shell .detail-record-health,
 .app-shell .shipment-mobile-card,
@@ -929,7 +928,6 @@
   color: var(--jixin-ink);
 }
 
-.app-shell .detail-route,
 .app-shell .detail-summary {
   background: var(--jixin-surface-raised);
 }
@@ -1421,12 +1419,6 @@
   font-family: 'Manrope Variable', sans-serif;
   font-size: 0.65rem;
   font-weight: 700;
-}
-
-.shipment-map-marker.is-destination {
-  color: #314139;
-  border-color: #ffffff;
-  background: #e7ece9;
 }
 
 .shipment-map-marker.is-current {
