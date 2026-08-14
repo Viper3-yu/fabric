@@ -75,7 +75,10 @@ async function request<T>(
   let response: Response;
   try {
     response = await fetch(`${API_BASE}${path}`, { ...init, headers });
-  } catch {
+  } catch (caught) {
+    // A caller aborting its own request is normal (fast navigation/filter
+    // changes); surface the AbortError instead of a misleading network error.
+    if (caught instanceof DOMException && caught.name === 'AbortError') throw caught;
     throw new ApiError('无法连接服务端，请确认 API 已启动', 'NETWORK_ERROR', 0);
   }
 
@@ -102,6 +105,10 @@ async function request<T>(
   return result;
 }
 
+function withSignal(signal: AbortSignal | undefined, init: RequestInit = {}): RequestInit {
+  return signal ? { ...init, signal } : init;
+}
+
 function buildQuery(filters: ShipmentFilters): string {
   const query = new URLSearchParams();
   if (filters.search) query.set('search', filters.search);
@@ -120,25 +127,34 @@ export const api = {
         { method: 'POST', body: JSON.stringify({ username, password }) },
         false,
       ),
-    me: () => request<AppUser | { user: AppUser; ledgerMode?: 'fabric' | 'demo' }>('/auth/me'),
+    me: (signal?: AbortSignal) =>
+      request<AppUser | { user: AppUser; ledgerMode?: 'fabric' | 'demo' }>(
+        '/auth/me',
+        withSignal(signal),
+      ),
   },
   dashboard: {
-    summary: () => request<DashboardSummary>('/dashboard/summary'),
+    summary: (signal?: AbortSignal) =>
+      request<DashboardSummary>('/dashboard/summary', withSignal(signal)),
   },
   network: {
-    info: () => request<NetworkInfo>('/network'),
+    info: (signal?: AbortSignal) => request<NetworkInfo>('/network', withSignal(signal)),
   },
   shipments: {
-    list: (filters: ShipmentFilters = {}) =>
-      request<ShipmentListResult>(`/shipments${buildQuery(filters)}`),
+    list: (filters: ShipmentFilters = {}, signal?: AbortSignal) =>
+      request<ShipmentListResult>(`/shipments${buildQuery(filters)}`, withSignal(signal)),
     create: (input: CreateShipmentInput) =>
       request<ShipmentReceipt>('/shipments', {
         method: 'POST',
         body: JSON.stringify(input),
       }),
-    get: (id: string) => request<Shipment>(`/shipments/${encodeURIComponent(id)}`),
-    history: (id: string) =>
-      request<ShipmentHistoryEntry[]>(`/shipments/${encodeURIComponent(id)}/history`),
+    get: (id: string, signal?: AbortSignal) =>
+      request<Shipment>(`/shipments/${encodeURIComponent(id)}`, withSignal(signal)),
+    history: (id: string, signal?: AbortSignal) =>
+      request<ShipmentHistoryEntry[]>(
+        `/shipments/${encodeURIComponent(id)}/history`,
+        withSignal(signal),
+      ),
     action: (id: string, action: ShipmentAction, payload: ShipmentActionPayload) =>
       request<ShipmentReceipt>(`/shipments/${encodeURIComponent(id)}/actions/${action}`, {
         method: 'POST',
@@ -146,20 +162,24 @@ export const api = {
       }),
   },
   public: {
-    track: (trackingNumber: string) =>
-      request<Shipment>(`/public/track/${encodeURIComponent(trackingNumber)}`, {}, false),
-    history: (trackingNumber: string) =>
-      request<ShipmentHistoryEntry[]>(
-        `/public/track/${encodeURIComponent(trackingNumber)}/history`,
-        {},
+    track: (trackingNumber: string, signal?: AbortSignal) =>
+      request<Shipment>(
+        `/public/track/${encodeURIComponent(trackingNumber)}`,
+        withSignal(signal),
         false,
       ),
-    verify: (trackingNumber: string, evidenceHash?: string) => {
+    history: (trackingNumber: string, signal?: AbortSignal) =>
+      request<ShipmentHistoryEntry[]>(
+        `/public/track/${encodeURIComponent(trackingNumber)}/history`,
+        withSignal(signal),
+        false,
+      ),
+    verify: (trackingNumber: string, evidenceHash?: string, signal?: AbortSignal) => {
       const body: { trackingNumber: string; evidenceHash?: string } = { trackingNumber };
       if (evidenceHash) body.evidenceHash = evidenceHash;
       return request<IntegrityResult>(
         '/public/verify',
-        { method: 'POST', body: JSON.stringify(body) },
+        withSignal(signal, { method: 'POST', body: JSON.stringify(body) }),
         false,
       );
     },

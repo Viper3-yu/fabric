@@ -1346,6 +1346,13 @@ a {
   color: var(--jixin-ink-soft);
 }
 
+.not-found-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
 @media (max-width: 1056px) {
   .dashboard-layout,
   .detail-layout,

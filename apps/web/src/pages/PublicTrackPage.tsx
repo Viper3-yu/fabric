@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { Button, Form, InlineNotification, Search, Tile } from '@carbon/react';
 import {
   ArrowLeft,
@@ -228,37 +228,60 @@ function RoleVoices() {
 export function PublicTrackPage() {
   const pageRef = useRef<HTMLDivElement>(null);
   const [params, setParams] = useSearchParams();
-  const [trackingNumber, setTrackingNumber] = useState(params.get('trackingNumber') ?? '');
+  const urlTracking = params.get('trackingNumber') ?? '';
+  const [trackingNumber, setTrackingNumber] = useState(urlTracking);
   const [shipment, setShipment] = useState<Shipment | null>(null);
   const [history, setHistory] = useState<ShipmentHistoryEntry[]>([]);
   const [ledgerMode, setLedgerMode] = useState<LedgerMode | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const searchController = useRef<AbortController | null>(null);
+  const lastSearched = useRef<string | null>(null);
 
   useCinematicMotion(pageRef, [shipment?.id]);
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    const normalized = trackingNumber.trim().toUpperCase();
-    if (!normalized) return;
-    setTrackingNumber(normalized);
-    setParams({ trackingNumber: normalized });
+  const runSearch = useCallback(async (normalized: string) => {
+    searchController.current?.abort();
+    const controller = new AbortController();
+    searchController.current = controller;
+    lastSearched.current = normalized;
     setLoading(true);
     setError('');
     setShipment(null);
     try {
       const [trackResult, historyResult] = await Promise.all([
-        api.public.track(normalized),
-        api.public.history(normalized),
+        api.public.track(normalized, controller.signal),
+        api.public.history(normalized, controller.signal),
       ]);
+      if (controller.signal.aborted) return;
       setShipment(trackResult.data);
       setHistory(historyResult.data);
       setLedgerMode(trackResult.meta?.ledgerMode ?? historyResult.meta?.ledgerMode ?? null);
     } catch (caught) {
+      if (controller.signal.aborted) return;
       setError(getErrorMessage(caught));
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
+  }, []);
+
+  // React to back/forward navigation and direct /track?trackingNumber=… links.
+  useEffect(() => {
+    const normalized = urlTracking.trim().toUpperCase();
+    if (!normalized || normalized === lastSearched.current) return;
+    setTrackingNumber(normalized);
+    void runSearch(normalized);
+  }, [urlTracking, runSearch]);
+
+  useEffect(() => () => searchController.current?.abort(), []);
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    const normalized = trackingNumber.trim().toUpperCase();
+    if (!normalized || loading) return;
+    setTrackingNumber(normalized);
+    setParams({ trackingNumber: normalized });
+    await runSearch(normalized);
   };
 
   return (

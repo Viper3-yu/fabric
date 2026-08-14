@@ -102,6 +102,7 @@ export function DashboardPage() {
   const { user, ledgerMode } = useAuth();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [network, setNetwork] = useState<NetworkInfo | null>(null);
+  const [checkedAt, setCheckedAt] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -115,6 +116,7 @@ export function DashboardPage() {
       ]);
       setSummary(summaryResult.data);
       setNetwork(networkResult?.data ?? null);
+      setCheckedAt(networkResult ? new Date().toISOString() : '');
     } catch (caught) {
       setError(getErrorMessage(caught));
     } finally {
@@ -303,7 +305,7 @@ export function DashboardPage() {
           </div>
           <div>
             <dt>检查时间</dt>
-            <dd>刚刚</dd>
+            <dd>{checkedAt ? formatDateTime(checkedAt) : '—'}</dd>
           </div>
         </dl>
       </section>

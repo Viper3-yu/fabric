@@ -41,33 +41,41 @@ export function ShipmentsPage() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<ShipmentStatus | ''>('');
   const [page, setPage] = useState(1);
+  const [reloadKey, setReloadKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [importOpen, setImportOpen] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const filters: Parameters<typeof api.shipments.list>[0] = {
-        limit: PAGE_SIZE,
-        offset: (page - 1) * PAGE_SIZE,
-      };
-      if (search) filters.search = search;
-      if (status) filters.status = status;
-      const { data } = await api.shipments.list(filters);
-      setShipments(data.items);
-      setTotal(data.total);
-    } catch (caught) {
-      setError(getErrorMessage(caught));
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search, status]);
-
+  // The controller aborts in-flight lists when filters/page change so a slow
+  // older response can never overwrite a newer one.
   useEffect(() => {
+    const controller = new AbortController();
+    const load = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const filters: Parameters<typeof api.shipments.list>[0] = {
+          limit: PAGE_SIZE,
+          offset: (page - 1) * PAGE_SIZE,
+        };
+        if (search) filters.search = search;
+        if (status) filters.status = status;
+        const { data } = await api.shipments.list(filters, controller.signal);
+        if (controller.signal.aborted) return;
+        setShipments(data.items);
+        setTotal(data.total);
+      } catch (caught) {
+        if (controller.signal.aborted) return;
+        setError(getErrorMessage(caught));
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
     void load();
-  }, [load]);
+    return () => controller.abort();
+  }, [page, search, status, reloadKey]);
+
+  const reload = useCallback(() => setReloadKey((current) => current + 1), []);
 
   const activeFilterCount = Number(Boolean(search)) + Number(Boolean(status));
 
@@ -127,7 +135,7 @@ export function ShipmentsPage() {
             onClose={() => setImportOpen(false)}
             onImported={() => {
               setPage(1);
-              void load();
+              reload();
             }}
           />
         </div>
@@ -178,7 +186,7 @@ export function ShipmentsPage() {
       </div>
 
       {loading ? <PageSkeleton rows={4} /> : null}
-      {!loading && error ? <ErrorState message={error} onRetry={() => void load()} /> : null}
+      {!loading && error ? <ErrorState message={error} onRetry={reload} /> : null}
       {!loading && !error && !shipments.length ? (
         <EmptyState
           title={activeFilterCount ? '没有匹配的运单' : '还没有运单'}
