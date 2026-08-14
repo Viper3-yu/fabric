@@ -53,3 +53,5 @@ onlyBuiltDependencies:
   - '@ibm/plex-serif'
   - '@parcel/watcher'
   - 'esbuild'
+  - 'pkcs11js'
+  - 'protobufjs'

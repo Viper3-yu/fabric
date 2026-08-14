@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Web build & tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.12
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - name: Build shared types first
+        run: pnpm --filter @jixin/shared build
+      - run: pnpm --filter @jixin/web typecheck
+      - run: pnpm --filter @jixin/web test
+      - run: pnpm --filter @jixin/web build
+      - name: Prettier check
+        run: npx prettier --check .
+
+  go:
+    name: Go build, vet & tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+      - name: gofmt
+        run: |
+          unformatted=$(find apps/api chaincode/logistics -name vendor -prune -o -name '*.go' -print0 | xargs -0 gofmt -l)
+          if [ -n "$unformatted" ]; then
+            echo "Files need gofmt:"; echo "$unformatted"; exit 1
+          fi
+      - run: go vet ./apps/api/... ./chaincode/logistics/...
+      - run: go test ./apps/api/... ./chaincode/logistics/...
+      - run: go build ./apps/api/... ./chaincode/logistics/...
+      - name: Closed-loop test
+        run: go test ./apps/api/internal/httpapi -run TestClosedLoop -count=1
