@@ -10,7 +10,7 @@
 $ErrorActionPreference = 'Stop'
 
 $root = Split-Path -Parent $PSScriptRoot
-$envFile = Join-Path $root 'appsapi.env.fabric'
+$envFile = Join-Path $root 'apps\api\.env.fabric'
 if (Test-Path $envFile) {
   $env:ENV_FILE = $envFile
   Write-Host "[test-fabric] loading $envFile"
