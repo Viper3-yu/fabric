@@ -168,7 +168,7 @@ export function VerifyPage() {
                   <WarningAltFilled size={40} aria-hidden="true" />
                 )}
                 <div>
-                  <span className="mono">{result.trackingNumber}</span>
+                  <span className="num">{result.trackingNumber}</span>
                   <h2>运输记录检查结果</h2>
                 </div>
               </div>
@@ -177,7 +177,7 @@ export function VerifyPage() {
             <div className="verify-metrics">
               <Tile>
                 <span>操作记录</span>
-                <strong className="mono">{result.eventCount}</strong>
+                <strong className="num">{result.eventCount}</strong>
               </Tile>
               <Tile>
                 <span>中间有无缺失</span>

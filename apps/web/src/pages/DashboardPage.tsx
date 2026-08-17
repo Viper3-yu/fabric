@@ -38,7 +38,7 @@ function RecentShipments({ shipments }: { shipments: Shipment[] }) {
         {shipments.map((shipment) => (
           <article key={shipment.id}>
             <div>
-              <span className="mono">{shipment.trackingNumber}</span>
+              <span className="num">{shipment.trackingNumber}</span>
               <StatusTag status={shipment.status} />
             </div>
             <h3>{routeLabel(shipment)}</h3>
@@ -72,7 +72,7 @@ function RecentShipments({ shipments }: { shipments: Shipment[] }) {
           <TableBody>
             {shipments.map((shipment) => (
               <TableRow key={shipment.id}>
-                <TableCell className="mono">{shipment.trackingNumber}</TableCell>
+                <TableCell className="num">{shipment.trackingNumber}</TableCell>
                 <TableCell>{routeLabel(shipment)}</TableCell>
                 <TableCell>
                   <StatusTag status={shipment.status} />
@@ -204,19 +204,19 @@ export function DashboardPage() {
       <section className="dashboard-kpis" aria-label="关键运单指标">
         <article>
           <span>全部运单</span>
-          <strong className="mono">{summary.total}</strong>
+          <strong className="num">{summary.total}</strong>
         </article>
         <article>
           <span>运输中</span>
-          <strong className="mono">{summary.inTransit}</strong>
+          <strong className="num">{summary.inTransit}</strong>
         </article>
         <article data-tone="danger">
           <span>异常待处理</span>
-          <strong className="mono">{summary.exceptions}</strong>
+          <strong className="num">{summary.exceptions}</strong>
         </article>
         <article>
           <span>等待签收</span>
-          <strong className="mono">{summary.pendingReceipt}</strong>
+          <strong className="num">{summary.pendingReceipt}</strong>
         </article>
       </section>
 
@@ -236,7 +236,7 @@ export function DashboardPage() {
             {statusBreakdown.map((item) => (
               <div key={item.label}>
                 <dt>{item.label}</dt>
-                <dd className="mono">{item.value}</dd>
+                <dd className="num">{item.value}</dd>
               </div>
             ))}
           </dl>
@@ -266,7 +266,7 @@ export function DashboardPage() {
                   <li key={`${shipment.id}-${action}`}>
                     <button type="button" onClick={() => navigate(`/app/shipments/${shipment.id}`)}>
                       <span>{ACTION_LABELS[action]}</span>
-                      <strong className="mono">{shipment.trackingNumber}</strong>
+                      <strong className="num">{shipment.trackingNumber}</strong>
                     </button>
                   </li>
                 ))}

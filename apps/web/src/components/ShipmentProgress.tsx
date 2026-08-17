@@ -80,7 +80,7 @@ export function ShipmentProgress({ shipment, compact = false }: ShipmentProgress
       <header className="shipment-progress__header">
         <div>
           <span>当前运单进度</span>
-          <strong className="mono">{shipment.trackingNumber}</strong>
+          <strong className="num">{shipment.trackingNumber}</strong>
         </div>
         <StatusTag status={shipment.status} />
       </header>

@@ -127,15 +127,15 @@ export function CreateShipmentPage() {
 
       <ol className="creation-steps" aria-label="创建运单填写顺序">
         <li>
-          <span className="mono">01</span>
+          <span className="num">01</span>
           <strong>发货信息</strong>
         </li>
         <li>
-          <span className="mono">02</span>
+          <span className="num">02</span>
           <strong>收货信息</strong>
         </li>
         <li>
-          <span className="mono">03</span>
+          <span className="num">03</span>
           <strong>货物与交付</strong>
         </li>
       </ol>
@@ -341,7 +341,7 @@ export function CreateShipmentPage() {
                 <div className="delivery-code-block">
                   <span>一次性签收码</span>
                   <div>
-                    <strong className="mono">{receipt.deliveryCode}</strong>
+                    <strong className="num">{receipt.deliveryCode}</strong>
                     <CopyButton value={receipt.deliveryCode} label="复制签收码" />
                   </div>
                   <p>此签收码仅在这里显示一次。请立即保存，并通过安全渠道交给收货方。</p>
@@ -350,7 +350,7 @@ export function CreateShipmentPage() {
               <dl className="receipt-list">
                 <div>
                   <dt>运单号</dt>
-                  <dd className="mono">{receipt.data.trackingNumber}</dd>
+                  <dd className="num">{receipt.data.trackingNumber}</dd>
                 </div>
                 <div>
                   <dt>系统记录编号</dt>

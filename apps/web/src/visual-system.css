@@ -138,6 +138,16 @@ p {
   letter-spacing: -0.02em;
 }
 
+/*
+ * 业务数字（运单号、数量、指标、时间）：Manrope 等宽数字。
+ * mono 只保留给 txId、摘要等需要逐字符核验的标识（DESIGN.md 字体规范）。
+ */
+.num {
+  font-family: var(--jixin-font-data);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
 .eyebrow {
   margin-bottom: 0.5rem;
   color: var(--jixin-accent);
@@ -1570,8 +1580,7 @@ p {
     var(--jixin-surface-raised);
 }
 
-.detail-header h1.mono {
-  font-family: var(--jixin-font-data);
+.detail-header h1.num {
   font-size: clamp(3rem, 5.4vw, 5.4rem);
   font-weight: 750;
   letter-spacing: -0.058em;

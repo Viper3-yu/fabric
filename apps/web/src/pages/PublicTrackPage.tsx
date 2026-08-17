@@ -176,7 +176,7 @@ function RoleVoices() {
         <button type="button" aria-label="上一个角色" onClick={() => go(-1)}>
           <ArrowLeft size={20} />
         </button>
-        <span className="mono">
+        <span className="num">
           {String(active + 1).padStart(2, '0')} / {String(ROLE_STORIES.length).padStart(2, '0')}
         </span>
         <button type="button" aria-label="下一个角色" onClick={() => go(1)}>
@@ -327,7 +327,7 @@ export function PublicTrackPage() {
             {ledgerMode ? <LedgerBanner mode={ledgerMode} /> : null}
             <header className="public-result__header">
               <div>
-                <span className="mono">{shipment.trackingNumber}</span>
+                <span className="num">{shipment.trackingNumber}</span>
                 <h2>{routeLabel(shipment)}</h2>
                 <p>
                   {shipment.goods.name}，预计 {formatDate(shipment.expectedDeliveryDate)} 送达
@@ -373,7 +373,7 @@ export function PublicTrackPage() {
               </Tile>
               <Tile>
                 <span>已记录节点</span>
-                <strong className="mono">{shipment.events.length}</strong>
+                <strong className="num">{shipment.events.length}</strong>
               </Tile>
             </div>
 
@@ -394,11 +394,11 @@ export function PublicTrackPage() {
                   <dl>
                     <div>
                       <dt>历史版本</dt>
-                      <dd className="mono">{history.length}</dd>
+                      <dd className="num">{history.length}</dd>
                     </div>
                     <div>
                       <dt>异常记录</dt>
-                      <dd className="mono">{shipment.anomalyCount}</dd>
+                      <dd className="num">{shipment.anomalyCount}</dd>
                     </div>
                   </dl>
                   <Button
@@ -454,7 +454,7 @@ export function PublicTrackPage() {
                         <p>{item.description}</p>
                         <div className="privacy-card__saved">
                           <span>系统实际保存</span>
-                          <strong className="mono">{item.evidence}</strong>
+                          <strong>{item.evidence}</strong>
                         </div>
                       </div>
                     </article>
@@ -484,7 +484,7 @@ export function PublicTrackPage() {
           <Link to="/verify">记录核对</Link>
           <Link to="/login">业务登录</Link>
         </nav>
-        <span className="mono">Hyperledger Fabric 应用实践</span>
+        <span>Hyperledger Fabric 应用实践</span>
       </footer>
     </div>
   );
