@@ -9,7 +9,6 @@ export default defineConfig({
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'carbon-vendor': ['@carbon/react', '@carbon/icons-react'],
-          'motion-vendor': ['gsap', 'gsap/ScrollTrigger', '@gsap/react'],
         },
       },
     },

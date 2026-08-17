@@ -4,7 +4,7 @@ import { BrandMark } from './BrandMark';
 
 export function PublicHeader() {
   return (
-    <header className="public-nav" data-motion="nav">
+    <header className="public-nav">
       <a className="skip-link" href="#main-content">
         跳到主要内容
       </a>

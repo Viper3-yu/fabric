@@ -545,8 +545,31 @@ p {
   text-align: left;
 }
 
-.trust-marquee {
-  background: var(--jixin-surface-raised);
+/*
+ * 进出场动效：进入视口一次性淡入上移（useRevealMotion 添加 .is-revealed）。
+ * 只允许这一种入场表达；钉住、scrub、跑马等见 DESIGN.md 禁止事项。
+ */
+[data-reveal],
+.shipment-timeline__item {
+  opacity: 0;
+  transform: translateY(0.875rem);
+  transition:
+    opacity var(--motion-page) var(--ease-enter),
+    transform var(--motion-page) var(--ease-enter);
+}
+
+[data-reveal].is-revealed,
+.shipment-timeline__item.is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+[data-motion='hero'] > [data-reveal]:nth-child(2) {
+  transition-delay: 90ms;
+}
+
+[data-motion='hero'] > [data-reveal]:nth-child(3) {
+  transition-delay: 180ms;
 }
 
 .chain-story,
@@ -1055,13 +1078,11 @@ p {
     transition-duration: 0.001ms !important;
   }
 
-  .trust-marquee__track {
-    width: auto;
-    transform: none !important;
-  }
-
-  .trust-marquee__set:nth-child(2) {
-    display: none;
+  [data-reveal],
+  .shipment-timeline__item {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }
 
@@ -1365,18 +1386,12 @@ p {
 }
 
 .record-journey__scrub {
-  display: flex;
+  display: block;
   max-width: 31rem;
-  flex-wrap: wrap;
-  gap: 0 0.28em;
   margin: 2rem 0 0;
   color: #bacbc2;
   font-size: clamp(1rem, 1.5vw, 1.18rem);
   line-height: 1.75;
-}
-
-.record-journey__scrub span {
-  display: inline-block;
 }
 
 .record-journey__cards {
@@ -2219,8 +2234,6 @@ p {
 }
 
 .record-journey__heading {
-  position: sticky;
-  top: 6rem;
   padding-top: 0;
 }
 

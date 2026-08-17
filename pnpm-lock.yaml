@@ -38,15 +38,9 @@ importers:
       '@fontsource-variable/noto-serif-sc':
         specifier: 5.3.0
         version: 5.3.0
-      '@gsap/react':
-        specifier: ^2.1.2
-        version: 2.1.2(gsap@3.15.0)(react@19.2.7)
       '@jixin/shared':
         specifier: workspace:*
         version: link:../../packages/shared
-      gsap:
-        specifier: ^3.15.0
-        version: 3.15.0
       leaflet:
         specifier: 1.9.4
         version: 1.9.4
@@ -618,12 +612,6 @@ packages:
 
   '@fontsource-variable/noto-serif-sc@5.3.0':
     resolution: {integrity: sha512-7LcN2NEf4HDjoSkGWc79WqDDyMK8JvSPdA/gsHjJpZ8l9A9mcK/GQTazp3klmkBwJooy0eqeNvlmaZFXPupHrA==}
-
-  '@gsap/react@2.1.2':
-    resolution: {integrity: sha512-JqliybO1837UcgH2hVOM4VO+38APk3ECNrsuSM4MuXp+rbf+/2IG2K1YJiqfTcXQHH7XlA0m3ykniFYstfq0Iw==}
-    peerDependencies:
-      gsap: ^3.12.5
-      react: '>=17'
 
   '@ibm/plex-mono@1.1.0':
     resolution: {integrity: sha512-hpsdRxR3BRJkC6wGM4MZcUFD6C8M+mmK76RtAy/hlsfPro9FzpXVdIWC+G3jeQOXof109dxlUvmeKxpeKUG68A==}
@@ -1242,9 +1230,6 @@ packages:
   get-caller-file@2.0.5:
     resolution: {integrity: sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==}
     engines: {node: 6.* || 8.* || >= 10.*}
-
-  gsap@3.15.0:
-    resolution: {integrity: sha512-dMW4CWBTUK1AEEDeZc1g4xpPGIrSf9fJF960qbTZmN/QwZIWY5wgliS6JWl9/25fpTGJrMRtSjGtOmPnfjZB+A==}
 
   has-flag@4.0.0:
     resolution: {integrity: sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==}
@@ -2191,11 +2176,6 @@ snapshots:
 
   '@fontsource-variable/noto-serif-sc@5.3.0': {}
 
-  '@gsap/react@2.1.2(gsap@3.15.0)(react@19.2.7)':
-    dependencies:
-      gsap: 3.15.0
-      react: 19.2.7
-
   '@ibm/plex-mono@1.1.0':
     dependencies:
       '@ibm/telemetry-js': 1.11.0
@@ -2774,8 +2754,6 @@ snapshots:
   gensync@1.0.0-beta.2: {}
 
   get-caller-file@2.0.5: {}
-
-  gsap@3.15.0: {}
 
   has-flag@4.0.0: {}
 
