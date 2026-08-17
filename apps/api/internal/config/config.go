@@ -42,7 +42,12 @@ type Config struct {
 	CORSOrigins    []string
 	DemoLedgerPath string
 	DemoAutoSeed   bool
-	Fabric         FabricConfig
+	// DemoPasswords maps demo usernames to plaintext password overrides
+	// (course demos). DemoPasswordHashes maps usernames to bcrypt hashes and
+	// takes precedence; production deployments must supply one of the two.
+	DemoPasswords      map[string]string
+	DemoPasswordHashes map[string]string
+	Fabric             FabricConfig
 }
 
 func Load() (Config, error) {
@@ -93,16 +98,30 @@ func Load() (Config, error) {
 		demoPath = defaultDemoPath()
 	}
 
+	demoPasswords, demoHashes := loadDemoCredentials()
+	if environment == "production" {
+		for _, username := range []string{"shipper", "carrier", "receiver", "auditor"} {
+			if demoPasswords[username] == "" && demoHashes[username] == "" {
+				return Config{}, fmt.Errorf(
+					"DEMO_PASSWORD_%s or DEMO_PASSWORD_HASH_%s is required in production",
+					strings.ToUpper(username), strings.ToUpper(username),
+				)
+			}
+		}
+	}
+
 	return Config{
-		Environment:    environment,
-		Host:           env("HOST", "127.0.0.1"),
-		Port:           port,
-		LedgerMode:     mode,
-		JWTSecret:      jwtSecret,
-		JWTExpiresIn:   expires,
-		CORSOrigins:    splitList(env("CORS_ORIGIN", "http://localhost:5173,http://127.0.0.1:5173")),
-		DemoLedgerPath: demoPath,
-		DemoAutoSeed:   autoSeed,
+		Environment:        environment,
+		Host:               env("HOST", "127.0.0.1"),
+		Port:               port,
+		LedgerMode:         mode,
+		JWTSecret:          jwtSecret,
+		JWTExpiresIn:       expires,
+		CORSOrigins:        splitList(env("CORS_ORIGIN", "http://localhost:5173,http://127.0.0.1:5173")),
+		DemoLedgerPath:     demoPath,
+		DemoAutoSeed:       autoSeed,
+		DemoPasswords:      demoPasswords,
+		DemoPasswordHashes: demoHashes,
 		Fabric: FabricConfig{
 			ConnectionProfilePath: strings.TrimSpace(os.Getenv("FABRIC_CONNECTION_PROFILE_PATH")),
 			ChannelName:           env("FABRIC_CHANNEL_NAME", "logisticschannel"),
@@ -153,6 +172,25 @@ func splitList(value string) []string {
 		}
 	}
 	return result
+}
+
+// loadDemoCredentials collects DEMO_PASSWORD_<USER> and
+// DEMO_PASSWORD_HASH_<USER> overrides for the four built-in demo accounts.
+// Hashes (bcrypt) take precedence at authentication time; plaintext overrides
+// exist so a course demo can pin passwords without editing source code.
+func loadDemoCredentials() (passwords map[string]string, hashes map[string]string) {
+	passwords = make(map[string]string)
+	hashes = make(map[string]string)
+	for _, username := range []string{"shipper", "carrier", "receiver", "auditor"} {
+		suffix := strings.ToUpper(username)
+		if value := strings.TrimSpace(os.Getenv("DEMO_PASSWORD_" + suffix)); value != "" {
+			passwords[username] = value
+		}
+		if value := strings.TrimSpace(os.Getenv("DEMO_PASSWORD_HASH_" + suffix)); value != "" {
+			hashes[username] = value
+		}
+	}
+	return passwords, hashes
 }
 
 func loadEnvFile(path string) error {

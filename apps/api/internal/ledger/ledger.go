@@ -43,6 +43,7 @@ type Health struct {
 type Ledger interface {
 	Mode() string
 	Health(context.Context) Health
+	Close() error
 	GetAllShipments(context.Context, *model.User) ([]model.Shipment, error)
 	ReadShipment(context.Context, string, *model.User) (model.Shipment, error)
 	ReadShipmentByTracking(context.Context, string, *model.User) (model.Shipment, error)

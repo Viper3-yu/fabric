@@ -5,13 +5,13 @@ go 1.23.0
 require (
 	github.com/Viper3-yu/fabric/chaincode/logistics v0.0.0
 	github.com/hyperledger/fabric-gateway v1.8.0
+	golang.org/x/crypto v0.40.0
 	google.golang.org/grpc v1.73.0
 )
 
 require (
 	github.com/hyperledger/fabric-protos-go-apiv2 v0.3.7 // indirect
 	github.com/miekg/pkcs11 v1.1.1 // indirect
-	golang.org/x/crypto v0.40.0 // indirect
 	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect
 	golang.org/x/text v0.27.0 // indirect

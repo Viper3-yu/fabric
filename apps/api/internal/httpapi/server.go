@@ -30,6 +30,36 @@ const (
 	requestIDKey contextKey = "request-id"
 )
 
+// sessionCookieName carries the JWT for browser clients. It is httpOnly so
+// page scripts (and any injected script) cannot read it; SameSite=Lax keeps
+// cross-site POSTs from riding the session. In production the cookie is also
+// Secure, so deployment must serve the API over HTTPS.
+const sessionCookieName = "jixin_session"
+
+func (a *API) setSessionCookie(response http.ResponseWriter, token string) {
+	http.SetCookie(response, &http.Cookie{
+		Name:     sessionCookieName,
+		Value:    token,
+		Path:     "/",
+		MaxAge:   int(a.config.JWTExpiresIn / time.Second),
+		HttpOnly: true,
+		Secure:   a.config.Environment == "production",
+		SameSite: http.SameSiteLaxMode,
+	})
+}
+
+func (a *API) clearSessionCookie(response http.ResponseWriter) {
+	http.SetCookie(response, &http.Cookie{
+		Name:     sessionCookieName,
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   a.config.Environment == "production",
+		SameSite: http.SameSiteLaxMode,
+	})
+}
+
 var publicEventDescriptions = map[string]string{
 	model.EventCreated:           "运单已创建",
 	model.EventAccepted:          "承运方已接单",
@@ -60,6 +90,7 @@ func (a *API) routes() {
 	a.mux.HandleFunc("GET /api/network", a.handleNetwork)
 	a.mux.HandleFunc("GET /api/network/mode", a.handleNetwork)
 	a.mux.HandleFunc("POST /api/auth/login", a.handleLogin)
+	a.mux.HandleFunc("POST /api/auth/logout", a.handleLogout)
 	a.mux.HandleFunc("GET /api/auth/me", a.withAuth(a.handleMe))
 	a.mux.HandleFunc("GET /api/dashboard/summary", a.withAuth(a.handleDashboard))
 	a.mux.HandleFunc("GET /api/shipments", a.withAuth(a.handleListShipments))
@@ -114,6 +145,7 @@ func (a *API) middleware(next http.Handler) http.Handler {
 			}
 			response.Header().Set("Access-Control-Allow-Origin", origin)
 			response.Header().Set("Vary", "Origin")
+			response.Header().Set("Access-Control-Allow-Credentials", "true")
 			response.Header().Set("Access-Control-Expose-Headers", "x-request-id")
 		}
 		if request.Method == http.MethodOptions {
@@ -184,9 +216,17 @@ func (a *API) handleLogin(response http.ResponseWriter, request *http.Request) {
 		a.writeError(response, request, err)
 		return
 	}
+	a.setSessionCookie(response, token)
+	// The token is still returned in the body for non-browser API clients;
+	// browser code must rely on the httpOnly cookie and never persist it.
 	a.sendSuccess(response, request, map[string]any{
 		"token": token, "user": user, "ledgerMode": a.ledger.Mode(),
 	}, http.StatusOK)
+}
+
+func (a *API) handleLogout(response http.ResponseWriter, request *http.Request) {
+	a.clearSessionCookie(response)
+	a.sendSuccess(response, request, map[string]any{"loggedOut": true}, http.StatusOK)
 }
 
 const (
@@ -578,7 +618,15 @@ func (a *API) withAuth(
 	next func(http.ResponseWriter, *http.Request, model.User),
 ) http.HandlerFunc {
 	return func(response http.ResponseWriter, request *http.Request) {
+		// Non-browser clients keep the Authorization header; browsers carry
+		// the same JWT in the httpOnly session cookie.
 		token, err := auth.Bearer(request.Header.Get("Authorization"))
+		if err != nil {
+			if cookie, cookieErr := request.Cookie(sessionCookieName); cookieErr == nil && cookie.Value != "" {
+				token = cookie.Value
+				err = nil
+			}
+		}
 		if err != nil {
 			a.writeError(response, request, apperror.New(401, "AUTH_REQUIRED", "A Bearer token is required"))
 			return

@@ -60,6 +60,12 @@ func (d *Demo) Mode() string {
 	return "demo"
 }
 
+// Close releases nothing for the in-memory demo ledger; it exists so the
+// demo and Fabric adapters share the same Ledger lifecycle.
+func (d *Demo) Close() error {
+	return nil
+}
+
 func (d *Demo) load() error {
 	if err := os.MkdirAll(filepath.Dir(d.path), 0o755); err != nil {
 		return err

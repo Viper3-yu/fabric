@@ -14,6 +14,7 @@ import (
 	"github.com/Viper3-yu/fabric/apps/api/internal/apperror"
 	"github.com/Viper3-yu/fabric/apps/api/internal/users"
 	"github.com/Viper3-yu/fabric/chaincode/logistics/model"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type claims struct {
@@ -25,7 +26,18 @@ type claims struct {
 
 func Authenticate(username, password string) (model.User, error) {
 	account, ok := users.ByUsername[username]
-	if !ok || !equal(password, account.Password) {
+	if !ok {
+		return model.User{}, apperror.New(401, "INVALID_CREDENTIALS", "Username or password is incorrect")
+	}
+	// A bcrypt hash (production form) takes precedence; the plaintext value
+	// only remains as the built-in course demo fallback.
+	valid := false
+	if account.PasswordHash != "" {
+		valid = bcrypt.CompareHashAndPassword([]byte(account.PasswordHash), []byte(password)) == nil
+	} else {
+		valid = equal(password, account.Password)
+	}
+	if !valid {
 		return model.User{}, apperror.New(401, "INVALID_CREDENTIALS", "Username or password is incorrect")
 	}
 	return account.User, nil

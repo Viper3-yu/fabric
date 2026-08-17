@@ -27,12 +27,6 @@ export interface LoginResult {
   ledgerMode: LedgerMode;
 }
 
-export interface AuthSession {
-  token: string;
-  user: AppUser;
-  ledgerMode: LedgerMode;
-}
-
 export interface NetworkInfo {
   mode: LedgerMode;
   isDemo: boolean;

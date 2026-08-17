@@ -9,7 +9,6 @@ import {
 } from 'react';
 import type { AppUser } from '@jixin/shared';
 import { api } from '../lib/api';
-import { clearSession, readSession, writeSession } from '../lib/storage';
 import type { LedgerMode } from '../types';
 
 interface AuthContextValue {
@@ -23,13 +22,13 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const saved = useMemo(() => readSession(), []);
-  const [user, setUser] = useState<AppUser | null>(saved?.user ?? null);
-  const [ledgerMode, setLedgerMode] = useState<LedgerMode | null>(saved?.ledgerMode ?? null);
-  const [ready, setReady] = useState(!saved);
+  const [user, setUser] = useState<AppUser | null>(null);
+  const [ledgerMode, setLedgerMode] = useState<LedgerMode | null>(null);
+  const [ready, setReady] = useState(false);
 
   const logout = useCallback(() => {
-    clearSession();
+    // Best-effort server-side cookie clear; the JWT itself stays stateless.
+    void api.auth.logout().catch(() => undefined);
     setUser(null);
     setLedgerMode(null);
     setReady(true);
@@ -42,22 +41,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [logout]);
 
   useEffect(() => {
-    if (!saved) return;
+    // The session lives in the httpOnly cookie; /auth/me validates it and
+    // returns the current user, so a page refresh restores the session
+    // without ever touching localStorage.
     let active = true;
     api.auth
       .me()
       .then(({ data, meta }) => {
         if (!active) return;
         const nextUser = 'user' in data ? data.user : data;
-        const nextMode =
-          ('user' in data ? data.ledgerMode : undefined) ?? meta?.ledgerMode ?? saved.ledgerMode;
-        const session = { token: saved.token, user: nextUser, ledgerMode: nextMode };
-        writeSession(session);
+        const nextMode = ('user' in data ? data.ledgerMode : undefined) ?? meta?.ledgerMode ?? null;
         setUser(nextUser);
         setLedgerMode(nextMode);
       })
       .catch(() => {
-        if (active) logout();
+        // No cookie, expired token, or API unreachable: stay signed out.
+        if (active) {
+          setUser(null);
+          setLedgerMode(null);
+        }
       })
       .finally(() => {
         if (active) setReady(true);
@@ -65,11 +67,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       active = false;
     };
-  }, [logout, saved]);
+  }, []);
 
   const login = useCallback(async (username: string, password: string) => {
     const { data } = await api.auth.login(username, password);
-    writeSession(data);
+    // The browser stores the httpOnly cookie; only the user data is kept in
+    // memory for this page view.
     setUser(data.user);
     setLedgerMode(data.ledgerMode);
     setReady(true);

@@ -5,27 +5,53 @@ import { describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '../auth/AuthContext';
 import { LoginPage } from './LoginPage';
 
+const loginPayload = {
+  success: true,
+  data: {
+    token: 'demo-token',
+    ledgerMode: 'demo',
+    user: {
+      id: 'carrier-1',
+      username: 'carrier',
+      displayName: '华东承运中心',
+      role: 'carrier',
+      mspId: 'Org2MSP',
+    },
+  },
+};
+
+function fetchMock() {
+  return vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
+    // Boot-time session restore: no cookie yet, so /auth/me answers 401.
+    if (url === '/api/auth/me') {
+      return {
+        ok: false,
+        status: 401,
+        json: async () => ({
+          success: false,
+          error: { code: 'INVALID_TOKEN', message: 'expired', requestId: 'test' },
+        }),
+      };
+    }
+    if (url === '/api/auth/logout') {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ success: true, data: { loggedOut: true } }),
+      };
+    }
+    if (url === '/api/auth/login') {
+      expect(init?.credentials).toBe('include');
+      return { ok: true, status: 200, json: async () => loginPayload };
+    }
+    throw new Error('unexpected request: ' + url);
+  });
+}
+
 describe('登录页', () => {
-  it('展示演示账户并将 JWT 会话持久化', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({
-        success: true,
-        data: {
-          token: 'demo-token',
-          ledgerMode: 'demo',
-          user: {
-            id: 'carrier-1',
-            username: 'carrier',
-            displayName: '华东承运中心',
-            role: 'carrier',
-            mspId: 'Org2MSP',
-          },
-        },
-      }),
-    });
-    vi.stubGlobal('fetch', fetchMock);
+  it('展示演示账户并通过 httpOnly cookie 会话进入工作台', async () => {
+    const mock = fetchMock();
+    vi.stubGlobal('fetch', mock);
     const user = userEvent.setup();
 
     render(
@@ -50,11 +76,15 @@ describe('登录页', () => {
 
     expect(await screen.findByText('工作台已打开')).toBeInTheDocument();
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
+      expect(mock).toHaveBeenCalledWith(
         '/api/auth/login',
-        expect.objectContaining({ method: 'POST' }),
+        expect.objectContaining({
+          method: 'POST',
+          credentials: 'include',
+        }),
       );
     });
-    expect(window.localStorage.getItem('jixin.auth.session')).toContain('demo-token');
+    // The token must never reach localStorage: the session rides the cookie.
+    expect(window.localStorage.getItem('jixin.auth.session')).toBeNull();
   });
 });

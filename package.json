@@ -14,6 +14,7 @@
     "test": "pnpm -r test && go test ./apps/api/... ./chaincode/logistics/...",
     "test:unit": "pnpm -r test:unit && go test ./apps/api/... ./chaincode/logistics/...",
     "test:closed-loop": "go test ./apps/api/internal/httpapi -run TestClosedLoop -count=1",
+    "test:fabric": "powershell -ExecutionPolicy Bypass -File scripts/test-fabric.ps1",
     "lint": "pnpm -r lint && go vet ./apps/api/... ./chaincode/logistics/...",
     "typecheck": "pnpm -r typecheck && go test ./apps/api/... ./chaincode/logistics/... -run ^$",
     "format": "prettier --write . && go fmt ./apps/api/... ./chaincode/logistics/...",
