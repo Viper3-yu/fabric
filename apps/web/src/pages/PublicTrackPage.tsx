@@ -17,18 +17,9 @@ import { ShipmentProgress } from '../components/ShipmentProgress';
 import { ShipmentTimeline } from '../components/ShipmentTimeline';
 import { StatusTag } from '../components/StatusTag';
 import { api, getErrorMessage } from '../lib/api';
-import { useCinematicMotion } from '../lib/motion';
+import { useRevealMotion } from '../lib/motion';
 import { formatDate, routeLabel } from '../lib/presentation';
 import type { LedgerMode } from '../types';
-
-const TRUST_FLOW = [
-  '发货方建单',
-  '承运方接货',
-  '位置自动更新',
-  '异常及时处理',
-  '收货方确认',
-  '全程记录可查',
-];
 
 const RECORD_STEPS = [
   {
@@ -116,49 +107,20 @@ const ROLE_STORIES = [
   },
 ];
 
-function TrustMarquee() {
-  return (
-    <div className="trust-marquee" aria-label="物流闭环阶段">
-      <div className="trust-marquee__track">
-        {[0, 1].map((copy) => (
-          <div key={copy} className="trust-marquee__set" aria-hidden={copy === 1}>
-            {TRUST_FLOW.map((item) => (
-              <span key={`${copy}-${item}`}>
-                <i aria-hidden="true" />
-                {item}
-              </span>
-            ))}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function RecordJourney() {
   return (
-    <section className="record-journey" aria-labelledby="record-journey-title" data-motion-pin>
-      <div className="record-journey__heading" data-pin-heading>
+    <section className="record-journey" aria-labelledby="record-journey-title">
+      <div className="record-journey__heading">
         <h2 id="record-journey-title">每一步都有记录 来龙去脉一看就懂</h2>
         <p className="record-journey__scrub" aria-label="运输过程中的关键动作都会被系统按顺序保存">
-          {[
-            '谁建的单，',
-            '谁接的货，',
-            '车辆到过哪里，',
-            '什么时候签收，',
-            '系统都会按顺序记下来。',
-          ].map((copy) => (
-            <span key={copy} data-scrub-word>
-              {copy}
-            </span>
-          ))}
+          谁建的单，谁接的货，车辆到过哪里，什么时候签收，系统都会按顺序记下来。
         </p>
       </div>
       <div className="record-journey__cards">
         {RECORD_STEPS.map((step, index) => {
           const Icon = step.icon;
           return (
-            <article key={step.label} className="record-step" data-pin-card>
+            <article key={step.label} className="record-step" data-reveal>
               <div className="record-step__top">
                 <span className="record-step__icon">
                   <Icon size={22} aria-hidden="true" />
@@ -238,7 +200,7 @@ export function PublicTrackPage() {
   const searchController = useRef<AbortController | null>(null);
   const lastSearched = useRef<string | null>(null);
 
-  useCinematicMotion(pageRef, [shipment?.id]);
+  useRevealMotion(pageRef, [shipment?.id]);
 
   const runSearch = useCallback(async (normalized: string) => {
     searchController.current?.abort();
@@ -289,6 +251,7 @@ export function PublicTrackPage() {
       <PublicHeader />
       <main id="main-content">
         <section className="public-hero" aria-labelledby="track-title" data-motion="hero">
+          {' '}
           <div className="public-hero__content" data-reveal>
             <p className="eyebrow" data-reveal>
               一张运单 从发出到签收都能查
@@ -349,8 +312,6 @@ export function PublicTrackPage() {
             </div>
           </div>
         </section>
-
-        <TrustMarquee />
 
         {loading ? (
           <section className="public-loading" aria-live="polite" aria-busy="true">
@@ -462,7 +423,7 @@ export function PublicTrackPage() {
               <div className="chain-story__intro">
                 <div>
                   <h2 id="chain-story-title">想查的过程都能看到 隐私默认隐藏</h2>
-                  <p className="chain-story__lead" data-scrub-copy>
+                  <p className="chain-story__lead" data-reveal>
                     运输过程和核对编号可以查询；完整文件、证件和联系方式仍由业务方保管，不会出现在公开页面。
                   </p>
                 </div>
