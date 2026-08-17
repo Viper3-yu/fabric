@@ -268,11 +268,11 @@ export function ShipmentImportPanel({ open, onClose, onImported }: ShipmentImpor
               <tbody>
                 {rows.map((row) => (
                   <tr key={row.rowNumber} data-state={row.errors.length ? 'invalid' : row.state}>
-                    <td className="mono">{row.rowNumber}</td>
+                    <td className="num">{row.rowNumber}</td>
                     <td>{row.summary.goodsName}</td>
                     <td>{row.summary.route}</td>
-                    <td className="mono">{row.summary.quantity}</td>
-                    <td className="mono">{row.summary.expectedDeliveryDate}</td>
+                    <td className="num">{row.summary.quantity}</td>
+                    <td className="num">{row.summary.expectedDeliveryDate}</td>
                     <td>
                       {row.errors.length ? (
                         <span className="import-row-result is-error">
@@ -291,7 +291,7 @@ export function ShipmentImportPanel({ open, onClose, onImported }: ShipmentImpor
                           <CheckmarkFilled size={16} aria-hidden="true" />
                           <span>
                             {row.receipt?.data.trackingNumber}
-                            <small className="mono">签收码 {row.receipt?.deliveryCode}</small>
+                            <small className="num">签收码 {row.receipt?.deliveryCode}</small>
                           </span>
                         </span>
                       ) : null}

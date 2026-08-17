@@ -119,7 +119,7 @@ export function ShipmentDetailPage() {
             <div className="detail-header__status">
               <StatusTag status={shipment.status} />
             </div>
-            <h1 className="mono">{shipment.trackingNumber}</h1>
+            <h1 className="num">{shipment.trackingNumber}</h1>
             <p>
               {routeLabel(shipment)}，{shipment.goods.name}
             </p>
@@ -199,7 +199,7 @@ export function ShipmentDetailPage() {
             <CheckmarkFilled size={18} aria-hidden="true" />
             <span>已经保存</span>
           </div>
-          <strong className="mono">{shipment.events.length} 次变化</strong>
+          <strong className="num">{shipment.events.length} 次变化</strong>
           <small>
             最近一次：{formatDateTime(shipment.events.at(-1)?.timestamp ?? shipment.updatedAt)}
           </small>
@@ -223,7 +223,7 @@ export function ShipmentDetailPage() {
         </Tile>
         <Tile>
           <span>异常记录</span>
-          <strong className="mono">{shipment.anomalyCount}</strong>
+          <strong className="num">{shipment.anomalyCount}</strong>
         </Tile>
       </section>
 
@@ -295,11 +295,11 @@ export function ShipmentDetailPage() {
               </div>
               <div>
                 <dt>数量</dt>
-                <dd className="mono">{shipment.goods.quantity} 件</dd>
+                <dd className="num">{shipment.goods.quantity} 件</dd>
               </div>
               <div>
                 <dt>重量</dt>
-                <dd className="mono">{shipment.goods.weightKg} kg</dd>
+                <dd className="num">{shipment.goods.weightKg} kg</dd>
               </div>
               {shipment.goods.description ? (
                 <div>

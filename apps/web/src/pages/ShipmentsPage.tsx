@@ -230,7 +230,7 @@ export function ShipmentsPage() {
                 <TableBody>
                   {shipments.map((shipment) => (
                     <TableRow key={shipment.id}>
-                      <TableCell className="mono">{shipment.trackingNumber}</TableCell>
+                      <TableCell className="num">{shipment.trackingNumber}</TableCell>
                       <TableCell>
                         <strong>{shipment.goods.name}</strong>
                         <span className="table-secondary">{shipment.goods.quantity} 件</span>
@@ -262,7 +262,7 @@ export function ShipmentsPage() {
             {shipments.map((shipment) => (
               <article key={shipment.id} className="shipment-mobile-card">
                 <div className="shipment-mobile-card__top">
-                  <span className="mono">{shipment.trackingNumber}</span>
+                  <span className="num">{shipment.trackingNumber}</span>
                   <StatusTag status={shipment.status} />
                 </div>
                 <h2>{shipment.goods.name}</h2>

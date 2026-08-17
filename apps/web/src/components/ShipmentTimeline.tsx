@@ -69,7 +69,7 @@ export function ShipmentTimeline({ events }: { events: ShipmentEvent[] }) {
                 {event.temperature !== undefined ? (
                   <div>
                     <dt>记录温度</dt>
-                    <dd className="mono">{event.temperature} °C</dd>
+                    <dd className="num">{event.temperature} °C</dd>
                   </div>
                 ) : null}
                 <div className="evidence-grid__wide">
