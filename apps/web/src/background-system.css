@@ -1,7 +1,8 @@
 /*
- * Quiet logistics field
- * A low-contrast route network, paper grid, and soft ambient color add depth
- * without competing with operational content.
+ * Night route field
+ * 蓝调时刻的立交桥车流摄影（Pexels 28380982，免授权商用）作为公开页叙事底景：
+ * hero 承载影像（左侧文案压重遮罩），正文回到安静纸面网格，
+ * 登录品牌板与运输清单证据面板另叠暗调底图。
  */
 
 .public-page,
@@ -9,20 +10,17 @@
 .login-page {
   background-color: var(--jixin-canvas);
   background-image:
-    url('/logistics-field.svg'),
     radial-gradient(circle at 12% 8%, rgba(85, 189, 146, 0.15), transparent 30rem),
     radial-gradient(circle at 88% 40%, rgba(35, 98, 77, 0.09), transparent 34rem),
     linear-gradient(rgba(20, 33, 28, 0.025) 1px, transparent 1px),
     linear-gradient(90deg, rgba(20, 33, 28, 0.025) 1px, transparent 1px);
-  background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat;
+  background-repeat: no-repeat, no-repeat, repeat, repeat;
   background-position:
-    center top,
     left top,
     right 18rem,
     left top,
     left top;
   background-size:
-    min(112rem, 120vw) auto,
     auto,
     auto,
     5rem 5rem,
@@ -35,8 +33,23 @@
   background: transparent;
 }
 
+/* hero 摄影底景：照片 fixed 产生细微视差；遮罩左重右轻保证文案列对比度，
+   底缘 mask 把影像溶解回纸面。 */
 .public-hero::before {
-  opacity: 0.42;
+  background-image:
+    linear-gradient(
+      to right,
+      rgba(243, 242, 238, 0.9) 0%,
+      rgba(243, 242, 238, 0.78) 36%,
+      rgba(243, 242, 238, 0.38) 68%,
+      rgba(243, 242, 238, 0.54) 100%
+    ),
+    url('/night-route.jpg');
+  background-repeat: no-repeat, no-repeat;
+  background-position: left top, center 36%;
+  background-size: auto, cover;
+  background-attachment: scroll, fixed;
+  mask-image: linear-gradient(to bottom, #000 0%, #000 74%, transparent 100%);
 }
 
 .public-hero::after {
@@ -45,9 +58,6 @@
     radial-gradient(circle at 68% 36%, rgba(35, 98, 77, 0.16), transparent 34%);
 }
 
-/* .login-intro 的背景由 visual-system.css 的深色品牌面板规则负责，
-   不在此处覆盖，避免浅色背景与浅色文字叠加导致不可读。 */
-
 .login-panel {
   background: color-mix(in srgb, var(--jixin-canvas) 88%, transparent);
   backdrop-filter: blur(18px);
@@ -55,27 +65,8 @@
 
 .app-shell,
 .app-shell .app-main {
-  /* 后台只保留画布底色：高密度操作区不叠加路线底图与网格，保证表格与证据面板的可读性 */
+  /* 后台只保留画布底色：高密度操作区不叠加底图与网格，保证表格与证据面板的可读性 */
   background-color: var(--jixin-canvas);
-}
-
-@media (prefers-color-scheme: dark) {
-  .public-page,
-  .verify-page,
-  .login-page {
-    background-image:
-      url('/logistics-field.svg'),
-      radial-gradient(circle at 12% 8%, rgba(104, 201, 161, 0.14), transparent 30rem),
-      radial-gradient(circle at 88% 40%, rgba(104, 201, 161, 0.08), transparent 34rem),
-      linear-gradient(rgba(226, 239, 232, 0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(226, 239, 232, 0.025) 1px, transparent 1px);
-  }
-
-  .login-intro {
-    background:
-      linear-gradient(145deg, rgba(28, 42, 36, 0.92), rgba(28, 42, 36, 0.72)),
-      url('/logistics-field.svg') center / cover no-repeat;
-  }
 }
 
 @media (max-width: 768px) {
@@ -83,7 +74,6 @@
   .verify-page,
   .login-page {
     background-size:
-      70rem auto,
       auto,
       auto,
       4rem 4rem,
@@ -91,14 +81,66 @@
     background-position:
       center top,
       center top,
-      center top,
       left top,
       left top;
     background-attachment: scroll;
   }
 
+  /* 移动端文案居中，遮罩改为纵向均匀；fixed 在移动浏览器上不可靠。 */
+  .public-hero::before {
+    background-image:
+      linear-gradient(to bottom, rgba(243, 242, 238, 0.9), rgba(243, 242, 238, 0.82)),
+      url('/night-route.jpg');
+    background-attachment: scroll, scroll;
+  }
+
   .login-panel {
     backdrop-filter: none;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .public-page,
+  .verify-page,
+  .login-page {
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(104, 201, 161, 0.14), transparent 30rem),
+      radial-gradient(circle at 88% 40%, rgba(104, 201, 161, 0.08), transparent 34rem),
+      linear-gradient(rgba(226, 239, 232, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(226, 239, 232, 0.025) 1px, transparent 1px);
+  }
+
+  /* 夜景摄影与暗色画布同构：遮罩更透，影像存在感强于浅色模式。 */
+  .public-hero::before {
+    background-image:
+      linear-gradient(
+        to right,
+        rgba(13, 20, 17, 0.84) 0%,
+        rgba(13, 20, 17, 0.62) 36%,
+        rgba(13, 20, 17, 0.3) 68%,
+        rgba(13, 20, 17, 0.46) 100%
+      ),
+      url('/night-route.jpg');
+  }
+
+  .login-intro {
+    background:
+      linear-gradient(145deg, rgba(28, 42, 36, 0.9), rgba(24, 46, 36, 0.82)),
+      url('/night-route.jpg') center / cover no-repeat;
+  }
+}
+
+@media (prefers-color-scheme: dark) and (max-width: 768px) {
+  .public-hero::before {
+    background-image:
+      linear-gradient(to bottom, rgba(13, 20, 17, 0.84), rgba(13, 20, 17, 0.74)),
+      url('/night-route.jpg');
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-hero::before {
+    background-attachment: scroll, scroll;
   }
 }
 

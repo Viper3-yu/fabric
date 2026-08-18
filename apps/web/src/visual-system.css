@@ -484,28 +484,77 @@ p {
 .hero-proof > div {
   justify-content: flex-start;
   text-align: left;
-} /*
- * 进出场动效：进入视口一次性淡入上移（useRevealMotion 添加 .is-revealed）。
- * 只允许这一种入场表达；钉住、scrub、跑马等见 DESIGN.md 禁止事项。
+}
+/*
+ * 公开页动效由 useCinematicMotion（gsap）驱动：hero 交错入场、清单
+ * 面板钉住 + 卡片滑入、逐词 scrub、跑马灯。CSS 不做隐藏态，避免与
+ * gsap 的 from 动画互抢；reduced-motion 下 gsap 与下方通用降级兜底。
  */
-[data-reveal],
-.shipment-timeline__item {
-  opacity: 0;
-  transform: translateY(0.875rem);
-  transition:
-    opacity var(--motion-page) var(--ease-enter),
-    transform var(--motion-page) var(--ease-enter);
+.trust-marquee {
+  overflow: hidden;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: #c5d5ce;
+  background: #121c19;
 }
-[data-reveal].is-revealed,
-.shipment-timeline__item.is-revealed {
-  opacity: 1;
-  transform: none;
+.trust-marquee__track {
+  display: flex;
+  width: max-content;
+  animation: trust-marquee 28s linear infinite;
 }
-[data-motion='hero'] > [data-reveal]:nth-child(2) {
-  transition-delay: 90ms;
+.trust-marquee__set {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
-[data-motion='hero'] > [data-reveal]:nth-child(3) {
-  transition-delay: 180ms;
+.trust-marquee__set > span {
+  display: flex;
+  min-width: 12rem;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 1rem 1.5rem;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+}
+.trust-marquee__set i {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  background: var(--jixin-lime);
+  box-shadow: 0 0 0 5px rgba(98, 193, 147, 0.07);
+}
+@keyframes trust-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@media (prefers-color-scheme: light) {
+  .trust-marquee {
+    border-color: var(--jixin-border);
+    color: var(--jixin-ink-soft);
+    background: var(--jixin-surface);
+  }
+  .trust-marquee__set > span {
+    border-color: var(--jixin-border);
+  }
+  .trust-marquee__set i {
+    display: none;
+  }
+}
+@media (max-width: 672px) {
+  .trust-marquee__set > span {
+    min-width: 9rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trust-marquee__track {
+    width: auto;
+    transform: none !important;
+    animation: none !important;
+  }
+  .trust-marquee__set:nth-child(2) {
+    display: none;
+  }
 }
 .chain-story,
 .role-voices,
@@ -555,13 +604,18 @@ p {
   overflow: clip;
   border-radius: 1rem;
   color: #eef7f2;
-  /* 4rem 账本网格底纹：证据面板的"登记纸"意象。 */
+  /* 4rem 账本网格 + 蓝调时刻道路摄影暗底：证据面板的"登记纸 + 现场影像"意象。 */
   background:
     linear-gradient(rgba(197, 229, 213, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(197, 229, 213, 0.05) 1px, transparent 1px), #0b1a14;
+    linear-gradient(90deg, rgba(197, 229, 213, 0.05) 1px, transparent 1px),
+    linear-gradient(rgba(6, 14, 10, 0.82), rgba(6, 14, 10, 0.88)),
+    url('/night-route.jpg') center 42% / cover no-repeat,
+    #0b1a14;
   background-size:
     4rem 4rem,
     4rem 4rem,
+    auto,
+    cover,
     auto;
 }
 .manifest-timeline__head {
@@ -581,12 +635,18 @@ p {
   line-height: 1.05;
   color: #f4faf7;
 }
-.manifest-timeline__head > p {
-  margin: 0;
+.manifest-timeline__scrub {
+  display: flex;
   max-width: 34rem;
+  flex-wrap: wrap;
+  gap: 0 0.28em;
+  margin: 0;
   color: #bacbc2;
   font-size: clamp(1rem, 1.4vw, 1.15rem);
   line-height: 1.75;
+}
+.manifest-timeline__scrub span {
+  display: inline-block;
 }
 .manifest-timeline__rail {
   display: grid;
@@ -958,7 +1018,10 @@ p {
   background: var(--jixin-canvas);
 }
 .login-intro {
-  background: var(--jixin-panel-soft);
+  /* 品牌板叠加道路摄影暗调底图，与公开页 hero 同一影像语言。 */
+  background:
+    linear-gradient(rgba(230, 235, 231, 0.78), rgba(230, 235, 231, 0.86)),
+    url('/night-route.jpg') center / cover no-repeat;
 }
 .login-intro::after {
   background-image:
@@ -1226,12 +1289,6 @@ p {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
-  }
-  [data-reveal],
-  .shipment-timeline__item {
-    opacity: 1;
-    transform: none;
-    transition: none;
   }
 }
 

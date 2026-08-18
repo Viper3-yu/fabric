@@ -18,9 +18,51 @@ async function loginAs(page: Page, username: string) {
   if (!response.ok()) throw new Error(`login failed for ${username}`);
 }
 
-// 等字体全部就绪再截图，避免 woff2 分批加载造成的差异。
+// Chromium 移动仿真下 context 级 reducedMotion 不生效（matchMedia 为 false），
+// 显式按页模拟：gsap 与 CSS 动画直接呈现终态，截图才可复现。
+test.beforeEach(async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+});
+
+// 等字体全部就绪、背景摄影图解码完成再截图，避免 woff2 分批加载与
+// CSS 背景图晚到造成的差异（fonts.ready 不覆盖 background-image）。
 async function settle(page: Page) {
-  await page.evaluate(() => document.fonts.ready);
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    const urls: string[] = [];
+    const candidates = [
+      document.querySelector<HTMLElement>('.public-hero'),
+      document.querySelector<HTMLElement>('.manifest-timeline'),
+      document.querySelector<HTMLElement>('.login-intro'),
+    ];
+    for (const el of candidates) {
+      if (!el) continue;
+      const images = [
+        getComputedStyle(el, '::before').backgroundImage,
+        getComputedStyle(el).backgroundImage,
+      ];
+      for (const image of images) {
+        const match = image.match(/url\("?([^")]+)"?\)/);
+        if (match && !match[1].startsWith('data:')) {
+          urls.push(new URL(match[1], location.href).href);
+          break;
+        }
+      }
+    }
+    await Promise.all(
+      urls.map(
+        (src) =>
+          new Promise<void>((resolve) => {
+            const img = new Image();
+            img.onload = img.onerror = () => {
+              // onload 只代表传输完成，强制解码落地再放行截图。
+              img.decode().catch(() => {}).then(() => resolve());
+            };
+            img.src = src;
+          }),
+      ),
+    );
+  });
 }
 
 test.describe('公开页面', () => {
