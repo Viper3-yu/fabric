@@ -1776,3 +1776,83 @@
 .ledger-disclaimer.is-fabric > svg {
   color: var(--jixin-accent);
 }
+
+/* ===== 记录带：一条系统记录的标准形态（详情健康卡 / 工作台焦点共用） ===== */
+.app-shell .record-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.55rem 0 0;
+  padding: 0.55rem 0.75rem;
+  border: 1px dashed var(--jixin-border-strong);
+  border-radius: var(--jixin-control-radius);
+  background: var(--jixin-surface);
+  color: var(--jixin-ink-soft);
+  font-size: 0.78rem;
+}
+
+.app-shell .record-strip i {
+  flex-shrink: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--jixin-accent);
+}
+
+.app-shell .record-strip.is-exception i {
+  background: var(--jixin-danger);
+}
+
+.app-shell .record-strip__event {
+  flex-shrink: 0;
+  color: var(--jixin-ink);
+  font-weight: 600;
+}
+
+.app-shell .record-strip__location {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-shell .record-strip__time {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.app-shell .record-strip__tx {
+  display: inline-flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.2rem;
+  margin-left: auto;
+}
+
+.app-shell .record-strip__tx-value {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--jixin-ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.72rem;
+}
+
+.app-shell .record-strip--compact {
+  gap: 0.45rem;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.74rem;
+}
+
+@media (max-width: 720px) {
+  .app-shell .record-strip {
+    flex-wrap: wrap;
+  }
+
+  .app-shell .record-strip__tx {
+    flex-basis: 100%;
+    justify-content: flex-start;
+  }
+}
