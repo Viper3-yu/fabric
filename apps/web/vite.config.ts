@@ -1,4 +1,5 @@
 import react from '@vitejs/plugin-react';
+import { configDefaults } from 'vitest/config';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
@@ -26,5 +27,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
     css: false,
+    // e2e 是 Playwright 用例，不归 vitest 管。
+    exclude: ['e2e/**', ...configDefaults.exclude],
   },
 });
