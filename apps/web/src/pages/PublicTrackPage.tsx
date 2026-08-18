@@ -26,28 +26,28 @@ const RECORD_STEPS = [
     label: '发货方建单',
     title: '先把货物和路线说清楚',
     description: '货物、收发地址和温控要求保存后，这趟运输就有了清楚的起点。',
-    meta: '起点已经保存',
+    record: '建单 CREATED · 上海张江 · 08:36 · tx 8f31a2c9',
     icon: DeliveryParcel,
   },
   {
     label: '承运方接货',
     title: '交给谁系统马上记下',
     description: '接单和揽收会同时记下操作人、所属公司、地点和时间，之后不能悄悄覆盖。',
-    meta: '责任已经交接',
+    record: '揽收 PICKED_UP · 上海张江 · 09:12 · tx 2b7e40f1',
     icon: Locked,
   },
   {
     label: '运输途中',
     title: '每到一站都多一条记录',
     description: '位置、温度和现场说明按顺序追加；遇到异常，也能看到发生和处理的完整过程。',
-    meta: '记录持续更新',
+    record: '节点 CHECKPOINT · 昆山中转 · 11:47 · tx d94c66e0',
     icon: DataCheck,
   },
   {
     label: '到货签收',
     title: '最后由收货方完成确认',
     description: '一次性签收码完成最后确认，前面的运输记录会连成一条完整、可回看的时间线。',
-    meta: '运输已经闭环',
+    record: '签收 RECEIVED · 南京玄武 · 15:03 · tx 57a08b3d',
     icon: Blockchain,
   },
 ] as const;
@@ -107,38 +107,132 @@ const ROLE_STORIES = [
   },
 ];
 
-function RecordJourney() {
+// 运输清单时间线：交接单式的横向四步，每步带一条真实形态的记录行。
+function ManifestJourney() {
   return (
-    <section className="record-journey" aria-labelledby="record-journey-title">
-      <div className="record-journey__heading">
+    <section className="manifest-timeline" aria-labelledby="record-journey-title">
+      <header className="manifest-timeline__head">
+        <p className="eyebrow">运输清单</p>
         <h2 id="record-journey-title">每一步都有记录 来龙去脉一看就懂</h2>
-        <p className="record-journey__scrub" aria-label="运输过程中的关键动作都会被系统按顺序保存">
+        <p aria-label="运输过程中的关键动作都会被系统按顺序保存">
           谁建的单，谁接的货，车辆到过哪里，什么时候签收，系统都会按顺序记下来。
         </p>
-      </div>
-      <div className="record-journey__cards">
+      </header>
+      <ol className="manifest-timeline__rail">
         {RECORD_STEPS.map((step, index) => {
           const Icon = step.icon;
           return (
-            <article key={step.label} className="record-step" data-reveal>
-              <div className="record-step__top">
-                <span className="record-step__icon">
-                  <Icon size={22} aria-hidden="true" />
-                </span>
-                <span className="record-step__index mono">
-                  {String(index + 1).padStart(2, '0')}
-                </span>
+            <li key={step.label} className="manifest-step" data-reveal>
+              <div className="manifest-step__node" aria-hidden="true">
+                <i className={index === 0 ? 'is-current' : ''} />
+                {index < RECORD_STEPS.length - 1 ? <span /> : null}
               </div>
-              <p>{step.label}</p>
-              <h3>{step.title}</h3>
-              <p>{step.description}</p>
-              <div className="record-step__status">
-                <i aria-hidden="true" />
-                <span>{step.meta}</span>
-              </div>
-            </article>
+              <article className="manifest-step__card">
+                <header>
+                  <span className="num">{String(index + 1).padStart(2, '0')}</span>
+                  <Icon size={20} aria-hidden="true" />
+                  <strong>{step.label}</strong>
+                </header>
+                <h3>{step.title}</h3>
+                <p>{step.description}</p>
+                <p className="manifest-step__record mono">{step.record}</p>
+              </article>
+            </li>
           );
         })}
+      </ol>
+    </section>
+  );
+}
+
+// 运单解剖图：一张单据标出公开、脱敏、链下三层边界。
+function WaybillAnatomy() {
+  return (
+    <section className="chain-story" aria-labelledby="chain-story-title">
+      <div className="chain-story__intro">
+        <div>
+          <h2 id="chain-story-title">想查的过程都能看到 隐私默认隐藏</h2>
+          <p className="chain-story__lead" data-reveal>
+            运输过程和核对编号可以查询；完整文件、证件和联系方式仍由业务方保管，不会出现在公开页面。
+          </p>
+        </div>
+        <dl className="chain-story__scope" aria-label="公开信息范围">
+          <div>
+            <dt>公开可查</dt>
+            <dd>运输状态 · 地点 · 操作时间</dd>
+          </div>
+          <div>
+            <dt>默认隐藏</dt>
+            <dd>完整文件 · 证件 · 联系方式</dd>
+          </div>
+        </dl>
+      </div>
+      <div className="waybill-anatomy" data-reveal>
+        <article className="waybill-doc" aria-label="运单信息公开范围示意">
+          <header className="waybill-doc__head">
+            <span>迹信 运单</span>
+            <span className="num">JX202607200001</span>
+          </header>
+          <dl className="waybill-doc__rows">
+            <div data-layer="public">
+              <dt>运输状态</dt>
+              <dd>
+                运输中 · 昆山中转中心
+                <em>公开可查</em>
+              </dd>
+            </div>
+            <div data-layer="public">
+              <dt>操作时间</dt>
+              <dd>
+                2026-07-20 11:47
+                <em>公开可查</em>
+              </dd>
+            </div>
+            <div data-layer="public">
+              <dt>记录编号</dt>
+              <dd>
+                <span className="mono">tx d94c66e0</span>
+                <em>公开可查</em>
+              </dd>
+            </div>
+            <div data-layer="masked">
+              <dt>收货人</dt>
+              <dd>
+                李** · 139****0002
+                <em>已脱敏</em>
+              </dd>
+            </div>
+            <div data-layer="offchain">
+              <dt>发货文件</dt>
+              <dd>
+                原件由业务方保管 · 系统只存核对编号
+                <em>链下保管</em>
+              </dd>
+            </div>
+          </dl>
+          <footer className="waybill-doc__foot mono">
+            document hash 3f2a…c81 · 由多方共同确认
+          </footer>
+        </article>
+        <div className="waybill-legend">
+          {PRIVACY_LAYERS.map((item) => {
+            const Icon = item.icon;
+            return (
+              <article key={item.id} className="waybill-legend__item" data-layer={item.id}>
+                <header>
+                  <Icon size={20} aria-hidden="true" />
+                  <small>{item.label}</small>
+                </header>
+                <h3>{item.title}</h3>
+                <p>{item.description}</p>
+                <p className="waybill-legend__evidence">
+                  <span>系统实际保存</span>
+                  <strong>{item.evidence}</strong>
+                </p>
+              </article>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
@@ -281,6 +375,12 @@ export function PublicTrackPage() {
                 {loading ? '正在查询' : '查询物流'}
               </Button>
             </Form>
+            {!shipment ? (
+              <p className="hero-record-strip" data-reveal>
+                <span>每次操作都会生成一条这样的记录</span>
+                <span className="mono">揽收 PICKED_UP · 上海张江 · 09:12 · tx 2b7e40f1</span>
+              </p>
+            ) : null}
             <div className="public-hero__secondary" data-reveal>
               <Link to="/verify">输入文件核对编号 查看是否一致</Link>
             </div>
@@ -421,63 +521,11 @@ export function PublicTrackPage() {
 
         {!shipment && !loading && !error ? (
           <>
-            <RecordJourney />
+            <ManifestJourney />
 
-            <section className="chain-story" aria-labelledby="chain-story-title">
-              <div className="chain-story__intro">
-                <div>
-                  <h2 id="chain-story-title">想查的过程都能看到 隐私默认隐藏</h2>
-                  <p className="chain-story__lead" data-reveal>
-                    运输过程和核对编号可以查询；完整文件、证件和联系方式仍由业务方保管，不会出现在公开页面。
-                  </p>
-                </div>
-                <dl className="chain-story__scope" aria-label="公开信息范围">
-                  <div>
-                    <dt>公开可查</dt>
-                    <dd>运输状态 · 地点 · 操作时间</dd>
-                  </div>
-                  <div>
-                    <dt>默认隐藏</dt>
-                    <dd>完整文件 · 证件 · 联系方式</dd>
-                  </div>
-                </dl>
-              </div>
-              <div className="privacy-grid">
-                {PRIVACY_LAYERS.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <article key={item.id} className="privacy-card">
-                      <header className="privacy-card__heading">
-                        <Icon size={24} aria-hidden="true" />
-                        <span>
-                          <small>{item.label}</small>
-                          <strong>{item.title}</strong>
-                        </span>
-                      </header>
-                      <div className="privacy-card__body">
-                        <p>{item.description}</p>
-                        <div className="privacy-card__saved">
-                          <span>系统实际保存</span>
-                          <strong>{item.evidence}</strong>
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            </section>
+            <WaybillAnatomy />
 
             <RoleVoices />
-
-            <section className="public-cta">
-              <div>
-                <p className="eyebrow">拿一张真实运单试试看</p>
-                <h2>用文件核对编号看看文件有没有被换过</h2>
-              </div>
-              <Button as={Link} to="/verify" size="lg" renderIcon={ArrowRight}>
-                开始核对记录
-              </Button>
-            </section>
           </>
         ) : null}
       </main>
@@ -488,6 +536,11 @@ export function PublicTrackPage() {
           <Link to="/verify">记录核对</Link>
           <Link to="/login">业务登录</Link>
         </nav>
+        {!shipment ? (
+          <Link className="public-footer__cta" to="/verify">
+            拿一张真实运单试试：用文件核对编号看看文件有没有被换过 →
+          </Link>
+        ) : null}
         <span>Hyperledger Fabric 应用实践</span>
       </footer>
     </div>
