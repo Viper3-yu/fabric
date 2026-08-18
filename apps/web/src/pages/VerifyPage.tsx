@@ -30,7 +30,6 @@ export function VerifyPage() {
     searchController.current?.abort();
     const controller = new AbortController();
     searchController.current = controller;
-    lastChecked.current = normalized;
     setLoading(true);
     setError('');
     setResult(null);
@@ -46,7 +45,12 @@ export function VerifyPage() {
       if (controller.signal.aborted) return;
       setError(getErrorMessage(caught));
     } finally {
-      if (!controller.signal.aborted) setLoading(false);
+      if (!controller.signal.aborted) {
+        // 只在核对落定（含失败）后记名，被中止的请求不算完成——
+        // StrictMode 开发态双挂载会先中止再重跑，提前记名会让第二次跳过。
+        lastChecked.current = normalized;
+        setLoading(false);
+      }
     }
   }, []);
 

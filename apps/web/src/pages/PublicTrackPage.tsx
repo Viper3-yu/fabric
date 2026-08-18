@@ -206,7 +206,6 @@ export function PublicTrackPage() {
     searchController.current?.abort();
     const controller = new AbortController();
     searchController.current = controller;
-    lastSearched.current = normalized;
     setLoading(true);
     setError('');
     setShipment(null);
@@ -223,7 +222,12 @@ export function PublicTrackPage() {
       if (controller.signal.aborted) return;
       setError(getErrorMessage(caught));
     } finally {
-      if (!controller.signal.aborted) setLoading(false);
+      if (!controller.signal.aborted) {
+        // 只在搜索落定（含失败）后记名，被中止的请求不算完成——
+        // StrictMode 开发态双挂载会先中止再重跑，提前记名会让第二次跳过。
+        lastSearched.current = normalized;
+        setLoading(false);
+      }
     }
   }, []);
 

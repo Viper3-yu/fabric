@@ -1,0 +1,863 @@
+{
+  "version": 1,
+  "shipments": {
+    "shipment-demo-exception": {
+      "docType": "shipment",
+      "id": "shipment-demo-exception",
+      "trackingNumber": "JX202607200002",
+      "status": "EXCEPTION",
+      "shipperId": "shipper-demo",
+      "shipperName": "星河商贸",
+      "carrierId": "carrier-demo",
+      "carrierName": "迅达物流",
+      "origin": {
+        "province": "上海市",
+        "city": "上海市",
+        "district": "浦东新区",
+        "detail": "张江物流园 1 号库",
+        "contactName": "李发货",
+        "contactPhoneMasked": "138****0001"
+      },
+      "destination": {
+        "province": "江苏省",
+        "city": "南京市",
+        "district": "玄武区",
+        "detail": "珠江路 88 号",
+        "contactName": "演示收货人",
+        "contactPhoneMasked": "139****0002"
+      },
+      "goods": {
+        "name": "医药试剂",
+        "category": "医药",
+        "quantity": 2,
+        "weightKg": 3.5
+      },
+      "recipientMasked": "演** · 139****0002",
+      "expectedDeliveryDate": "2026-07-23",
+      "temperatureRange": {
+        "min": 2,
+        "max": 8,
+        "unit": "C"
+      },
+      "deliveryCodeHash": "dec58ab7d7f9fb6bd366cea633274ef3632f8eaa823bf811c14bed255d60e339",
+      "documentHash": "1faab837dea90e6a5583be9c8d07213468844fb0baf8a5403a4b7e21f5fc3db3",
+      "events": [
+        {
+          "sequence": 1,
+          "type": "CREATED",
+          "location": "上海市 · 张江物流园 1 号库",
+          "description": "发货方创建运单",
+          "actorId": "shipper-demo",
+          "actorName": "星河商贸",
+          "mspId": "Org1MSP",
+          "txId": "demo-b1dcde2950dca73ab5e4d35f73ee4260",
+          "timestamp": "2026-07-20T08:30:00.000Z",
+          "evidenceHash": "1faab837dea90e6a5583be9c8d07213468844fb0baf8a5403a4b7e21f5fc3db3"
+        },
+        {
+          "sequence": 2,
+          "type": "ACCEPTED",
+          "location": "上海市 · 张江物流园 1 号库",
+          "description": "承运方已接单",
+          "actorId": "carrier-demo",
+          "actorName": "迅达物流",
+          "mspId": "Org2MSP",
+          "txId": "demo-1631f622de617bf8b2d0903c7d3d77f6",
+          "timestamp": "2026-07-20T08:31:30.000Z"
+        },
+        {
+          "sequence": 3,
+          "type": "PICKED_UP",
+          "location": "上海张江物流园",
+          "description": "承运方完成揽收",
+          "actorId": "carrier-demo",
+          "actorName": "迅达物流",
+          "mspId": "Org2MSP",
+          "txId": "demo-80b304a3853e14869c2b5da20524efb9",
+          "timestamp": "2026-07-20T08:33:00.000Z"
+        },
+        {
+          "sequence": 4,
+          "type": "CHECKPOINT",
+          "location": "苏州温控仓",
+          "description": "运输节点人工录入温度",
+          "actorId": "carrier-demo",
+          "actorName": "迅达物流",
+          "mspId": "Org2MSP",
+          "txId": "demo-33ad3327f16c65715bcb1c8d3907472e",
+          "timestamp": "2026-07-20T08:34:30.000Z",
+          "temperature": 10.4
+        },
+        {
+          "sequence": 5,
+          "type": "EXCEPTION_REPORTED",
+          "location": "苏州温控仓",
+          "description": "温度 10.4°C 超出 2~8°C 设定范围",
+          "actorId": "carrier-demo",
+          "actorName": "迅达物流",
+          "mspId": "Org2MSP",
+          "txId": "demo-33ad3327f16c65715bcb1c8d3907472e",
+          "timestamp": "2026-07-20T08:34:30.000Z",
+          "temperature": 10.4
+        }
+      ],
+      "anomalyCount": 1,
+      "lastLocation": "苏州温控仓",
+      "createdAt": "2026-07-20T08:30:00.000Z",
+      "updatedAt": "2026-07-20T08:34:30.000Z"
+    },
+    "shipment-demo-transit": {
+      "docType": "shipment",
+      "id": "shipment-demo-transit",
+      "trackingNumber": "JX202607200001",
+      "status": "IN_TRANSIT",
+      "shipperId": "shipper-demo",
+      "shipperName": "星河商贸",
+      "carrierId": "carrier-demo",
+      "carrierName": "迅达物流",
+      "origin": {
+        "province": "上海市",
+        "city": "上海市",
+        "district": "浦东新区",
+        "detail": "张江物流园 1 号库",
+        "contactName": "李发货",
+        "contactPhoneMasked": "138****0001"
+      },
+      "destination": {
+        "province": "江苏省",
+        "city": "南京市",
+        "district": "玄武区",
+        "detail": "珠江路 88 号",
+        "contactName": "演示收货人",
+        "contactPhoneMasked": "139****0002"
+      },
+      "goods": {
+        "name": "生鲜样品",
+        "category": "冷链",
+        "quantity": 4,
+        "weightKg": 16
+      },
+      "recipientMasked": "演** · 139****0002",
+      "expectedDeliveryDate": "2026-07-23",
+      "temperatureRange": {
+        "min": 2,
+        "max": 8,
+        "unit": "C"
+      },
+      "deliveryCodeHash": "7c2523c985881fb2c2b4cfbe917eb12c4c4b61e898ad4e7160cfca487ca3c4f3",
+      "documentHash": "1faab837dea90e6a5583be9c8d07213468844fb0baf8a5403a4b7e21f5fc3db3",
+      "events": [
+        {
+          "sequence": 1,
+          "type": "CREATED",
+          "location": "上海市 · 张江物流园 1 号库",
+          "description": "发货方创建运单",
+          "actorId": "shipper-demo",
+          "actorName": "星河商贸",
+          "mspId": "Org1MSP",
+          "txId": "demo-2e4b2a0755d0dbed69cf5a4e1fdb3153",
+          "timestamp": "2026-07-20T08:36:00.000Z",
+          "evidenceHash": "1faab837dea90e6a5583be9c8d07213468844fb0baf8a5403a4b7e21f5fc3db3"
+        },
+        {
+          "sequence": 2,
+          "type": "ACCEPTED",
+          "location": "上海市 · 张江物流园 1 号库",
+          "description": "承运方已接单",
+          "actorId": "carrier-demo",
+          "actorName": "迅达物流",
+          "mspId": "Org2MSP",
+          "txId": "demo-2ba331d65f865d71eb61a2dbfc855df4",
+          "timestamp": "2026-07-20T08:37:30.000Z"
+        },
+        {
+          "sequence": 3,
+          "type": "PICKED_UP",
+          "location": "上海张江物流园",
+          "description": "承运方完成揽收",
+          "actorId": "carrier-demo",
+          "actorName": "迅达物流",
+          "mspId": "Org2MSP",
+          "txId": "demo-6685bdd3109090204f60343d12316d92",
+          "timestamp": "2026-07-20T08:39:00.000Z"
+        },
+        {
+          "sequence": 4,
+          "type": "CHECKPOINT",
+          "location": "昆山中转中心",
+          "description": "完成干线中转",
+          "actorId": "carrier-demo",
+          "actorName": "迅达物流",
+          "mspId": "Org2MSP",
+          "txId": "demo-38adb17db71e642d99ef2b8254937ebe",
+          "timestamp": "2026-07-20T08:40:30.000Z",
+          "temperature": 5.2
+        }
+      ],
+      "anomalyCount": 0,
+      "lastLocation": "昆山中转中心",
+      "createdAt": "2026-07-20T08:36:00.000Z",
+      "updatedAt": "2026-07-20T08:40:30.000Z"
+    }
+  },
+  "histories": {
+    "shipment-demo-exception": [
+      {
+        "txId": "demo-b1dcde2950dca73ab5e4d35f73ee4260",
+        "timestamp": "2026-07-20T08:30:00.000Z",
+        "isDelete": false,
+        "value": {
+          "docType": "shipment",
+          "id": "shipment-demo-exception",
+          "trackingNumber": "JX202607200002",
+          "status": "CREATED",
+          "shipperId": "shipper-demo",
+          "shipperName": "星河商贸",
+          "origin": {
+            "province": "上海市",
+            "city": "上海市",
+            "district": "浦东新区",
+            "detail": "张江物流园 1 号库",
+            "contactName": "李发货",
+            "contactPhoneMasked": "138****0001"
+          },
+          "destination": {
+            "province": "江苏省",
+            "city": "南京市",
+            "district": "玄武区",
+            "detail": "珠江路 88 号",
+            "contactName": "演示收货人",
+            "contactPhoneMasked": "139****0002"
+          },
+          "goods": {
+            "name": "医药试剂",
+            "category": "医药",
+            "quantity": 2,
+            "weightKg": 3.5
+          },
+          "recipientMasked": "演** · 139****0002",
+          "expectedDeliveryDate": "2026-07-23",
+          "temperatureRange": {
+            "min": 2,
+            "max": 8,
+            "unit": "C"
+          },
+          "deliveryCodeHash": "dec58ab7d7f9fb6bd366cea633274ef3632f8eaa823bf811c14bed255d60e339",
+          "documentHash": "1faab837dea90e6a5583be9c8d07213468844fb0baf8a5403a4b7e21f5fc3db3",
+          "events": [
+            {
+              "sequence": 1,
+              "type": "CREATED",
+              "location": "上海市 · 张江物流园 1 号库",
+              "description": "发货方创建运单",
+              "actorId": "shipper-demo",
+              "actorName": "星河商贸",
+              "mspId": "Org1MSP",
+              "txId": "demo-b1dcde2950dca73ab5e4d35f73ee4260",
+              "timestamp": "2026-07-20T08:30:00.000Z",
+              "evidenceHash": "1faab837dea90e6a5583be9c8d07213468844fb0baf8a5403a4b7e21f5fc3db3"
+            }
+          ],
+          "anomalyCount": 0,
+          "lastLocation": "上海市 · 张江物流园 1 号库",
+          "createdAt": "2026-07-20T08:30:00.000Z",
+          "updatedAt": "2026-07-20T08:30:00.000Z"
+        }
+      },
+      {
+        "txId": "demo-1631f622de617bf8b2d0903c7d3d77f6",
+        "timestamp": "2026-07-20T08:31:30.000Z",
+        "isDelete": false,
+        "value": {
+          "docType": "shipment",
+          "id": "shipment-demo-exception",
+          "trackingNumber": "JX202607200002",
+          "status": "ACCEPTED",
+          "shipperId": "shipper-demo",
+          "shipperName": "星河商贸",
+          "carrierId": "carrier-demo",
+          "carrierName": "迅达物流",
+          "origin": {
+            "province": "上海市",
+            "city": "上海市",
+            "district": "浦东新区",
+            "detail": "张江物流园 1 号库",
+            "contactName": "李发货",
+            "contactPhoneMasked": "138****0001"
+          },
+          "destination": {
+            "province": "江苏省",
+            "city": "南京市",
+            "district": "玄武区",
+            "detail": "珠江路 88 号",
+            "contactName": "演示收货人",
+            "contactPhoneMasked": "139****0002"
+          },
+          "goods": {
+            "name": "医药试剂",
+            "category": "医药",
+            "quantity": 2,
+            "weightKg": 3.5
+          },
+          "recipientMasked": "演** · 139****0002",
+          "expectedDeliveryDate": "2026-07-23",
+          "temperatureRange": {
+            "min": 2,
+            "max": 8,
+            "unit": "C"
+          },
+          "deliveryCodeHash": "dec58ab7d7f9fb6bd366cea633274ef3632f8eaa823bf811c14bed255d60e339",
+          "documentHash": "1faab837dea90e6a5583be9c8d07213468844fb0baf8a5403a4b7e21f5fc3db3",
+          "events": [
+            {
+              "sequence": 1,
+              "type": "CREATED",
+              "location": "上海市 · 张江物流园 1 号库",
+              "description": "发货方创建运单",
+              "actorId": "shipper-demo",
+              "actorName": "星河商贸",
+              "mspId": "Org1MSP",
+              "txId": "demo-b1dcde2950dca73ab5e4d35f73ee4260",
+              "timestamp": "2026-07-20T08:30:00.000Z",
+              "evidenceHash": "1faab837dea90e6a5583be9c8d07213468844fb0baf8a5403a4b7e21f5fc3db3"
+            },
+            {
+              "sequence": 2,
+              "type": "ACCEPTED",
+              "location": "上海市 · 张江物流园 1 号库",
+              "description": "承运方已接单",
+              "actorId": "carrier-demo",
+              "actorName": "迅达物流",
+              "mspId": "Org2MSP",
+              "txId": "demo-1631f622de617bf8b2d0903c7d3d77f6",
+              "timestamp": "2026-07-20T08:31:30.000Z"
+            }
+          ],
+          "anomalyCount": 0,
+          "lastLocation": "上海市 · 张江物流园 1 号库",
+          "createdAt": "2026-07-20T08:30:00.000Z",
+          "updatedAt": "2026-07-20T08:31:30.000Z"
+        }
+      },
+      {
+        "txId": "demo-80b304a3853e14869c2b5da20524efb9",
+        "timestamp": "2026-07-20T08:33:00.000Z",
+        "isDelete": false,
+        "value": {
+          "docType": "shipment",
+          "id": "shipment-demo-exception",
+          "trackingNumber": "JX202607200002",
+          "status": "PICKED_UP",
+          "shipperId": "shipper-demo",
+          "shipperName": "星河商贸",
+          "carrierId": "carrier-demo",
+          "carrierName": "迅达物流",
+          "origin": {
+            "province": "上海市",
+            "city": "上海市",
+            "district": "浦东新区",
+            "detail": "张江物流园 1 号库",
+            "contactName": "李发货",
+            "contactPhoneMasked": "138****0001"
+          },
+          "destination": {
+            "province": "江苏省",
+            "city": "南京市",
+            "district": "玄武区",
+            "detail": "珠江路 88 号",
+            "contactName": "演示收货人",
+            "contactPhoneMasked": "139****0002"
+          },
+          "goods": {
+            "name": "医药试剂",
+            "category": "医药",
+            "quantity": 2,
+            "weightKg": 3.5
+          },
+          "recipientMasked": "演** · 139****0002",
+          "expectedDeliveryDate": "2026-07-23",
+          "temperatureRange": {
+            "min": 2,
+            "max": 8,
+            "unit": "C"
+          },
+          "deliveryCodeHash": "dec58ab7d7f9fb6bd366cea633274ef3632f8eaa823bf811c14bed255d60e339",
+          "documentHash": "1faab837dea90e6a5583be9c8d07213468844fb0baf8a5403a4b7e21f5fc3db3",
+          "events": [
+            {
+              "sequence": 1,
+              "type": "CREATED",
+              "location": "上海市 · 张江物流园 1 号库",
+              "description": "发货方创建运单",
+              "actorId": "shipper-demo",
+              "actorName": "星河商贸",
+              "mspId": "Org1MSP",
+              "txId": "demo-b1dcde2950dca73ab5e4d35f73ee4260",
+              "timestamp": "2026-07-20T08:30:00.000Z",
+              "evidenceHash": "1faab837dea90e6a5583be9c8d07213468844fb0baf8a5403a4b7e21f5fc3db3"
+            },
+            {
+              "sequence": 2,
+              "type": "ACCEPTED",
+              "location": "上海市 · 张江物流园 1 号库",
+              "description": "承运方已接单",
+              "actorId": "carrier-demo",
+              "actorName": "迅达物流",
+              "mspId": "Org2MSP",
+              "txId": "demo-1631f622de617bf8b2d0903c7d3d77f6",
+              "timestamp": "2026-07-20T08:31:30.000Z"
+            },
+            {
+              "sequence": 3,
+              "type": "PICKED_UP",
+              "location": "上海张江物流园",
+              "description": "承运方完成揽收",
+              "actorId": "carrier-demo",
+              "actorName": "迅达物流",
+              "mspId": "Org2MSP",
+              "txId": "demo-80b304a3853e14869c2b5da20524efb9",
+              "timestamp": "2026-07-20T08:33:00.000Z"
+            }
+          ],
+          "anomalyCount": 0,
+          "lastLocation": "上海张江物流园",
+          "createdAt": "2026-07-20T08:30:00.000Z",
+          "updatedAt": "2026-07-20T08:33:00.000Z"
+        }
+      },
+      {
+        "txId": "demo-33ad3327f16c65715bcb1c8d3907472e",
+        "timestamp": "2026-07-20T08:34:30.000Z",
+        "isDelete": false,
+        "value": {
+          "docType": "shipment",
+          "id": "shipment-demo-exception",
+          "trackingNumber": "JX202607200002",
+          "status": "EXCEPTION",
+          "shipperId": "shipper-demo",
+          "shipperName": "星河商贸",
+          "carrierId": "carrier-demo",
+          "carrierName": "迅达物流",
+          "origin": {
+            "province": "上海市",
+            "city": "上海市",
+            "district": "浦东新区",
+            "detail": "张江物流园 1 号库",
+            "contactName": "李发货",
+            "contactPhoneMasked": "138****0001"
+          },
+          "destination": {
+            "province": "江苏省",
+            "city": "南京市",
+            "district": "玄武区",
+            "detail": "珠江路 88 号",
+            "contactName": "演示收货人",
+            "contactPhoneMasked": "139****0002"
+          },
+          "goods": {
+            "name": "医药试剂",
+            "category": "医药",
+            "quantity": 2,
+            "weightKg": 3.5
+          },
+          "recipientMasked": "演** · 139****0002",
+          "expectedDeliveryDate": "2026-07-23",
+          "temperatureRange": {
+            "min": 2,
+            "max": 8,
+            "unit": "C"
+          },
+          "deliveryCodeHash": "dec58ab7d7f9fb6bd366cea633274ef3632f8eaa823bf811c14bed255d60e339",
+          "documentHash": "1faab837dea90e6a5583be9c8d07213468844fb0baf8a5403a4b7e21f5fc3db3",
+          "events": [
+            {
+              "sequence": 1,
+              "type": "CREATED",
+              "location": "上海市 · 张江物流园 1 号库",
+              "description": "发货方创建运单",
+              "actorId": "shipper-demo",
+              "actorName": "星河商贸",
+              "mspId": "Org1MSP",
+              "txId": "demo-b1dcde2950dca73ab5e4d35f73ee4260",
+              "timestamp": "2026-07-20T08:30:00.000Z",
+              "evidenceHash": "1faab837dea90e6a5583be9c8d07213468844fb0baf8a5403a4b7e21f5fc3db3"
+            },
+            {
+              "sequence": 2,
+              "type": "ACCEPTED",
+              "location": "上海市 · 张江物流园 1 号库",
+              "description": "承运方已接单",
+              "actorId": "carrier-demo",
+              "actorName": "迅达物流",
+              "mspId": "Org2MSP",
+              "txId": "demo-1631f622de617bf8b2d0903c7d3d77f6",
+              "timestamp": "2026-07-20T08:31:30.000Z"
+            },
+            {
+              "sequence": 3,
+              "type": "PICKED_UP",
+              "location": "上海张江物流园",
+              "description": "承运方完成揽收",
+              "actorId": "carrier-demo",
+              "actorName": "迅达物流",
+              "mspId": "Org2MSP",
+              "txId": "demo-80b304a3853e14869c2b5da20524efb9",
+              "timestamp": "2026-07-20T08:33:00.000Z"
+            },
+            {
+              "sequence": 4,
+              "type": "CHECKPOINT",
+              "location": "苏州温控仓",
+              "description": "运输节点人工录入温度",
+              "actorId": "carrier-demo",
+              "actorName": "迅达物流",
+              "mspId": "Org2MSP",
+              "txId": "demo-33ad3327f16c65715bcb1c8d3907472e",
+              "timestamp": "2026-07-20T08:34:30.000Z",
+              "temperature": 10.4
+            },
+            {
+              "sequence": 5,
+              "type": "EXCEPTION_REPORTED",
+              "location": "苏州温控仓",
+              "description": "温度 10.4°C 超出 2~8°C 设定范围",
+              "actorId": "carrier-demo",
+              "actorName": "迅达物流",
+              "mspId": "Org2MSP",
+              "txId": "demo-33ad3327f16c65715bcb1c8d3907472e",
+              "timestamp": "2026-07-20T08:34:30.000Z",
+              "temperature": 10.4
+            }
+          ],
+          "anomalyCount": 1,
+          "lastLocation": "苏州温控仓",
+          "createdAt": "2026-07-20T08:30:00.000Z",
+          "updatedAt": "2026-07-20T08:34:30.000Z"
+        }
+      }
+    ],
+    "shipment-demo-transit": [
+      {
+        "txId": "demo-2e4b2a0755d0dbed69cf5a4e1fdb3153",
+        "timestamp": "2026-07-20T08:36:00.000Z",
+        "isDelete": false,
+        "value": {
+          "docType": "shipment",
+          "id": "shipment-demo-transit",
+          "trackingNumber": "JX202607200001",
+          "status": "CREATED",
+          "shipperId": "shipper-demo",
+          "shipperName": "星河商贸",
+          "origin": {
+            "province": "上海市",
+            "city": "上海市",
+            "district": "浦东新区",
+            "detail": "张江物流园 1 号库",
+            "contactName": "李发货",
+            "contactPhoneMasked": "138****0001"
+          },
+          "destination": {
+            "province": "江苏省",
+            "city": "南京市",
+            "district": "玄武区",
+            "detail": "珠江路 88 号",
+            "contactName": "演示收货人",
+            "contactPhoneMasked": "139****0002"
+          },
+          "goods": {
+            "name": "生鲜样品",
+            "category": "冷链",
+            "quantity": 4,
+            "weightKg": 16
+          },
+          "recipientMasked": "演** · 139****0002",
+          "expectedDeliveryDate": "2026-07-23",
+          "temperatureRange": {
+            "min": 2,
+            "max": 8,
+            "unit": "C"
+          },
+          "deliveryCodeHash": "7c2523c985881fb2c2b4cfbe917eb12c4c4b61e898ad4e7160cfca487ca3c4f3",
+          "documentHash": "1faab837dea90e6a5583be9c8d07213468844fb0baf8a5403a4b7e21f5fc3db3",
+          "events": [
+            {
+              "sequence": 1,
+              "type": "CREATED",
+              "location": "上海市 · 张江物流园 1 号库",
+              "description": "发货方创建运单",
+              "actorId": "shipper-demo",
+              "actorName": "星河商贸",
+              "mspId": "Org1MSP",
+              "txId": "demo-2e4b2a0755d0dbed69cf5a4e1fdb3153",
+              "timestamp": "2026-07-20T08:36:00.000Z",
+              "evidenceHash": "1faab837dea90e6a5583be9c8d07213468844fb0baf8a5403a4b7e21f5fc3db3"
+            }
+          ],
+          "anomalyCount": 0,
+          "lastLocation": "上海市 · 张江物流园 1 号库",
+          "createdAt": "2026-07-20T08:36:00.000Z",
+          "updatedAt": "2026-07-20T08:36:00.000Z"
+        }
+      },
+      {
+        "txId": "demo-2ba331d65f865d71eb61a2dbfc855df4",
+        "timestamp": "2026-07-20T08:37:30.000Z",
+        "isDelete": false,
+        "value": {
+          "docType": "shipment",
+          "id": "shipment-demo-transit",
+          "trackingNumber": "JX202607200001",
+          "status": "ACCEPTED",
+          "shipperId": "shipper-demo",
+          "shipperName": "星河商贸",
+          "carrierId": "carrier-demo",
+          "carrierName": "迅达物流",
+          "origin": {
+            "province": "上海市",
+            "city": "上海市",
+            "district": "浦东新区",
+            "detail": "张江物流园 1 号库",
+            "contactName": "李发货",
+            "contactPhoneMasked": "138****0001"
+          },
+          "destination": {
+            "province": "江苏省",
+            "city": "南京市",
+            "district": "玄武区",
+            "detail": "珠江路 88 号",
+            "contactName": "演示收货人",
+            "contactPhoneMasked": "139****0002"
+          },
+          "goods": {
+            "name": "生鲜样品",
+            "category": "冷链",
+            "quantity": 4,
+            "weightKg": 16
+          },
+          "recipientMasked": "演** · 139****0002",
+          "expectedDeliveryDate": "2026-07-23",
+          "temperatureRange": {
+            "min": 2,
+            "max": 8,
+            "unit": "C"
+          },
+          "deliveryCodeHash": "7c2523c985881fb2c2b4cfbe917eb12c4c4b61e898ad4e7160cfca487ca3c4f3",
+          "documentHash": "1faab837dea90e6a5583be9c8d07213468844fb0baf8a5403a4b7e21f5fc3db3",
+          "events": [
+            {
+              "sequence": 1,
+              "type": "CREATED",
+              "location": "上海市 · 张江物流园 1 号库",
+              "description": "发货方创建运单",
+              "actorId": "shipper-demo",
+              "actorName": "星河商贸",
+              "mspId": "Org1MSP",
+              "txId": "demo-2e4b2a0755d0dbed69cf5a4e1fdb3153",
+              "timestamp": "2026-07-20T08:36:00.000Z",
+              "evidenceHash": "1faab837dea90e6a5583be9c8d07213468844fb0baf8a5403a4b7e21f5fc3db3"
+            },
+            {
+              "sequence": 2,
+              "type": "ACCEPTED",
+              "location": "上海市 · 张江物流园 1 号库",
+              "description": "承运方已接单",
+              "actorId": "carrier-demo",
+              "actorName": "迅达物流",
+              "mspId": "Org2MSP",
+              "txId": "demo-2ba331d65f865d71eb61a2dbfc855df4",
+              "timestamp": "2026-07-20T08:37:30.000Z"
+            }
+          ],
+          "anomalyCount": 0,
+          "lastLocation": "上海市 · 张江物流园 1 号库",
+          "createdAt": "2026-07-20T08:36:00.000Z",
+          "updatedAt": "2026-07-20T08:37:30.000Z"
+        }
+      },
+      {
+        "txId": "demo-6685bdd3109090204f60343d12316d92",
+        "timestamp": "2026-07-20T08:39:00.000Z",
+        "isDelete": false,
+        "value": {
+          "docType": "shipment",
+          "id": "shipment-demo-transit",
+          "trackingNumber": "JX202607200001",
+          "status": "PICKED_UP",
+          "shipperId": "shipper-demo",
+          "shipperName": "星河商贸",
+          "carrierId": "carrier-demo",
+          "carrierName": "迅达物流",
+          "origin": {
+            "province": "上海市",
+            "city": "上海市",
+            "district": "浦东新区",
+            "detail": "张江物流园 1 号库",
+            "contactName": "李发货",
+            "contactPhoneMasked": "138****0001"
+          },
+          "destination": {
+            "province": "江苏省",
+            "city": "南京市",
+            "district": "玄武区",
+            "detail": "珠江路 88 号",
+            "contactName": "演示收货人",
+            "contactPhoneMasked": "139****0002"
+          },
+          "goods": {
+            "name": "生鲜样品",
+            "category": "冷链",
+            "quantity": 4,
+            "weightKg": 16
+          },
+          "recipientMasked": "演** · 139****0002",
+          "expectedDeliveryDate": "2026-07-23",
+          "temperatureRange": {
+            "min": 2,
+            "max": 8,
+            "unit": "C"
+          },
+          "deliveryCodeHash": "7c2523c985881fb2c2b4cfbe917eb12c4c4b61e898ad4e7160cfca487ca3c4f3",
+          "documentHash": "1faab837dea90e6a5583be9c8d07213468844fb0baf8a5403a4b7e21f5fc3db3",
+          "events": [
+            {
+              "sequence": 1,
+              "type": "CREATED",
+              "location": "上海市 · 张江物流园 1 号库",
+              "description": "发货方创建运单",
+              "actorId": "shipper-demo",
+              "actorName": "星河商贸",
+              "mspId": "Org1MSP",
+              "txId": "demo-2e4b2a0755d0dbed69cf5a4e1fdb3153",
+              "timestamp": "2026-07-20T08:36:00.000Z",
+              "evidenceHash": "1faab837dea90e6a5583be9c8d07213468844fb0baf8a5403a4b7e21f5fc3db3"
+            },
+            {
+              "sequence": 2,
+              "type": "ACCEPTED",
+              "location": "上海市 · 张江物流园 1 号库",
+              "description": "承运方已接单",
+              "actorId": "carrier-demo",
+              "actorName": "迅达物流",
+              "mspId": "Org2MSP",
+              "txId": "demo-2ba331d65f865d71eb61a2dbfc855df4",
+              "timestamp": "2026-07-20T08:37:30.000Z"
+            },
+            {
+              "sequence": 3,
+              "type": "PICKED_UP",
+              "location": "上海张江物流园",
+              "description": "承运方完成揽收",
+              "actorId": "carrier-demo",
+              "actorName": "迅达物流",
+              "mspId": "Org2MSP",
+              "txId": "demo-6685bdd3109090204f60343d12316d92",
+              "timestamp": "2026-07-20T08:39:00.000Z"
+            }
+          ],
+          "anomalyCount": 0,
+          "lastLocation": "上海张江物流园",
+          "createdAt": "2026-07-20T08:36:00.000Z",
+          "updatedAt": "2026-07-20T08:39:00.000Z"
+        }
+      },
+      {
+        "txId": "demo-38adb17db71e642d99ef2b8254937ebe",
+        "timestamp": "2026-07-20T08:40:30.000Z",
+        "isDelete": false,
+        "value": {
+          "docType": "shipment",
+          "id": "shipment-demo-transit",
+          "trackingNumber": "JX202607200001",
+          "status": "IN_TRANSIT",
+          "shipperId": "shipper-demo",
+          "shipperName": "星河商贸",
+          "carrierId": "carrier-demo",
+          "carrierName": "迅达物流",
+          "origin": {
+            "province": "上海市",
+            "city": "上海市",
+            "district": "浦东新区",
+            "detail": "张江物流园 1 号库",
+            "contactName": "李发货",
+            "contactPhoneMasked": "138****0001"
+          },
+          "destination": {
+            "province": "江苏省",
+            "city": "南京市",
+            "district": "玄武区",
+            "detail": "珠江路 88 号",
+            "contactName": "演示收货人",
+            "contactPhoneMasked": "139****0002"
+          },
+          "goods": {
+            "name": "生鲜样品",
+            "category": "冷链",
+            "quantity": 4,
+            "weightKg": 16
+          },
+          "recipientMasked": "演** · 139****0002",
+          "expectedDeliveryDate": "2026-07-23",
+          "temperatureRange": {
+            "min": 2,
+            "max": 8,
+            "unit": "C"
+          },
+          "deliveryCodeHash": "7c2523c985881fb2c2b4cfbe917eb12c4c4b61e898ad4e7160cfca487ca3c4f3",
+          "documentHash": "1faab837dea90e6a5583be9c8d07213468844fb0baf8a5403a4b7e21f5fc3db3",
+          "events": [
+            {
+              "sequence": 1,
+              "type": "CREATED",
+              "location": "上海市 · 张江物流园 1 号库",
+              "description": "发货方创建运单",
+              "actorId": "shipper-demo",
+              "actorName": "星河商贸",
+              "mspId": "Org1MSP",
+              "txId": "demo-2e4b2a0755d0dbed69cf5a4e1fdb3153",
+              "timestamp": "2026-07-20T08:36:00.000Z",
+              "evidenceHash": "1faab837dea90e6a5583be9c8d07213468844fb0baf8a5403a4b7e21f5fc3db3"
+            },
+            {
+              "sequence": 2,
+              "type": "ACCEPTED",
+              "location": "上海市 · 张江物流园 1 号库",
+              "description": "承运方已接单",
+              "actorId": "carrier-demo",
+              "actorName": "迅达物流",
+              "mspId": "Org2MSP",
+              "txId": "demo-2ba331d65f865d71eb61a2dbfc855df4",
+              "timestamp": "2026-07-20T08:37:30.000Z"
+            },
+            {
+              "sequence": 3,
+              "type": "PICKED_UP",
+              "location": "上海张江物流园",
+              "description": "承运方完成揽收",
+              "actorId": "carrier-demo",
+              "actorName": "迅达物流",
+              "mspId": "Org2MSP",
+              "txId": "demo-6685bdd3109090204f60343d12316d92",
+              "timestamp": "2026-07-20T08:39:00.000Z"
+            },
+            {
+              "sequence": 4,
+              "type": "CHECKPOINT",
+              "location": "昆山中转中心",
+              "description": "完成干线中转",
+              "actorId": "carrier-demo",
+              "actorName": "迅达物流",
+              "mspId": "Org2MSP",
+              "txId": "demo-38adb17db71e642d99ef2b8254937ebe",
+              "timestamp": "2026-07-20T08:40:30.000Z",
+              "temperature": 5.2
+            }
+          ],
+          "anomalyCount": 0,
+          "lastLocation": "昆山中转中心",
+          "createdAt": "2026-07-20T08:36:00.000Z",
+          "updatedAt": "2026-07-20T08:40:30.000Z"
+        }
+      }
+    ]
+  }
+}
