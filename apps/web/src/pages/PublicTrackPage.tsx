@@ -17,7 +17,7 @@ import { ShipmentProgress } from '../components/ShipmentProgress';
 import { ShipmentTimeline } from '../components/ShipmentTimeline';
 import { StatusTag } from '../components/StatusTag';
 import { api, getErrorMessage } from '../lib/api';
-import { useRevealMotion } from '../lib/motion';
+import { useCinematicMotion } from '../lib/motion';
 import { formatDate, routeLabel } from '../lib/presentation';
 import type { LedgerMode } from '../types';
 
@@ -107,27 +107,72 @@ const ROLE_STORIES = [
   },
 ];
 
+const TRUST_FLOW = [
+  '发货方建单',
+  '承运方接货',
+  '位置自动更新',
+  '异常及时处理',
+  '收货方确认',
+  '全程记录可查',
+];
+
+function TrustMarquee() {
+  return (
+    <div className="trust-marquee" aria-label="物流闭环阶段">
+      <div className="trust-marquee__track">
+        {[0, 1].map((copy) => (
+          <div key={copy} className="trust-marquee__set" aria-hidden={copy === 1}>
+            {TRUST_FLOW.map((item) => (
+              <span key={`${copy}-${item}`}>
+                <i aria-hidden="true" />
+                {item}
+              </span>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // 运输清单时间线：交接单式的横向四步，每步带一条真实形态的记录行。
 function ManifestJourney() {
   return (
-    <section className="manifest-timeline" aria-labelledby="record-journey-title">
-      <header className="manifest-timeline__head">
+    <section
+      className="manifest-timeline"
+      aria-labelledby="record-journey-title"
+      data-motion-pin
+    >
+      <header className="manifest-timeline__head" data-pin-heading>
         <p className="eyebrow">运输清单</p>
         <h2 id="record-journey-title">每一步都有记录 来龙去脉一看就懂</h2>
-        <p aria-label="运输过程中的关键动作都会被系统按顺序保存">
-          谁建的单，谁接的货，车辆到过哪里，什么时候签收，系统都会按顺序记下来。
+        <p
+          className="manifest-timeline__scrub"
+          aria-label="运输过程中的关键动作都会被系统按顺序保存"
+        >
+          {[
+            '谁建的单，',
+            '谁接的货，',
+            '车辆到过哪里，',
+            '什么时候签收，',
+            '系统都会按顺序记下来。',
+          ].map((copy) => (
+            <span key={copy} data-scrub-word>
+              {copy}
+            </span>
+          ))}
         </p>
       </header>
       <ol className="manifest-timeline__rail">
         {RECORD_STEPS.map((step, index) => {
           const Icon = step.icon;
           return (
-            <li key={step.label} className="manifest-step" data-reveal>
+            <li key={step.label} className="manifest-step">
               <div className="manifest-step__node" aria-hidden="true">
                 <i className={index === 0 ? 'is-current' : ''} />
                 {index < RECORD_STEPS.length - 1 ? <span /> : null}
               </div>
-              <article className="manifest-step__card">
+              <article className="manifest-step__card" data-pin-card>
                 <header>
                   <span className="num">{String(index + 1).padStart(2, '0')}</span>
                   <Icon size={20} aria-hidden="true" />
@@ -152,7 +197,7 @@ function WaybillAnatomy() {
       <div className="chain-story__intro">
         <div>
           <h2 id="chain-story-title">想查的过程都能看到 隐私默认隐藏</h2>
-          <p className="chain-story__lead" data-reveal>
+          <p className="chain-story__lead" data-scrub-copy>
             运输过程和核对编号可以查询；完整文件、证件和联系方式仍由业务方保管，不会出现在公开页面。
           </p>
         </div>
@@ -294,7 +339,7 @@ export function PublicTrackPage() {
   const searchController = useRef<AbortController | null>(null);
   const lastSearched = useRef<string | null>(null);
 
-  useRevealMotion(pageRef, [shipment?.id]);
+  useCinematicMotion(pageRef, [shipment?.id]);
 
   const runSearch = useCallback(async (normalized: string) => {
     searchController.current?.abort();
@@ -416,6 +461,8 @@ export function PublicTrackPage() {
             </div>
           </div>
         </section>
+
+        <TrustMarquee />
 
         {loading ? (
           <section className="public-loading" aria-live="polite" aria-busy="true">
