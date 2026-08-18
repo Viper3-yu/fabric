@@ -547,27 +547,46 @@ p {
     opacity: 0;
     transform: translateY(8px);
   }
-} /* ===== 运输清单时间线（交接单式四步） ===== */
+} /* ===== 运输清单时间线（深墨绿证据面板内的交接单式四步） ===== */
 .manifest-timeline {
   width: min(calc(100% - (2 * var(--jixin-gutter))), var(--jixin-container));
   margin: clamp(4rem, 8vw, 7rem) auto;
+  padding: clamp(2.5rem, 5vw, 4.5rem) clamp(1.5rem, 4vw, 3.5rem);
+  overflow: clip;
+  border-radius: 1rem;
+  color: #eef7f2;
+  /* 4rem 账本网格底纹：证据面板的"登记纸"意象。 */
+  background:
+    linear-gradient(rgba(197, 229, 213, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(197, 229, 213, 0.05) 1px, transparent 1px), #0b1a14;
+  background-size:
+    4rem 4rem,
+    4rem 4rem,
+    auto;
 }
 .manifest-timeline__head {
-  max-width: 44rem;
-  margin-bottom: 2.5rem;
+  max-width: 46rem;
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+.manifest-timeline__head .eyebrow {
+  color: #75d3aa;
 }
 .manifest-timeline__head h2 {
-  margin: 0 0 0.75rem;
+  max-width: 13ch;
+  margin: 0 0 0.9rem;
   font-family: var(--jixin-font-editorial);
-  font-size: clamp(2.25rem, 4vw, 3.5rem);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
+  font-size: clamp(2.75rem, 5vw, 4.75rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  color: #f4faf7;
 }
 .manifest-timeline__head > p {
   margin: 0;
-  color: var(--jixin-ink-soft);
-  line-height: 1.7;
+  max-width: 34rem;
+  color: #bacbc2;
+  font-size: clamp(1rem, 1.4vw, 1.15rem);
+  line-height: 1.75;
 }
 .manifest-timeline__rail {
   display: grid;
@@ -590,12 +609,13 @@ p {
   flex-shrink: 0;
   width: 0.8rem;
   height: 0.8rem;
-  border: 1.5px solid var(--jixin-accent);
+  border: 1.5px solid #75d3aa;
   border-radius: 50%;
-  background: var(--jixin-surface-raised);
+  background: transparent;
 }
 .manifest-step__node i.is-current {
-  background: var(--jixin-accent);
+  border-color: #6acba0;
+  background: #6acba0;
 }
 .manifest-step__node span {
   flex: 1;
@@ -603,51 +623,53 @@ p {
   margin-left: 0.5rem;
   /* 延伸穿过列间距，与下一步的节点相连。 */
   margin-right: -1rem;
-  background: var(--jixin-border);
+  background: rgba(226, 241, 233, 0.22);
 }
 .manifest-step__card {
   display: grid;
   gap: 0.5rem;
   align-content: start;
-  padding: 1.1rem 1.2rem 1rem;
-  border: 1px solid var(--jixin-border);
-  border-radius: var(--jixin-card-radius);
-  background: var(--jixin-surface-raised);
+  min-height: 15rem;
+  padding: 1.15rem 1.25rem 1.05rem;
+  border: 1px solid rgba(192, 226, 208, 0.18);
+  border-radius: 0.75rem;
+  background: rgba(20, 47, 36, 0.82);
 }
 .manifest-step__card header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding-bottom: 0.7rem;
-  border-bottom: 1px solid var(--jixin-border);
-  color: var(--jixin-accent);
+  border-bottom: 1px solid rgba(192, 226, 208, 0.16);
+  color: #75d3aa;
 }
 .manifest-step__card header .num {
-  color: var(--jixin-ink-soft);
+  color: #8fa69a;
   font-size: 0.75rem;
 }
 .manifest-step__card header strong {
-  color: var(--jixin-ink);
+  color: #eef7f2;
   font-size: 0.92rem;
   font-weight: 600;
 }
 .manifest-step__card h3 {
   margin: 0.25rem 0 0;
-  font-size: 1.02rem;
+  color: #f4faf7;
+  font-size: 1.05rem;
   font-weight: 600;
   line-height: 1.4;
 }
 .manifest-step__card > p {
   margin: 0;
-  color: var(--jixin-ink-soft);
+  color: #a9bcb2;
   font-size: 0.85rem;
   line-height: 1.65;
 }
 .manifest-step__record {
   margin: 0.35rem 0 0;
   padding-top: 0.6rem;
-  border-top: 1px dashed var(--jixin-border);
-  color: var(--jixin-ink-soft);
+  border-top: 1px dashed rgba(192, 226, 208, 0.28);
+  color: #cfe3d8;
   font-size: 0.7rem;
   letter-spacing: -0.01em;
 } /* ===== 运单解剖图 ===== */
@@ -663,6 +685,8 @@ p {
   border: 1px solid var(--jixin-border-strong);
   border-radius: var(--jixin-card-radius);
   background: var(--jixin-surface-raised);
+  /* 关键影像允许的单层阴影：像放在桌面上的一张凭证。 */
+  box-shadow: 0 1.4rem 3rem rgba(10, 22, 16, 0.14);
 }
 .waybill-doc__head {
   display: flex;
