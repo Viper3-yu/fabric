@@ -15,6 +15,7 @@ import { useAuth } from '../auth/AuthContext';
 import { ActionDialog } from '../components/ActionDialog';
 import { CopyButton } from '../components/CopyButton';
 import { ErrorState, PageSkeleton } from '../components/PageState';
+import { RecordStrip } from '../components/RecordStrip';
 import { ShipmentTimeline } from '../components/ShipmentTimeline';
 import { ShipmentRouteMap } from '../components/ShipmentRouteMap';
 import { StatusTag } from '../components/StatusTag';
@@ -101,6 +102,8 @@ export function ShipmentDetailPage() {
   if (loading && !shipment) return <PageSkeleton rows={4} />;
   if (error && !shipment) return <ErrorState message={error} onRetry={reload} />;
   if (!shipment || !user) return null;
+
+  const latestEvent = shipment.events.at(-1);
 
   return (
     <div className="page shipment-detail-page">
@@ -197,12 +200,10 @@ export function ShipmentDetailPage() {
         <article>
           <div>
             <CheckmarkFilled size={18} aria-hidden="true" />
-            <span>已经保存</span>
+            <span>最近一条记录</span>
           </div>
           <strong className="num">{shipment.events.length} 次变化</strong>
-          <small>
-            最近一次：{formatDateTime(shipment.events.at(-1)?.timestamp ?? shipment.updatedAt)}
-          </small>
+          {latestEvent ? <RecordStrip event={latestEvent} compact /> : <small>暂无事件记录</small>}
         </article>
       </section>
 

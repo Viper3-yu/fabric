@@ -14,6 +14,7 @@ import type { DashboardSummary, Shipment } from '@jixin/shared';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { EmptyState, ErrorState, PageSkeleton } from '../components/PageState';
+import { RecordStrip } from '../components/RecordStrip';
 import { ShipmentProgress } from '../components/ShipmentProgress';
 import { StatusTag } from '../components/StatusTag';
 import { api, getErrorMessage } from '../lib/api';
@@ -199,6 +200,9 @@ export function DashboardPage() {
           )}
         </div>
         <ShipmentProgress shipment={activeShipment} compact />
+        {activeShipment && activeShipment.events.length > 0 ? (
+          <RecordStrip event={activeShipment.events[activeShipment.events.length - 1]!} compact />
+        ) : null}
       </section>
 
       <section className="dashboard-kpis" aria-label="关键运单指标">
