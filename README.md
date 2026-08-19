@@ -51,6 +51,13 @@ pnpm dev
 
 浏览器访问 <http://localhost:5173>，API 默认位于 <http://127.0.0.1:3001>。访问 <http://127.0.0.1:3001/api/network>，确认 `mode` 为 `fabric` 且 `health.status` 为 `ok`。所有修改响应都会返回 Fabric `transactionId`；签收码通过 transient data 提交，不写入交易参数、区块状态或链码事件。
 
+如果想让工作台和公开页有可浏览的记录，可以写入一组覆盖各状态的预置运单（12 个，全部真实上链，可重复执行——已存在的会跳过）：
+
+```powershell
+$env:ENV_FILE = (Resolve-Path ".\apps\api\.env.fabric").Path
+pnpm seed
+```
+
 推荐闭环：发货方建单并保存系统返回的 6 位签收码；承运方依次接单、揽收、更新节点、处理异常并送达；收货方用签收码确认收货；最后使用公开查询页核对脱敏轨迹和交易历史。
 
 停止测试网络：

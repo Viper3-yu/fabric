@@ -5,11 +5,11 @@
 :root {
   color-scheme: light;
   --jixin-font-ui:
-    'Manrope Variable', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, sans-serif;
+    'Times New Roman', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, serif;
   --jixin-font-editorial:
-    'Noto Serif SC Variable', 'Noto Serif SC', 'Manrope Variable', 'Noto Sans SC', serif;
+    'Times New Roman', 'Noto Serif SC Variable', 'Noto Serif SC', serif;
   --jixin-font-data:
-    'Manrope Variable', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, sans-serif;
+    'Times New Roman', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, serif;
   --jixin-font-mono: 'Cascadia Mono', 'SFMono-Regular', Consolas, monospace;
   --jixin-accent: #1d624b;
   --jixin-accent-hover: #124a37;

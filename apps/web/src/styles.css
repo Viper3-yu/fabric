@@ -47,7 +47,7 @@ body {
   margin: 0;
   color: var(--jixin-ink);
   background: var(--jixin-canvas);
-  font-family: 'Manrope Variable', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, sans-serif;
+  font-family: 'Times New Roman', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, serif;
 }
 button,
 input,
@@ -1367,7 +1367,7 @@ body {
   background:
     radial-gradient(circle at 8% 2%, rgba(98, 193, 147, 0.12), transparent 27rem),
     var(--jixin-canvas);
-  font-family: 'Manrope Variable', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, sans-serif;
+  font-family: 'Times New Roman', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, serif;
   text-rendering: optimizeLegibility;
 }
 ::selection {
@@ -3029,7 +3029,7 @@ body {
   color: var(--jixin-ink);
   background:
     linear-gradient(135deg, rgba(85, 189, 146, 0.055), transparent 28rem), var(--jixin-canvas);
-  font-family: 'Manrope Variable', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, sans-serif;
+  font-family: 'Times New Roman', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, serif;
 }
 button,
 input,
