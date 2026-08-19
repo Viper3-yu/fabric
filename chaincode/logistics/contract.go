@@ -48,6 +48,7 @@ type createShipmentInput struct {
 	TrackingNumber       string                  `json:"trackingNumber"`
 	ShipperID            string                  `json:"shipperId"`
 	ShipperName          string                  `json:"shipperName"`
+	RecipientID          string                  `json:"recipientId"`
 	Origin               model.Address           `json:"origin"`
 	Destination          model.Address           `json:"destination"`
 	Goods                model.GoodsInfo         `json:"goods"`
@@ -111,7 +112,8 @@ func (c *LogisticsContract) CreateShipment(
 	shipment := model.Shipment{
 		DocType: "shipment", ID: input.ID, TrackingNumber: input.TrackingNumber,
 		Status: model.StatusCreated, ShipperID: input.ShipperID, ShipperName: input.ShipperName,
-		Origin: input.Origin, Destination: input.Destination, Goods: input.Goods,
+		RecipientID: input.RecipientID,
+		Origin:      input.Origin, Destination: input.Destination, Goods: input.Goods,
 		RecipientMasked: input.RecipientMasked, ExpectedDeliveryDate: input.ExpectedDeliveryDate,
 		TemperatureRange: input.TemperatureRange, DeliveryCodeHash: input.DeliveryCodeHash,
 		DocumentHash: input.DocumentHash, Events: []model.ShipmentEvent{created},
@@ -382,6 +384,15 @@ func (c *LogisticsContract) ConfirmReceipt(
 	}
 	if err := requireStatus(shipment, "ConfirmReceipt", model.StatusDelivered); err != nil {
 		return "", err
+	}
+	// Shipments recorded before recipient binding have an empty RecipientID;
+	// those stay confirmable by any Org1 receiver account to avoid stranding
+	// legacy data. New shipments must be confirmed by the recorded recipient.
+	if shipment.RecipientID != "" && input.ActorID != shipment.RecipientID {
+		return "", fmt.Errorf(
+			"ConfirmReceipt failed: actor %q is not authorized; shipment %q recipient is %q",
+			input.ActorID, shipment.ID, shipment.RecipientID,
+		)
 	}
 	actual := sha256.Sum256([]byte(code))
 	expected, err := hex.DecodeString(shipment.DeliveryCodeHash)

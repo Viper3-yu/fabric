@@ -290,14 +290,10 @@ export function DashboardPage() {
           <Blockchain size={22} aria-hidden="true" />
           <div>
             <span>记录服务</span>
-            <strong>{ledgerMode === 'fabric' ? 'Fabric 协作网络' : '本地演示环境'}</strong>
+            <strong>Fabric 协作网络</strong>
           </div>
         </div>
-        <p>
-          {ledgerMode === 'fabric'
-            ? '建单、交接和签收由多个协作方共同确认并保存。'
-            : '流程可以完整体验，但记录仅保存在本地演示环境。'}
-        </p>
+        <p>建单、交接和签收由多个协作方共同确认并保存。</p>
         <dl className="dashboard-network-strip__facts">
           <div>
             <dt>连接</dt>
@@ -305,7 +301,7 @@ export function DashboardPage() {
           </div>
           <div>
             <dt>记录方式</dt>
-            <dd>{ledgerMode === 'fabric' ? '多方确认' : '本地保存'}</dd>
+            <dd>多方确认</dd>
           </div>
           <div>
             <dt>检查时间</dt>

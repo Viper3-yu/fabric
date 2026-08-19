@@ -333,10 +333,7 @@ export function CreateShipmentPage() {
           {receipt ? (
             <div className="creation-success">
               <CheckmarkFilled size={32} aria-hidden="true" />
-              <p>
-                运单已保存到
-                {receipt.ledgerMode === 'fabric' ? ' Fabric 协作网络' : '演示环境'}。
-              </p>
+              <p>运单已保存到 Fabric 协作网络。</p>
               {receipt.deliveryCode ? (
                 <div className="delivery-code-block">
                   <span>一次性签收码</span>

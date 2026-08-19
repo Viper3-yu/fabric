@@ -80,14 +80,17 @@ type ShipmentEvent struct {
 }
 
 type Shipment struct {
-	DocType              string            `json:"docType"`
-	ID                   string            `json:"id"`
-	TrackingNumber       string            `json:"trackingNumber"`
-	Status               string            `json:"status"`
-	ShipperID            string            `json:"shipperId"`
-	ShipperName          string            `json:"shipperName"`
-	CarrierID            string            `json:"carrierId,omitempty"`
-	CarrierName          string            `json:"carrierName,omitempty"`
+	DocType        string `json:"docType"`
+	ID             string `json:"id"`
+	TrackingNumber string `json:"trackingNumber"`
+	Status         string `json:"status"`
+	ShipperID      string `json:"shipperId"`
+	ShipperName    string `json:"shipperName"`
+	CarrierID      string `json:"carrierId,omitempty"`
+	CarrierName    string `json:"carrierName,omitempty"`
+	// RecipientID binds the shipment to the receiver account allowed to view
+	// and confirm it. Empty on shipments recorded before this field existed.
+	RecipientID          string            `json:"recipientId,omitempty"`
 	Origin               Address           `json:"origin"`
 	Destination          Address           `json:"destination"`
 	Goods                GoodsInfo         `json:"goods"`

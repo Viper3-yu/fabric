@@ -17,7 +17,6 @@ if (Test-Path $envFile) {
 } else {
   Write-Warning "[test-fabric] apps/api/.env.fabric not found; run pnpm fabric:up first"
 }
-if (-not $env:LEDGER_MODE) { $env:LEDGER_MODE = 'fabric' }
 if (-not $env:JWT_SECRET) {
   # The integration test only needs config.Load to accept the environment;
   # the token itself is not exercised here.

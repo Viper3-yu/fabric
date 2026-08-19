@@ -67,15 +67,15 @@ describe('公开物流查询', () => {
   beforeEach(() => {
     vi.mocked(api.public.track).mockResolvedValue({
       data: shipment,
-      meta: { ledgerMode: 'demo' },
+      meta: { ledgerMode: 'fabric' },
     });
     vi.mocked(api.public.history).mockResolvedValue({
       data: [],
-      meta: { ledgerMode: 'demo' },
+      meta: { ledgerMode: 'fabric' },
     });
   });
 
-  it('查询后显示脱敏轨迹和演示记录提示', async () => {
+  it('查询后显示脱敏轨迹和链上记录标识', async () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter initialEntries={['/track']}>
@@ -87,7 +87,6 @@ describe('公开物流查询', () => {
     await user.click(screen.getByRole('button', { name: '查询物流' }));
 
     expect(await screen.findByText('广州 至 上海')).toBeInTheDocument();
-    expect(screen.getByText('当前使用演示记录')).toBeInTheDocument();
     expect(screen.getByText('周女士，139****2068')).toBeInTheDocument();
     expect(screen.getByText('tx-demo-001')).toBeInTheDocument();
   });

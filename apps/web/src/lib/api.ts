@@ -128,10 +128,7 @@ export const api = {
       }),
     logout: () => request<{ loggedOut: boolean }>('/auth/logout', { method: 'POST' }),
     me: (signal?: AbortSignal) =>
-      request<AppUser | { user: AppUser; ledgerMode?: 'fabric' | 'demo' }>(
-        '/auth/me',
-        withSignal(signal),
-      ),
+      request<AppUser | { user: AppUser; ledgerMode?: 'fabric' }>('/auth/me', withSignal(signal)),
   },
   dashboard: {
     summary: (signal?: AbortSignal) =>

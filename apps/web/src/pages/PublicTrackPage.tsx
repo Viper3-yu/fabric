@@ -11,7 +11,6 @@ import {
 } from '@carbon/icons-react';
 import type { Shipment, ShipmentHistoryEntry } from '@jixin/shared';
 import { Link, useSearchParams } from 'react-router-dom';
-import { LedgerBanner } from '../components/LedgerBanner';
 import { PublicHeader } from '../components/PublicHeader';
 import { ShipmentProgress } from '../components/ShipmentProgress';
 import { ShipmentTimeline } from '../components/ShipmentTimeline';
@@ -19,7 +18,6 @@ import { StatusTag } from '../components/StatusTag';
 import { api, getErrorMessage } from '../lib/api';
 import { useCinematicMotion } from '../lib/motion';
 import { formatDate, routeLabel } from '../lib/presentation';
-import type { LedgerMode } from '../types';
 
 const RECORD_STEPS = [
   {
@@ -138,11 +136,7 @@ function TrustMarquee() {
 // 运输清单时间线：交接单式的横向四步，每步带一条真实形态的记录行。
 function ManifestJourney() {
   return (
-    <section
-      className="manifest-timeline"
-      aria-labelledby="record-journey-title"
-      data-motion-pin
-    >
+    <section className="manifest-timeline" aria-labelledby="record-journey-title" data-motion-pin>
       <header className="manifest-timeline__head" data-pin-heading>
         <p className="eyebrow">运输清单</p>
         <h2 id="record-journey-title">每一步都有记录 来龙去脉一看就懂</h2>
@@ -333,7 +327,6 @@ export function PublicTrackPage() {
   const [trackingNumber, setTrackingNumber] = useState(urlTracking);
   const [shipment, setShipment] = useState<Shipment | null>(null);
   const [history, setHistory] = useState<ShipmentHistoryEntry[]>([]);
-  const [ledgerMode, setLedgerMode] = useState<LedgerMode | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const searchController = useRef<AbortController | null>(null);
@@ -356,7 +349,6 @@ export function PublicTrackPage() {
       if (controller.signal.aborted) return;
       setShipment(trackResult.data);
       setHistory(historyResult.data);
-      setLedgerMode(trackResult.meta?.ledgerMode ?? historyResult.meta?.ledgerMode ?? null);
     } catch (caught) {
       if (controller.signal.aborted) return;
       setError(getErrorMessage(caught));
@@ -475,7 +467,6 @@ export function PublicTrackPage() {
 
         {shipment ? (
           <section id="track-result" className="public-result" aria-live="polite">
-            {ledgerMode ? <LedgerBanner mode={ledgerMode} /> : null}
             <header className="public-result__header">
               <div>
                 <span className="num">{shipment.trackingNumber}</span>

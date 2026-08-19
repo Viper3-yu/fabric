@@ -157,6 +157,16 @@ func TestLogisticsContractLifecycle(t *testing.T) {
 	); err == nil {
 		t.Fatal("wrong delivery code was accepted")
 	}
+	// The delivery code is only half the guard: a different receiver account
+	// must not be able to confirm a shipment addressed to someone else even
+	// with the correct code.
+	if _, err := harness.invoke(
+		"Org1MSP", "tx-wrong-receiver", map[string][]byte{"deliveryCode": []byte("864209")},
+		"ConfirmReceipt", shipment.ID,
+		jsonText(map[string]string{"actorId": "receiver-002", "actorName": "王先生"}),
+	); err == nil {
+		t.Fatal("a shipment was confirmed by a non-recorded recipient")
+	}
 	payload, err = harness.invoke(
 		"Org1MSP", "tx-receive", map[string][]byte{"deliveryCode": []byte("864209")},
 		"ConfirmReceipt", shipment.ID,
@@ -295,6 +305,7 @@ func createInputMap(id, tracking string) map[string]any {
 			"quantity": 10, "weightKg": 25.5,
 		},
 		"recipientMasked":      "李** · 139****2000",
+		"recipientId":          "receiver-001",
 		"expectedDeliveryDate": "2026-07-22",
 		"temperatureRange":     map[string]any{"min": 2, "max": 8, "unit": "C"},
 		"deliveryCodeHash":     sha256Text("864209"),

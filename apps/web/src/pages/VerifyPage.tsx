@@ -9,7 +9,6 @@ import {
 } from '@carbon/icons-react';
 import type { IntegrityResult } from '@jixin/shared';
 import { Link, useSearchParams } from 'react-router-dom';
-import { LedgerBanner } from '../components/LedgerBanner';
 import { PublicHeader } from '../components/PublicHeader';
 import { StatusTag } from '../components/StatusTag';
 import { api, getErrorMessage } from '../lib/api';
@@ -142,26 +141,15 @@ export function VerifyPage() {
 
         {result ? (
           <section className="verify-result" aria-live="polite">
-            <LedgerBanner mode={result.ledgerMode} />
             <InlineNotification
-              kind={
-                result.verified ? 'success' : result.ledgerMode === 'demo' ? 'warning' : 'error'
-              }
+              kind={result.verified ? 'success' : 'error'}
               lowContrast
               hideCloseButton
-              title={
-                result.verified
-                  ? '记录完整，内容一致'
-                  : result.ledgerMode === 'demo'
-                    ? '演示检查完成'
-                    : '发现不一致'
-              }
+              title={result.verified ? '记录完整，内容一致' : '发现不一致'}
               subtitle={
                 result.verified
                   ? '这张运单的修改记录首尾相连，填写的文件核对编号也与系统保存的一致。'
-                  : result.ledgerMode === 'demo'
-                    ? '记录已经检查完成，但当前是演示环境，结果没有写入真实 Fabric 区块链网络。'
-                    : '中间可能缺少记录，或者文件核对编号不一致。请检查输入，也可以联系相关业务方。'
+                  : '中间可能缺少记录，或者文件核对编号不一致。请检查输入，也可以联系相关业务方。'
               }
             />
             <div className="verify-result__header">
@@ -189,7 +177,7 @@ export function VerifyPage() {
               </Tile>
               <Tile>
                 <span>记录环境</span>
-                <strong>{result.ledgerMode === 'fabric' ? 'Fabric 网络' : '演示环境'}</strong>
+                <strong>Fabric 网络</strong>
               </Tile>
               <Tile>
                 <span>检查时间</span>

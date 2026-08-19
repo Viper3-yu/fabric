@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"net"
 	"net/http"
 	"sort"
 	"strings"
@@ -21,6 +22,7 @@ import (
 	"github.com/Viper3-yu/fabric/apps/api/internal/auth"
 	"github.com/Viper3-yu/fabric/apps/api/internal/config"
 	"github.com/Viper3-yu/fabric/apps/api/internal/ledger"
+	"github.com/Viper3-yu/fabric/apps/api/internal/users"
 	"github.com/Viper3-yu/fabric/chaincode/logistics/model"
 )
 
@@ -77,10 +79,12 @@ type API struct {
 	ledger   ledger.Ledger
 	mux      *http.ServeMux
 	throttle loginThrottle
+	public   publicLimiter
 }
 
 func New(cfg config.Config, store ledger.Ledger) http.Handler {
 	api := &API{config: cfg, ledger: store, mux: http.NewServeMux()}
+	api.public.configure(cfg.PublicRateLimitPerMinute)
 	api.routes()
 	return api.middleware(api.mux)
 }
@@ -155,8 +159,73 @@ func (a *API) middleware(next http.Handler) http.Handler {
 			response.WriteHeader(http.StatusNoContent)
 			return
 		}
+		// Unauthenticated tracking and verification endpoints are enumeration
+		// surfaces; throttle them per client IP.
+		if strings.HasPrefix(request.URL.Path, "/api/public/") &&
+			!a.public.allow(clientIP(request, a.config.TrustProxyHeaders)) {
+			a.writeError(response, request, apperror.New(
+				429, "RATE_LIMITED", "Too many requests; wait briefly and try again",
+			))
+			return
+		}
 		next.ServeHTTP(response, request)
 	})
+}
+
+// publicLimiter implements a fixed-window per-IP counter for the unauthenticated
+// endpoints. The window is process-local, which is the right granularity for a
+// single-instance deployment; run multiple instances behind one proxy only
+// after moving this state out of process.
+type publicLimiter struct {
+	mu     sync.Mutex
+	limit  int
+	window time.Time
+	hits   map[string]int
+}
+
+// publicLimiterMaxIPs caps how many distinct IP keys one window can track, so
+// a flood of spoofed or rotating addresses cannot grow memory without bound.
+const publicLimiterMaxIPs = 1 << 16
+
+func (l *publicLimiter) configure(limit int) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.limit = limit
+}
+
+func (l *publicLimiter) allow(key string) bool {
+	now := time.Now()
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if l.limit <= 0 {
+		return true
+	}
+	if now.Sub(l.window) >= time.Minute {
+		l.window = now
+		l.hits = make(map[string]int)
+	}
+	if _, seen := l.hits[key]; !seen && len(l.hits) >= publicLimiterMaxIPs {
+		return false
+	}
+	l.hits[key]++
+	return l.hits[key] <= l.limit
+}
+
+// clientIP derives the throttle key. Behind a reverse proxy RemoteAddr is the
+// proxy itself, so deployments behind one enable TRUST_PROXY and use the
+// right-most X-Forwarded-For entry (appended by their own trusted proxy).
+func clientIP(request *http.Request, trustProxy bool) string {
+	if trustProxy {
+		if forwarded := request.Header.Get("X-Forwarded-For"); forwarded != "" {
+			parts := strings.Split(forwarded, ",")
+			return strings.TrimSpace(parts[len(parts)-1])
+		}
+	}
+	host, _, err := net.SplitHostPort(request.RemoteAddr)
+	if err != nil {
+		return request.RemoteAddr
+	}
+	return host
 }
 
 func (a *API) handleHealth(response http.ResponseWriter, request *http.Request) {
@@ -172,10 +241,8 @@ func (a *API) handleHealth(response http.ResponseWriter, request *http.Request) 
 }
 
 func (a *API) handleNetwork(response http.ResponseWriter, request *http.Request) {
-	mode := a.ledger.Mode()
 	a.sendSuccess(response, request, map[string]any{
-		"mode": mode, "isDemo": mode == "demo",
-		"label":  map[bool]string{true: "演示账本", false: "Hyperledger Fabric"}[mode == "demo"],
+		"mode":   a.ledger.Mode(),
 		"health": publicHealth(a.ledger.Health(request.Context())),
 	}, http.StatusOK)
 }
@@ -232,11 +299,16 @@ func (a *API) handleLogout(response http.ResponseWriter, request *http.Request) 
 const (
 	loginMaxFailures  = 5
 	loginLockDuration = 30 * time.Second
+	// throttleSweepThreshold caps how many tracked usernames accumulate
+	// before idle entries are purged, so spamming distinct usernames cannot
+	// grow the map without bound.
+	throttleSweepThreshold = 1024
 )
 
 type loginAttempt struct {
 	failures    int
 	lockedUntil time.Time
+	lastFailure time.Time
 }
 
 type loginThrottle struct {
@@ -272,8 +344,26 @@ func (t *loginThrottle) recordFailure(username string) {
 		t.attempts[username] = attempt
 	}
 	attempt.failures++
+	attempt.lastFailure = time.Now()
 	if attempt.failures >= loginMaxFailures {
 		attempt.lockedUntil = time.Now().Add(loginLockDuration)
+	}
+	if len(t.attempts) > throttleSweepThreshold {
+		t.sweepLocked()
+	}
+}
+
+// sweepLocked drops entries whose lock has expired and that have been idle
+// long enough that a new failure should start from a clean slate anyway.
+func (t *loginThrottle) sweepLocked() {
+	cutoff := time.Now().Add(-loginLockDuration)
+	for username, attempt := range t.attempts {
+		if attempt.lockedUntil.After(time.Now()) {
+			continue
+		}
+		if attempt.lastFailure.Before(cutoff) {
+			delete(t.attempts, username)
+		}
 	}
 }
 
@@ -375,7 +465,7 @@ func (a *API) handleCreateShipment(response http.ResponseWriter, request *http.R
 		return
 	}
 	command := ledger.CreateShipmentCommand{
-		ID: "shipment-" + randomID(), TrackingNumber: trackingNumber(),
+		ID:     "shipment-" + randomID(),
 		Origin: toAddress(body.Origin), Destination: toAddress(body.Destination),
 		Goods: model.GoodsInfo{
 			Name: body.Goods.Name, Category: body.Goods.Category,
@@ -383,6 +473,7 @@ func (a *API) handleCreateShipment(response http.ResponseWriter, request *http.R
 			Description: body.Goods.Description,
 		},
 		RecipientMasked:      maskName(body.Destination.ContactName) + " · " + maskPhone(body.Destination.ContactPhone),
+		RecipientID:          users.ReceiverAccountID(),
 		ExpectedDeliveryDate: body.ExpectedDeliveryDate,
 		DeliveryCodeHash:     sha256Hex(deliveryCode), DocumentHash: body.DocumentHash,
 	}
@@ -391,9 +482,19 @@ func (a *API) handleCreateShipment(response http.ResponseWriter, request *http.R
 			Min: float64(body.TemperatureRange.Min), Max: float64(body.TemperatureRange.Max), Unit: "C",
 		}
 	}
-	receipt, err := a.ledger.CreateShipment(request.Context(), command, user)
-	if err != nil {
-		a.writeError(response, request, err)
+	var receipt model.LedgerReceipt
+	var createErr error
+	// The random 8-digit tracking suffix can collide with an existing number;
+	// regenerate it instead of surfacing a 409 to the client.
+	for attempt := 0; ; attempt++ {
+		command.TrackingNumber = trackingNumber()
+		receipt, createErr = a.ledger.CreateShipment(request.Context(), command, user)
+		if createErr == nil || errorCode(createErr) != "TRACKING_NUMBER_EXISTS" || attempt >= 2 {
+			break
+		}
+	}
+	if createErr != nil {
+		a.writeError(response, request, createErr)
 		return
 	}
 	a.sendSuccess(response, request, map[string]any{
@@ -602,12 +703,9 @@ func (a *API) handleVerify(response http.ResponseWriter, request *http.Request) 
 	if !evidenceMatches {
 		warnings = append(warnings, "提交的证据摘要未在运单记录中找到")
 	}
-	if a.ledger.Mode() == "demo" {
-		warnings = append(warnings, "演示账本结果仅用于流程预览，不构成真实上链证明")
-	}
 	a.sendSuccess(response, request, map[string]any{
 		"trackingNumber": shipment.TrackingNumber,
-		"verified":       a.ledger.Mode() == "fabric" && continuous && evidenceMatches,
+		"verified":       continuous && evidenceMatches,
 		"ledgerMode":     a.ledger.Mode(), "status": shipment.Status,
 		"eventCount": len(shipment.Events), "historyContinuous": continuous,
 		"checkedAt": time.Now().UTC().Format(time.RFC3339Nano), "warnings": warnings,
@@ -797,7 +895,12 @@ func canView(user model.User, shipment model.Shipment) bool {
 	case "carrier":
 		return shipment.Status == model.StatusCreated || shipment.CarrierID == user.ID
 	case "receiver":
-		return shipment.Status == model.StatusDelivered || shipment.Status == model.StatusReceived
+		if shipment.Status != model.StatusDelivered && shipment.Status != model.StatusReceived {
+			return false
+		}
+		// Legacy shipments recorded before recipient binding stay visible to
+		// every receiver account; bound shipments only to their recipient.
+		return shipment.RecipientID == "" || shipment.RecipientID == user.ID
 	case "auditor":
 		return true
 	default:
@@ -933,6 +1036,16 @@ func contains(values []string, value string) bool {
 		}
 	}
 	return false
+}
+
+// errorCode extracts the machine-readable code from an app error, or "" for
+// plain errors.
+func errorCode(err error) string {
+	var appErr *apperror.Error
+	if errors.As(err, &appErr) {
+		return appErr.Code
+	}
+	return ""
 }
 
 func minimum(left, right int) int {

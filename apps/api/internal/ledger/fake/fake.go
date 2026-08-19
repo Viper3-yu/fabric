@@ -1,4 +1,7 @@
-package ledger
+// Package fake provides a file-backed Ledger test double. It implements the
+// same state machine as the chaincode so HTTP-layer tests stay hermetic, but
+// it is never linked into the server binary: only tests import it.
+package fake
 
 import (
 	"context"
@@ -16,11 +19,13 @@ import (
 	"time"
 
 	"github.com/Viper3-yu/fabric/apps/api/internal/apperror"
-	"github.com/Viper3-yu/fabric/apps/api/internal/users"
+	"github.com/Viper3-yu/fabric/apps/api/internal/ledger"
 	"github.com/Viper3-yu/fabric/chaincode/logistics/model"
 )
 
-type demoState struct {
+var _ ledger.Ledger = (*Fake)(nil)
+
+type state struct {
 	Version   int                                     `json:"version"`
 	Shipments map[string]model.Shipment               `json:"shipments"`
 	Histories map[string][]model.ShipmentHistoryEntry `json:"histories"`
@@ -34,67 +39,68 @@ type eventDraft struct {
 	EvidenceHash string
 }
 
-type Demo struct {
+type Fake struct {
 	path  string
 	mu    sync.RWMutex
-	state demoState
+	state state
 }
 
-func NewDemo(path string) (*Demo, error) {
-	demo := &Demo{path: path, state: emptyDemoState()}
-	if err := demo.load(); err != nil {
+func New(path string) (*Fake, error) {
+	f := &Fake{path: path, state: emptyState()}
+	if err := f.load(); err != nil {
 		return nil, err
 	}
-	return demo, nil
+	return f, nil
 }
 
-func emptyDemoState() demoState {
-	return demoState{
+func emptyState() state {
+	return state{
 		Version:   1,
 		Shipments: make(map[string]model.Shipment),
 		Histories: make(map[string][]model.ShipmentHistoryEntry),
 	}
 }
 
-func (d *Demo) Mode() string {
-	return "demo"
+// Mode reports "fabric" so the API surfaces behave exactly as they do against
+// the real ledger; the double exists only inside test processes.
+func (f *Fake) Mode() string {
+	return "fabric"
 }
 
-// Close releases nothing for the in-memory demo ledger; it exists so the
-// demo and Fabric adapters share the same Ledger lifecycle.
-func (d *Demo) Close() error {
+// Close releases nothing; it exists so the double shares the Ledger lifecycle.
+func (f *Fake) Close() error {
 	return nil
 }
 
-func (d *Demo) load() error {
-	if err := os.MkdirAll(filepath.Dir(d.path), 0o755); err != nil {
+func (f *Fake) load() error {
+	if err := os.MkdirAll(filepath.Dir(f.path), 0o755); err != nil {
 		return err
 	}
-	content, err := os.ReadFile(d.path)
+	content, err := os.ReadFile(f.path)
 	if errors.Is(err, os.ErrNotExist) {
-		return d.persistLocked()
+		return f.persistLocked()
 	}
 	if err != nil {
-		return apperror.WithDetails(500, "DEMO_LEDGER_CORRUPT", "The demo ledger file cannot be read", map[string]string{"path": d.path})
+		return apperror.WithDetails(500, "FAKE_LEDGER_CORRUPT", "The fake ledger file cannot be read", map[string]string{"path": f.path})
 	}
-	var stored demoState
+	var stored state
 	if err := json.Unmarshal(content, &stored); err != nil ||
 		stored.Version != 1 || stored.Shipments == nil || stored.Histories == nil {
-		return apperror.WithDetails(500, "DEMO_LEDGER_CORRUPT", "The demo ledger file cannot be read", map[string]string{"path": d.path})
+		return apperror.WithDetails(500, "FAKE_LEDGER_CORRUPT", "The fake ledger file cannot be read", map[string]string{"path": f.path})
 	}
-	d.state = stored
+	f.state = stored
 	return nil
 }
 
-func (d *Demo) persistLocked() error {
-	content, err := json.MarshalIndent(d.state, "", "  ")
+func (f *Fake) persistLocked() error {
+	content, err := json.MarshalIndent(f.state, "", "  ")
 	if err != nil {
 		return err
 	}
 	content = append(content, '\n')
-	// A unique temp file avoids two processes (server + seed) clobbering the
-	// same name, and Sync-before-rename keeps the target file whole on crash.
-	temporary, err := os.CreateTemp(filepath.Dir(d.path), filepath.Base(d.path)+".*.tmp")
+	// A unique temp file avoids two processes clobbering the same name, and
+	// Sync-before-rename keeps the target file whole on crash.
+	temporary, err := os.CreateTemp(filepath.Dir(f.path), filepath.Base(f.path)+".*.tmp")
 	if err != nil {
 		return err
 	}
@@ -114,23 +120,20 @@ func (d *Demo) persistLocked() error {
 	if err := os.Chmod(temporaryName, 0o600); err != nil {
 		return err
 	}
-	if err := os.Rename(temporaryName, d.path); err != nil {
-		return err
-	}
-	return nil
+	return os.Rename(temporaryName, f.path)
 }
 
-func (d *Demo) Health(context.Context) Health {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-	return Health{Mode: "demo", Status: "ok", Network: "durable-demo-ledger"}
+func (f *Fake) Health(context.Context) ledger.Health {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+	return ledger.Health{Mode: "fabric", Status: "ok", Network: "fake-test-double"}
 }
 
-func (d *Demo) GetAllShipments(context.Context, *model.User) ([]model.Shipment, error) {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-	result := make([]model.Shipment, 0, len(d.state.Shipments))
-	for _, shipment := range d.state.Shipments {
+func (f *Fake) GetAllShipments(context.Context, *model.User) ([]model.Shipment, error) {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+	result := make([]model.Shipment, 0, len(f.state.Shipments))
+	for _, shipment := range f.state.Shipments {
 		result = append(result, cloneShipment(shipment))
 	}
 	sort.Slice(result, func(i, j int) bool {
@@ -139,24 +142,24 @@ func (d *Demo) GetAllShipments(context.Context, *model.User) ([]model.Shipment, 
 	return result, nil
 }
 
-func (d *Demo) ReadShipment(_ context.Context, id string, _ *model.User) (model.Shipment, error) {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-	shipment, ok := d.state.Shipments[id]
+func (f *Fake) ReadShipment(_ context.Context, id string, _ *model.User) (model.Shipment, error) {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+	shipment, ok := f.state.Shipments[id]
 	if !ok {
 		return model.Shipment{}, apperror.New(404, "SHIPMENT_NOT_FOUND", "Shipment was not found")
 	}
 	return cloneShipment(shipment), nil
 }
 
-func (d *Demo) ReadShipmentByTracking(
+func (f *Fake) ReadShipmentByTracking(
 	_ context.Context,
 	trackingNumber string,
 	_ *model.User,
 ) (model.Shipment, error) {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-	for _, shipment := range d.state.Shipments {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+	for _, shipment := range f.state.Shipments {
 		if shipment.TrackingNumber == trackingNumber {
 			return cloneShipment(shipment), nil
 		}
@@ -166,35 +169,35 @@ func (d *Demo) ReadShipmentByTracking(
 	)
 }
 
-func (d *Demo) GetShipmentHistory(_ context.Context, id string, _ *model.User) ([]model.ShipmentHistoryEntry, error) {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-	if _, ok := d.state.Shipments[id]; !ok {
+func (f *Fake) GetShipmentHistory(_ context.Context, id string, _ *model.User) ([]model.ShipmentHistoryEntry, error) {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+	if _, ok := f.state.Shipments[id]; !ok {
 		return nil, apperror.New(404, "SHIPMENT_NOT_FOUND", "Shipment was not found")
 	}
-	return cloneHistory(d.state.Histories[id]), nil
+	return cloneHistory(f.state.Histories[id]), nil
 }
 
-func (d *Demo) CreateShipment(
+func (f *Fake) CreateShipment(
 	_ context.Context,
-	command CreateShipmentCommand,
+	command ledger.CreateShipmentCommand,
 	actor model.User,
 ) (model.LedgerReceipt, error) {
-	return d.mutate(func() (model.LedgerReceipt, error) {
+	return f.mutate(func() (model.LedgerReceipt, error) {
 		if err := requireRole(actor, "shipper"); err != nil {
 			return model.LedgerReceipt{}, err
 		}
-		if _, exists := d.state.Shipments[command.ID]; exists {
+		if _, exists := f.state.Shipments[command.ID]; exists {
 			return model.LedgerReceipt{}, apperror.New(409, "SHIPMENT_EXISTS", "Shipment ID already exists")
 		}
-		for _, shipment := range d.state.Shipments {
+		for _, shipment := range f.state.Shipments {
 			if shipment.TrackingNumber == command.TrackingNumber {
 				return model.LedgerReceipt{}, apperror.New(409, "TRACKING_NUMBER_EXISTS", "Tracking number already exists")
 			}
 		}
 
 		timestamp := nowISO()
-		txID, err := demoTxID()
+		txID, err := fakeTxID()
 		if err != nil {
 			return model.LedgerReceipt{}, err
 		}
@@ -205,6 +208,7 @@ func (d *Demo) CreateShipment(
 			Status:               model.StatusCreated,
 			ShipperID:            actor.ID,
 			ShipperName:          actor.DisplayName,
+			RecipientID:          command.RecipientID,
 			Origin:               command.Origin,
 			Destination:          command.Destination,
 			Goods:                command.Goods,
@@ -222,19 +226,19 @@ func (d *Demo) CreateShipment(
 			Type: model.EventCreated, Location: shipment.LastLocation,
 			Description: "发货方创建运单", EvidenceHash: command.DocumentHash,
 		})
-		d.state.Shipments[shipment.ID] = shipment
-		d.addHistoryLocked(shipment, txID, timestamp)
-		return demoReceipt(shipment, txID, timestamp), nil
+		f.state.Shipments[shipment.ID] = shipment
+		f.addHistoryLocked(shipment, txID, timestamp)
+		return receipt(shipment, txID, timestamp), nil
 	})
 }
 
-func (d *Demo) AcceptShipment(
+func (f *Fake) AcceptShipment(
 	_ context.Context,
 	id string,
-	command ActionCommand,
+	command ledger.ActionCommand,
 	actor model.User,
 ) (model.LedgerReceipt, error) {
-	return d.transition(id, actor, []string{"carrier"}, []string{model.StatusCreated},
+	return f.transition(id, actor, []string{"carrier"}, []string{model.StatusCreated},
 		func(shipment *model.Shipment, txID, timestamp string) error {
 			shipment.CarrierID = actor.ID
 			shipment.CarrierName = actor.DisplayName
@@ -247,13 +251,13 @@ func (d *Demo) AcceptShipment(
 		})
 }
 
-func (d *Demo) PickupShipment(
+func (f *Fake) PickupShipment(
 	_ context.Context,
 	id string,
-	command ActionCommand,
+	command ledger.ActionCommand,
 	actor model.User,
 ) (model.LedgerReceipt, error) {
-	return d.transition(id, actor, []string{"carrier"}, []string{model.StatusAccepted},
+	return f.transition(id, actor, []string{"carrier"}, []string{model.StatusAccepted},
 		func(shipment *model.Shipment, txID, timestamp string) error {
 			if err := requireAssignedCarrier(*shipment, actor); err != nil {
 				return err
@@ -271,13 +275,13 @@ func (d *Demo) PickupShipment(
 		})
 }
 
-func (d *Demo) AddCheckpoint(
+func (f *Fake) AddCheckpoint(
 	_ context.Context,
 	id string,
-	command ActionCommand,
+	command ledger.ActionCommand,
 	actor model.User,
 ) (model.LedgerReceipt, error) {
-	return d.transition(id, actor, []string{"carrier"}, []string{model.StatusPickedUp, model.StatusInTransit},
+	return f.transition(id, actor, []string{"carrier"}, []string{model.StatusPickedUp, model.StatusInTransit},
 		func(shipment *model.Shipment, txID, timestamp string) error {
 			if err := requireAssignedCarrier(*shipment, actor); err != nil {
 				return err
@@ -305,13 +309,13 @@ func (d *Demo) AddCheckpoint(
 		})
 }
 
-func (d *Demo) ReportException(
+func (f *Fake) ReportException(
 	_ context.Context,
 	id string,
-	command ActionCommand,
+	command ledger.ActionCommand,
 	actor model.User,
 ) (model.LedgerReceipt, error) {
-	return d.transition(id, actor, []string{"carrier"}, []string{model.StatusInTransit},
+	return f.transition(id, actor, []string{"carrier"}, []string{model.StatusInTransit},
 		func(shipment *model.Shipment, txID, timestamp string) error {
 			if err := requireAssignedCarrier(*shipment, actor); err != nil {
 				return err
@@ -329,13 +333,13 @@ func (d *Demo) ReportException(
 		})
 }
 
-func (d *Demo) ResolveException(
+func (f *Fake) ResolveException(
 	_ context.Context,
 	id string,
-	command ActionCommand,
+	command ledger.ActionCommand,
 	actor model.User,
 ) (model.LedgerReceipt, error) {
-	return d.transition(id, actor, []string{"carrier"}, []string{model.StatusException},
+	return f.transition(id, actor, []string{"carrier"}, []string{model.StatusException},
 		func(shipment *model.Shipment, txID, timestamp string) error {
 			if err := requireAssignedCarrier(*shipment, actor); err != nil {
 				return err
@@ -352,13 +356,13 @@ func (d *Demo) ResolveException(
 		})
 }
 
-func (d *Demo) MarkDelivered(
+func (f *Fake) MarkDelivered(
 	_ context.Context,
 	id string,
-	command ActionCommand,
+	command ledger.ActionCommand,
 	actor model.User,
 ) (model.LedgerReceipt, error) {
-	return d.transition(id, actor, []string{"carrier"}, []string{model.StatusInTransit},
+	return f.transition(id, actor, []string{"carrier"}, []string{model.StatusInTransit},
 		func(shipment *model.Shipment, txID, timestamp string) error {
 			if err := requireAssignedCarrier(*shipment, actor); err != nil {
 				return err
@@ -376,14 +380,22 @@ func (d *Demo) MarkDelivered(
 		})
 }
 
-func (d *Demo) ConfirmReceipt(
+func (f *Fake) ConfirmReceipt(
 	_ context.Context,
 	id string,
-	command ConfirmCommand,
+	command ledger.ConfirmCommand,
 	actor model.User,
 ) (model.LedgerReceipt, error) {
-	return d.transition(id, actor, []string{"receiver"}, []string{model.StatusDelivered},
+	return f.transition(id, actor, []string{"receiver"}, []string{model.StatusDelivered},
 		func(shipment *model.Shipment, txID, timestamp string) error {
+			// Mirror the chaincode guard: only the recorded recipient (or any
+			// receiver, for pre-binding legacy shipments) may confirm.
+			if shipment.RecipientID != "" && shipment.RecipientID != actor.ID {
+				return apperror.New(
+					403, "NOT_RECORDED_RECIPIENT",
+					"Only the recorded recipient can confirm this shipment",
+				)
+			}
 			sum := sha256.Sum256([]byte(command.DeliveryCode))
 			expected, err := hex.DecodeString(shipment.DeliveryCodeHash)
 			if err != nil || subtle.ConstantTimeCompare(sum[:], expected) != 1 {
@@ -398,13 +410,13 @@ func (d *Demo) ConfirmReceipt(
 		})
 }
 
-func (d *Demo) CancelShipment(
+func (f *Fake) CancelShipment(
 	_ context.Context,
 	id string,
-	command ActionCommand,
+	command ledger.ActionCommand,
 	actor model.User,
 ) (model.LedgerReceipt, error) {
-	return d.transition(id, actor, []string{"shipper"}, []string{model.StatusCreated},
+	return f.transition(id, actor, []string{"shipper"}, []string{model.StatusCreated},
 		func(shipment *model.Shipment, txID, timestamp string) error {
 			if shipment.ShipperID != actor.ID {
 				return apperror.New(403, "NOT_SHIPMENT_OWNER", "Only the creating shipper can cancel this shipment")
@@ -418,18 +430,18 @@ func (d *Demo) CancelShipment(
 		})
 }
 
-func (d *Demo) transition(
+func (f *Fake) transition(
 	id string,
 	actor model.User,
 	roles []string,
 	expected []string,
 	update func(*model.Shipment, string, string) error,
 ) (model.LedgerReceipt, error) {
-	return d.mutate(func() (model.LedgerReceipt, error) {
+	return f.mutate(func() (model.LedgerReceipt, error) {
 		if err := requireRole(actor, roles...); err != nil {
 			return model.LedgerReceipt{}, err
 		}
-		shipment, ok := d.state.Shipments[id]
+		shipment, ok := f.state.Shipments[id]
 		if !ok {
 			return model.LedgerReceipt{}, apperror.New(404, "SHIPMENT_NOT_FOUND", "Shipment was not found")
 		}
@@ -440,7 +452,7 @@ func (d *Demo) transition(
 			)
 		}
 		timestamp := nowISO()
-		txID, err := demoTxID()
+		txID, err := fakeTxID()
 		if err != nil {
 			return model.LedgerReceipt{}, err
 		}
@@ -448,125 +460,33 @@ func (d *Demo) transition(
 			return model.LedgerReceipt{}, err
 		}
 		shipment.UpdatedAt = timestamp
-		d.state.Shipments[id] = shipment
-		d.addHistoryLocked(shipment, txID, timestamp)
-		return demoReceipt(shipment, txID, timestamp), nil
+		f.state.Shipments[id] = shipment
+		f.addHistoryLocked(shipment, txID, timestamp)
+		return receipt(shipment, txID, timestamp), nil
 	})
 }
 
-func (d *Demo) mutate(operation func() (model.LedgerReceipt, error)) (model.LedgerReceipt, error) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	before := cloneState(d.state)
+func (f *Fake) mutate(operation func() (model.LedgerReceipt, error)) (model.LedgerReceipt, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	before := cloneState(f.state)
 	result, err := operation()
 	if err != nil {
-		d.state = before
+		f.state = before
 		return model.LedgerReceipt{}, err
 	}
-	if err := d.persistLocked(); err != nil {
-		d.state = before
+	if err := f.persistLocked(); err != nil {
+		f.state = before
 		return model.LedgerReceipt{}, err
 	}
 	return result, nil
 }
 
-func (d *Demo) addHistoryLocked(shipment model.Shipment, txID, timestamp string) {
+func (f *Fake) addHistoryLocked(shipment model.Shipment, txID, timestamp string) {
 	snapshot := cloneShipment(shipment)
-	d.state.Histories[shipment.ID] = append(d.state.Histories[shipment.ID], model.ShipmentHistoryEntry{
+	f.state.Histories[shipment.ID] = append(f.state.Histories[shipment.ID], model.ShipmentHistoryEntry{
 		TxID: txID, Timestamp: timestamp, IsDelete: false, Value: &snapshot,
 	})
-}
-
-func (d *Demo) Reset() error {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	before := d.state
-	d.state = emptyDemoState()
-	if err := d.persistLocked(); err != nil {
-		d.state = before
-		return err
-	}
-	return nil
-}
-
-func SeedDemo(demo *Demo, force bool) (bool, int, error) {
-	if force {
-		if err := demo.Reset(); err != nil {
-			return false, 0, err
-		}
-	}
-	existing, err := demo.GetAllShipments(context.Background(), nil)
-	if err != nil {
-		return false, 0, err
-	}
-	if len(existing) > 0 {
-		return false, len(existing), nil
-	}
-	shipper := users.ByUsername["shipper"].User
-	carrier := users.ByUsername["carrier"].User
-	commonOrigin := model.Address{
-		Province: "上海市", City: "上海市", District: "浦东新区",
-		Detail: "张江物流园 1 号库", ContactName: "李发货", ContactPhoneMasked: "138****0001",
-	}
-	commonDestination := model.Address{
-		Province: "江苏省", City: "南京市", District: "玄武区",
-		Detail: "珠江路 88 号", ContactName: "演示收货人", ContactPhoneMasked: "139****0002",
-	}
-	tempRange := &model.TemperatureRange{Min: 2, Max: 8, Unit: "C"}
-	documentHash := sha256Hex("jixin-demo-document")
-
-	first, err := demo.CreateShipment(context.Background(), CreateShipmentCommand{
-		ID: "shipment-demo-transit", TrackingNumber: "JX202607200001",
-		Origin: commonOrigin, Destination: commonDestination,
-		Goods:           model.GoodsInfo{Name: "生鲜样品", Category: "冷链", Quantity: 4, WeightKG: 16},
-		RecipientMasked: "演** · 139****0002", ExpectedDeliveryDate: "2026-07-23",
-		TemperatureRange: tempRange, DocumentHash: documentHash, DeliveryCodeHash: sha256Hex("246810"),
-	}, shipper)
-	if err != nil {
-		return false, 0, err
-	}
-	_, err = demo.AcceptShipment(context.Background(), first.Data.ID, ActionCommand{}, carrier)
-	if err != nil {
-		return false, 0, err
-	}
-	_, err = demo.PickupShipment(context.Background(), first.Data.ID, ActionCommand{Location: "上海张江物流园"}, carrier)
-	if err != nil {
-		return false, 0, err
-	}
-	normal := 5.2
-	_, err = demo.AddCheckpoint(context.Background(), first.Data.ID, ActionCommand{
-		Location: "昆山中转中心", Description: "完成干线中转", Temperature: &normal,
-	}, carrier)
-	if err != nil {
-		return false, 0, err
-	}
-
-	second, err := demo.CreateShipment(context.Background(), CreateShipmentCommand{
-		ID: "shipment-demo-exception", TrackingNumber: "JX202607200002",
-		Origin: commonOrigin, Destination: commonDestination,
-		Goods:           model.GoodsInfo{Name: "医药试剂", Category: "医药", Quantity: 2, WeightKG: 3.5},
-		RecipientMasked: "演** · 139****0002", ExpectedDeliveryDate: "2026-07-23",
-		TemperatureRange: tempRange, DocumentHash: documentHash, DeliveryCodeHash: sha256Hex("135790"),
-	}, shipper)
-	if err != nil {
-		return false, 0, err
-	}
-	_, err = demo.AcceptShipment(context.Background(), second.Data.ID, ActionCommand{}, carrier)
-	if err != nil {
-		return false, 0, err
-	}
-	_, err = demo.PickupShipment(context.Background(), second.Data.ID, ActionCommand{Location: "上海张江物流园"}, carrier)
-	if err != nil {
-		return false, 0, err
-	}
-	abnormal := 10.4
-	_, err = demo.AddCheckpoint(context.Background(), second.Data.ID, ActionCommand{
-		Location: "苏州温控仓", Description: "运输节点人工录入温度", Temperature: &abnormal,
-	}, carrier)
-	if err != nil {
-		return false, 0, err
-	}
-	return true, 2, nil
 }
 
 func appendEvent(
@@ -625,26 +545,21 @@ func fallback(value, fallbackValue string) string {
 	return value
 }
 
-func demoTxID() (string, error) {
+func fakeTxID() (string, error) {
 	value := make([]byte, 16)
 	if _, err := rand.Read(value); err != nil {
 		return "", err
 	}
-	return "demo-" + hex.EncodeToString(value), nil
+	return "fake-" + hex.EncodeToString(value), nil
 }
 
 func nowISO() string {
 	return time.Now().UTC().Format("2006-01-02T15:04:05.000Z")
 }
 
-func sha256Hex(value string) string {
-	sum := sha256.Sum256([]byte(value))
-	return hex.EncodeToString(sum[:])
-}
-
-func demoReceipt(shipment model.Shipment, txID, timestamp string) model.LedgerReceipt {
+func receipt(shipment model.Shipment, txID, timestamp string) model.LedgerReceipt {
 	return model.LedgerReceipt{
-		TransactionID: txID, CommittedAt: timestamp, LedgerMode: "demo",
+		TransactionID: txID, CommittedAt: timestamp, LedgerMode: "fabric",
 		Data: cloneShipment(shipment),
 	}
 }
@@ -666,9 +581,9 @@ func cloneHistory(value []model.ShipmentHistoryEntry) []model.ShipmentHistoryEnt
 	return result
 }
 
-func cloneState(value demoState) demoState {
+func cloneState(value state) state {
 	content, _ := json.Marshal(value)
-	var result demoState
+	var result state
 	_ = json.Unmarshal(content, &result)
 	return result
 }

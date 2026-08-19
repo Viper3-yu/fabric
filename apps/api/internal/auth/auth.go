@@ -29,12 +29,13 @@ func Authenticate(username, password string) (model.User, error) {
 	if !ok {
 		return model.User{}, apperror.New(401, "INVALID_CREDENTIALS", "Username or password is incorrect")
 	}
-	// A bcrypt hash (production form) takes precedence; the plaintext value
-	// only remains as the built-in course demo fallback.
+	// A bcrypt hash (production form) takes precedence over the plaintext
+	// development override. An account with neither configured cannot sign in,
+	// so an empty password never matches an unset credential.
 	valid := false
 	if account.PasswordHash != "" {
 		valid = bcrypt.CompareHashAndPassword([]byte(account.PasswordHash), []byte(password)) == nil
-	} else {
+	} else if account.Password != "" {
 		valid = equal(password, account.Password)
 	}
 	if !valid {

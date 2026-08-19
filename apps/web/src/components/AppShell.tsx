@@ -126,7 +126,7 @@ export function AppShell() {
         </div>
 
         <div className="app-topbar__tools">
-          <LedgerBanner mode={ledgerMode} compact />
+          <LedgerBanner compact />
           <Link className="app-topbar__public" to="/track">
             <Search size={17} aria-hidden="true" />
             <span>公开查询</span>

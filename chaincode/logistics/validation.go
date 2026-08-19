@@ -41,6 +41,14 @@ func parseCreateShipment(inputJSON string) (createShipmentInput, error) {
 			return input, err
 		}
 	}
+	// recipientId is optional so legacy shipments keep loading, but when the
+	// API provides one it must be a well-formed account identifier.
+	input.RecipientID = strings.TrimSpace(input.RecipientID)
+	if input.RecipientID != "" {
+		if input.RecipientID, err = identifier(input.RecipientID, "recipientId"); err != nil {
+			return input, err
+		}
+	}
 	if !strings.Contains(input.RecipientMasked, "*") {
 		return input, fmt.Errorf(`Invalid recipientMasked: value must be masked and contain "*"`)
 	}

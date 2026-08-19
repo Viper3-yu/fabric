@@ -7,12 +7,15 @@ import (
 )
 
 type CreateShipmentCommand struct {
-	ID                   string
-	TrackingNumber       string
-	Origin               model.Address
-	Destination          model.Address
-	Goods                model.GoodsInfo
-	RecipientMasked      string
+	ID              string
+	TrackingNumber  string
+	Origin          model.Address
+	Destination     model.Address
+	Goods           model.GoodsInfo
+	RecipientMasked string
+	// RecipientID binds the shipment to the receiver account allowed to view
+	// and confirm it; empty keeps the pre-binding behavior for legacy data.
+	RecipientID          string
 	ExpectedDeliveryDate string
 	TemperatureRange     *model.TemperatureRange
 	DeliveryCodeHash     string

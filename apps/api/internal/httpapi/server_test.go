@@ -12,7 +12,9 @@ import (
 	"time"
 
 	"github.com/Viper3-yu/fabric/apps/api/internal/config"
-	"github.com/Viper3-yu/fabric/apps/api/internal/ledger"
+	"github.com/Viper3-yu/fabric/apps/api/internal/ledger/fake"
+	"github.com/Viper3-yu/fabric/apps/api/internal/users"
+	"github.com/Viper3-yu/fabric/chaincode/logistics/model"
 )
 
 type testAPI struct {
@@ -24,15 +26,25 @@ type testAPI struct {
 
 func newTestAPI(t *testing.T) *testAPI {
 	t.Helper()
+	return newTestAPIWithLimit(t, 0)
+}
+
+func newTestAPIWithLimit(t *testing.T, publicLimit int) *testAPI {
+	t.Helper()
+	users.Configure(map[string]string{
+		"shipper": "shipper123", "carrier": "carrier123",
+		"receiver": "receiver123", "auditor": "auditor123",
+	}, nil)
 	path := filepath.Join(t.TempDir(), "ledger.json")
-	store, err := ledger.NewDemo(path)
+	store, err := fake.New(path)
 	if err != nil {
-		t.Fatalf("new demo ledger: %v", err)
+		t.Fatalf("new fake ledger: %v", err)
 	}
 	cfg := config.Config{
-		Environment: "test", LedgerMode: "demo",
-		JWTSecret: "closed-loop-test-secret-long-enough", JWTExpiresIn: 8 * time.Hour,
-		CORSOrigins: []string{"http://localhost:5173"}, DemoLedgerPath: path,
+		Environment: "test",
+		JWTSecret:   "closed-loop-test-secret-long-enough", JWTExpiresIn: 8 * time.Hour,
+		CORSOrigins:              []string{"http://localhost:5173"},
+		PublicRateLimitPerMinute: publicLimit,
 	}
 	return &testAPI{
 		t: t, server: httptest.NewServer(New(cfg, store)), path: path,
@@ -98,7 +110,7 @@ func TestClosedLoop(t *testing.T) {
 	receiver := api.login("receiver")
 
 	health := api.request(http.MethodGet, "/api/health", "", nil, http.StatusOK)
-	if health["data"].(map[string]any)["ledger"].(map[string]any)["mode"] != "demo" {
+	if health["data"].(map[string]any)["ledger"].(map[string]any)["mode"] != "fabric" {
 		t.Fatalf("health = %#v", health)
 	}
 	created := api.request(http.MethodPost, "/api/shipments", shipper, map[string]any{
@@ -124,7 +136,7 @@ func TestClosedLoop(t *testing.T) {
 	id := shipment["id"].(string)
 	tracking := shipment["trackingNumber"].(string)
 	deliveryCode := createData["deliveryCode"].(string)
-	if !strings.HasPrefix(createData["transactionId"].(string), "demo-") || len(deliveryCode) != 6 {
+	if !strings.HasPrefix(createData["transactionId"].(string), "fake-") || len(deliveryCode) != 6 {
 		t.Fatalf("create receipt = %#v", createData)
 	}
 
@@ -208,11 +220,11 @@ func TestClosedLoop(t *testing.T) {
 		"trackingNumber": tracking, "evidenceHash": strings.Repeat("c", 64),
 	}, http.StatusOK)
 	verifyData := verified["data"].(map[string]any)
-	if verifyData["verified"] != false || verifyData["historyContinuous"] != true {
+	if verifyData["verified"] != true || verifyData["historyContinuous"] != true {
 		t.Fatalf("verification = %#v", verifyData)
 	}
 
-	reloaded, err := ledger.NewDemo(api.path)
+	reloaded, err := fake.New(api.path)
 	if err != nil {
 		t.Fatalf("reload ledger: %v", err)
 	}
@@ -293,7 +305,7 @@ func TestCancelFlowAndPublicGuards(t *testing.T) {
 	}
 }
 
-func TestVerifyReportsContinuousDemoHistory(t *testing.T) {
+func TestVerifyReportsContinuousHistory(t *testing.T) {
 	api := newTestAPI(t)
 	defer api.close()
 	shipper := api.login("shipper")
@@ -314,12 +326,12 @@ func TestVerifyReportsContinuousDemoHistory(t *testing.T) {
 	if data["historyContinuous"] != true {
 		t.Fatalf("history continuity = %#v", data)
 	}
-	if data["verified"] != false {
-		t.Fatalf("demo mode must never report verified=true: %#v", data)
+	if data["verified"] != true {
+		t.Fatalf("continuous history must verify: %#v", data)
 	}
 	warnings, ok := data["warnings"].([]any)
-	if !ok || len(warnings) != 1 {
-		t.Fatalf("demo warning list = %#v", data["warnings"])
+	if !ok || len(warnings) != 0 {
+		t.Fatalf("warning list = %#v", data["warnings"])
 	}
 }
 
@@ -341,6 +353,101 @@ func TestLoginThrottleLocksAfterRepeatedFailures(t *testing.T) {
 	api.request(http.MethodPost, "/api/auth/login", "", map[string]string{
 		"username": "carrier", "password": "carrier123",
 	}, http.StatusOK)
+}
+
+func TestReceiverIsolation(t *testing.T) {
+	api := newTestAPI(t)
+	defer api.close()
+
+	// Register a second receiver account just for this test to prove
+	// shipments are only visible and confirmable by their recorded recipient.
+	second := users.Account{
+		User: model.User{
+			ID: "receiver-other", Username: "receiver-other", DisplayName: "另一收货人",
+			Role: "receiver", MSPID: "Org1MSP",
+		},
+		// Matches the login helper's username+"123" convention.
+		Password: "receiver-other123",
+	}
+	users.ByUsername[second.User.Username] = second
+	users.ByID[second.User.ID] = second.User
+	t.Cleanup(func() {
+		delete(users.ByUsername, second.User.Username)
+		delete(users.ByID, second.User.ID)
+	})
+
+	shipper := api.login("shipper")
+	carrier := api.login("carrier")
+	stranger := api.login("receiver-other")
+	owner := api.login("receiver")
+
+	created := api.request(http.MethodPost, "/api/shipments", shipper, shipmentBody(), http.StatusCreated)
+	shipment := created["data"].(map[string]any)["data"].(map[string]any)
+	id := shipment["id"].(string)
+	deliveryCode := created["data"].(map[string]any)["deliveryCode"].(string)
+	if shipment["recipientId"] != "receiver-demo" {
+		t.Fatalf("created shipment recipientId = %#v", shipment["recipientId"])
+	}
+
+	for _, action := range []struct {
+		name string
+		body map[string]any
+	}{
+		{"accept", map[string]any{"location": "上海运营中心"}},
+		{"pickup", map[string]any{"location": "上海张江物流园"}},
+		{"checkpoint", map[string]any{"location": "昆山中转站", "description": "干线运输正常"}},
+		{"deliver", map[string]any{"location": "杭州市西湖区", "evidenceHash": strings.Repeat("d", 64)}},
+	} {
+		api.request(
+			http.MethodPost, "/api/shipments/"+id+"/actions/"+action.name,
+			carrier, action.body, http.StatusOK,
+		)
+	}
+
+	// The unrecorded receiver can neither see the delivered shipment...
+	denied := api.request(http.MethodGet, "/api/shipments/"+id, stranger, nil, http.StatusForbidden)
+	if denied["error"].(map[string]any)["code"] != "SHIPMENT_NOT_VISIBLE" {
+		t.Fatalf("stranger read = %#v", denied)
+	}
+	list := api.request(http.MethodGet, "/api/shipments", stranger, nil, http.StatusOK)
+	if items := list["data"].(map[string]any)["items"].([]any); len(items) != 0 {
+		t.Fatalf("stranger list = %#v", items)
+	}
+	// ...nor confirm it, even with the correct delivery code.
+	confirmDenied := api.request(
+		http.MethodPost, "/api/shipments/"+id+"/actions/confirm", stranger,
+		map[string]string{"deliveryCode": deliveryCode}, http.StatusForbidden,
+	)
+	if confirmDenied["error"].(map[string]any)["code"] != "NOT_RECORDED_RECIPIENT" {
+		t.Fatalf("stranger confirm = %#v", confirmDenied)
+	}
+
+	// The recorded recipient still sees and confirms it.
+	api.request(http.MethodGet, "/api/shipments/"+id, owner, nil, http.StatusOK)
+	received := api.request(
+		http.MethodPost, "/api/shipments/"+id+"/actions/confirm", owner,
+		map[string]string{"deliveryCode": deliveryCode}, http.StatusOK,
+	)
+	if received["data"].(map[string]any)["data"].(map[string]any)["status"] != "RECEIVED" {
+		t.Fatalf("owner confirm = %#v", received)
+	}
+}
+
+func TestPublicEndpointsRateLimited(t *testing.T) {
+	api := newTestAPIWithLimit(t, 3)
+	defer api.close()
+	// The first 3 public requests in the window pass (each 404s on an unknown
+	// tracking number); the 4th is throttled before reaching the handler.
+	path := "/api/public/track/JX202607200001"
+	for i := 0; i < 3; i++ {
+		api.request(http.MethodGet, path, "", nil, http.StatusNotFound)
+	}
+	throttled := api.request(http.MethodGet, path, "", nil, http.StatusTooManyRequests)
+	if throttled["error"].(map[string]any)["code"] != "RATE_LIMITED" {
+		t.Fatalf("throttled response = %#v", throttled)
+	}
+	// Non-public endpoints are not affected by the public limiter.
+	api.request(http.MethodGet, "/api/health", "", nil, http.StatusOK)
 }
 
 func shipmentBody() map[string]any {

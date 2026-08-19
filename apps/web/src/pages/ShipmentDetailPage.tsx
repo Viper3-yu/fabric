@@ -194,8 +194,8 @@ export function ShipmentDetailPage() {
             <Blockchain size={18} aria-hidden="true" />
             <span>记录环境</span>
           </div>
-          <strong>{ledgerMode === 'fabric' ? 'Fabric 网络' : '演示环境'}</strong>
-          <small>{ledgerMode === 'fabric' ? '由多方共同确认' : '用于预览完整业务流程'}</small>
+          <strong>Fabric 网络</strong>
+          <small>由多方共同确认</small>
         </article>
         <article>
           <div>

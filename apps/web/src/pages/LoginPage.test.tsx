@@ -8,8 +8,8 @@ import { LoginPage } from './LoginPage';
 const loginPayload = {
   success: true,
   data: {
-    token: 'demo-token',
-    ledgerMode: 'demo',
+    token: 'session-token',
+    ledgerMode: 'fabric',
     user: {
       id: 'carrier-1',
       username: 'carrier',
@@ -40,6 +40,19 @@ function fetchMock() {
         json: async () => ({ success: true, data: { loggedOut: true } }),
       };
     }
+    if (url === '/api/network') {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          success: true,
+          data: {
+            mode: 'fabric',
+            health: { mode: 'fabric', status: 'ok', network: 'hyperledger-fabric' },
+          },
+        }),
+      };
+    }
     if (url === '/api/auth/login') {
       expect(init?.credentials).toBe('include');
       return { ok: true, status: 200, json: async () => loginPayload };
@@ -49,7 +62,7 @@ function fetchMock() {
 }
 
 describe('登录页', () => {
-  it('展示演示账户并通过 httpOnly cookie 会话进入工作台', async () => {
+  it('输入业务账户并通过 httpOnly cookie 会话进入工作台', async () => {
     const mock = fetchMock();
     vi.stubGlobal('fetch', mock);
     const user = userEvent.setup();
@@ -65,13 +78,13 @@ describe('登录页', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText('演示账户')).toBeInTheDocument();
-    expect(screen.getByText('carrier123')).toBeInTheDocument();
+    // 表单初始为空，页面上没有任何预置凭据。
+    expect(screen.getByLabelText('用户名')).toHaveValue('');
+    expect(screen.getByLabelText('密码')).toHaveValue('');
+    expect(screen.queryByText('演示账户')).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: '使用承运方账户' }));
-    expect(screen.getByLabelText('用户名')).toHaveValue('carrier');
-    expect(screen.getByLabelText('密码')).toHaveValue('carrier123');
-
+    await user.type(screen.getByLabelText('用户名'), 'carrier');
+    await user.type(screen.getByLabelText('密码'), 'carrier-secret');
     await user.click(screen.getByRole('button', { name: '进入工作台' }));
 
     expect(await screen.findByText('工作台已打开')).toBeInTheDocument();
@@ -81,6 +94,7 @@ describe('登录页', () => {
         expect.objectContaining({
           method: 'POST',
           credentials: 'include',
+          body: JSON.stringify({ username: 'carrier', password: 'carrier-secret' }),
         }),
       );
     });

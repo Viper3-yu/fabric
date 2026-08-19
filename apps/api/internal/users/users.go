@@ -3,43 +3,42 @@ package users
 import "github.com/Viper3-yu/fabric/chaincode/logistics/model"
 
 type Account struct {
-	User     model.User
+	User model.User
+	// Password is a plaintext password supplied via APP_PASSWORD_<USER>;
+	// it exists for local development convenience only.
 	Password string
-	// PasswordHash is a bcrypt hash of the account password. When set it
-	// takes precedence over Password and is the only accepted production
-	// credential form; the plaintext Password remains the built-in course
-	// demo fallback for development and tests.
+	// PasswordHash is a bcrypt hash supplied via APP_PASSWORD_HASH_<USER>.
+	// When set it takes precedence over Password and is the only accepted
+	// production credential form.
 	PasswordHash string
 }
 
+// Accounts defines the built-in role accounts. No credentials live in source
+// code: every password or hash is supplied through environment configuration.
 var Accounts = []Account{
 	{
 		User: model.User{
 			ID: "shipper-demo", Username: "shipper", DisplayName: "星河商贸",
 			Role: "shipper", MSPID: "Org1MSP",
 		},
-		Password: "shipper123",
 	},
 	{
 		User: model.User{
 			ID: "carrier-demo", Username: "carrier", DisplayName: "迅达物流",
 			Role: "carrier", MSPID: "Org2MSP",
 		},
-		Password: "carrier123",
 	},
 	{
 		User: model.User{
-			ID: "receiver-demo", Username: "receiver", DisplayName: "演示收货人",
+			ID: "receiver-demo", Username: "receiver", DisplayName: "确认收货人",
 			Role: "receiver", MSPID: "Org1MSP",
 		},
-		Password: "receiver123",
 	},
 	{
 		User: model.User{
-			ID: "auditor-demo", Username: "auditor", DisplayName: "课程审计员",
+			ID: "auditor-demo", Username: "auditor", DisplayName: "审计员",
 			Role: "auditor", MSPID: "ReadOnly",
 		},
-		Password: "auditor123",
 	},
 }
 
@@ -55,10 +54,10 @@ func init() {
 	}
 }
 
-// Configure applies environment-provided credential overrides to the built-in
-// demo accounts. Passwords from the DEMO_PASSWORD_<USER> variables replace the
-// source-code defaults; DEMO_PASSWORD_HASH_<USER> variables set bcrypt hashes
-// that then take precedence over plaintext passwords at authentication time.
+// Configure applies environment-provided credentials to the built-in
+// accounts. APP_PASSWORD_<USER> values set the plaintext development form;
+// APP_PASSWORD_HASH_<USER> values set bcrypt hashes that take precedence at
+// authentication time.
 func Configure(passwords map[string]string, hashes map[string]string) {
 	for username, password := range passwords {
 		account, ok := ByUsername[username]
@@ -78,3 +77,16 @@ func Configure(passwords map[string]string, hashes map[string]string) {
 		ByUsername[username] = account
 	}
 }
+
+// ReceiverAccountID returns the account new shipments are addressed to. With
+// the single built-in receiver this is a constant; a multi-receiver user
+// store would replace it with a per-shipment selection.
+func ReceiverAccountID() string {
+	if account, ok := ByUsername[ReceiverUsername]; ok {
+		return account.User.ID
+	}
+	return ""
+}
+
+// ReceiverUsername is the built-in consignee account name.
+const ReceiverUsername = "receiver"

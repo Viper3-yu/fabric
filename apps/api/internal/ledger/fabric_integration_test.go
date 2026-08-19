@@ -33,9 +33,6 @@ func TestFabricClosedLoopIntegration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("load config: %v", err)
 	}
-	if cfg.LedgerMode != "fabric" {
-		t.Skipf("LEDGER_MODE is %q; the integration loop requires fabric", cfg.LedgerMode)
-	}
 	fabric, err := NewFabric(cfg.Fabric)
 	if err != nil {
 		t.Fatalf("new fabric: %v", err)
@@ -72,6 +69,7 @@ func TestFabricClosedLoopIntegration(t *testing.T) {
 			Name: "集成测试货物", Category: "冷链", Quantity: 1, WeightKG: 2.5,
 		},
 		RecipientMasked:      "集** · 139****0002",
+		RecipientID:          receiver.ID,
 		ExpectedDeliveryDate: "2026-12-31",
 		TemperatureRange:     &model.TemperatureRange{Min: 2, Max: 8, Unit: "C"},
 		DeliveryCodeHash:     hex.EncodeToString(codeHash[:]),

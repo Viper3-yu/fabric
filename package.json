@@ -21,8 +21,7 @@
     "format:check": "prettier --check . && powershell -ExecutionPolicy Bypass -File scripts/check-go-format.ps1",
     "fabric:bootstrap": "powershell -ExecutionPolicy Bypass -File network/bootstrap.ps1",
     "fabric:up": "powershell -ExecutionPolicy Bypass -File network/start.ps1",
-    "fabric:down": "powershell -ExecutionPolicy Bypass -File network/stop.ps1",
-    "seed": "go run ./apps/api/cmd/seed"
+    "fabric:down": "powershell -ExecutionPolicy Bypass -File network/stop.ps1"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

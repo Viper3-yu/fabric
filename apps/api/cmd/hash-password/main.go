@@ -1,5 +1,5 @@
 // Command hash-password prints a bcrypt hash for a password so deployment
-// operators can populate DEMO_PASSWORD_HASH_<USER> without storing plaintext.
+// operators can populate APP_PASSWORD_HASH_<USER> without storing plaintext.
 //
 // Usage:
 //

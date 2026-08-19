@@ -9,7 +9,7 @@ import type {
   TemperatureRange,
 } from '@jixin/shared';
 
-export type LedgerMode = 'fabric' | 'demo';
+export type LedgerMode = 'fabric';
 
 export interface ApiMeta {
   ledgerMode?: LedgerMode;
@@ -29,8 +29,6 @@ export interface LoginResult {
 
 export interface NetworkInfo {
   mode: LedgerMode;
-  isDemo: boolean;
-  label: '演示账本' | 'Hyperledger Fabric';
   health: {
     mode: string;
     status: 'ok' | 'degraded';

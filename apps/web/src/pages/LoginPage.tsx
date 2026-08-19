@@ -1,45 +1,18 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Button, Form, InlineNotification, PasswordInput, TextInput } from '@carbon/react';
-import { ArrowRight, Blockchain, Checkmark, Information, Search } from '@carbon/icons-react';
+import { ArrowRight, Blockchain, Information, Search } from '@carbon/icons-react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { BrandMark } from '../components/BrandMark';
 import { api, getErrorMessage } from '../lib/api';
 import type { LedgerMode } from '../types';
 
-const DEMO_ACCOUNTS = [
-  {
-    role: '发货方',
-    username: 'shipper',
-    password: 'shipper123',
-    description: '创建和取消待接单运单',
-  },
-  {
-    role: '承运方',
-    username: 'carrier',
-    password: 'carrier123',
-    description: '接单、运输、异常和送达',
-  },
-  {
-    role: '收货方',
-    username: 'receiver',
-    password: 'receiver123',
-    description: '使用一次性签收码确认收货',
-  },
-  {
-    role: '审计访客',
-    username: 'auditor',
-    password: 'auditor123',
-    description: '只读查看运输和修改记录',
-  },
-];
-
 export function LoginPage() {
   const { user, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [username, setUsername] = useState('shipper');
-  const [password, setPassword] = useState('shipper123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [networkMode, setNetworkMode] = useState<LedgerMode | null>(null);
@@ -109,7 +82,7 @@ export function LoginPage() {
           <div className="login-panel__heading">
             <p className="eyebrow">业务工作台</p>
             <h2>欢迎回来</h2>
-            <p>使用业务账户继续处理运单，或选择一个演示角色快速进入。</p>
+            <p>使用业务账户继续处理运单。</p>
           </div>
 
           <div className={`ledger-disclaimer ${networkMode === 'fabric' ? 'is-fabric' : ''}`}>
@@ -120,10 +93,8 @@ export function LoginPage() {
             )}
             <span>
               {networkMode === 'fabric'
-                ? '当前已连接真实 Fabric 网络，关键业务记录会写入区块链。该网络仍用于测试，不等同于生产环境。'
-                : networkMode === 'demo'
-                  ? '当前是演示环境，可以体验完整流程，但记录没有写入真实 Fabric 区块链网络。'
-                  : '正在确认记录服务状态。'}
+                ? '当前已连接 Fabric 网络，关键业务记录会写入区块链。'
+                : '正在确认记录服务状态。'}
             </span>
           </div>
 
@@ -159,55 +130,6 @@ export function LoginPage() {
               {submitting ? '正在登录' : '进入工作台'}
             </Button>
           </Form>
-
-          <div className="demo-accounts" aria-labelledby="demo-account-title">
-            <div className="demo-accounts__heading">
-              <h3 id="demo-account-title">演示账户</h3>
-              <span>点击即可自动填充</span>
-            </div>
-            <div className="demo-accounts__grid">
-              {DEMO_ACCOUNTS.map((account) => (
-                <article
-                  key={account.username}
-                  className={`demo-account ${username === account.username ? 'is-selected' : ''}`}
-                >
-                  <div className="demo-account__top">
-                    <span className="demo-account__index">{account.role.slice(0, 1)}</span>
-                    {username === account.username ? (
-                      <Checkmark size={18} aria-hidden="true" />
-                    ) : null}
-                  </div>
-                  <div className="demo-account__copy">
-                    <strong>{account.role}</strong>
-                    <span>{account.description}</span>
-                  </div>
-                  <p className="mono">
-                    <span>{account.username}</span>
-                    <span aria-hidden="true"> / </span>
-                    <span>{account.password}</span>
-                  </p>
-                  <Button
-                    kind={username === account.username ? 'primary' : 'secondary'}
-                    size="sm"
-                    renderIcon={username === account.username ? Checkmark : ArrowRight}
-                    aria-pressed={username === account.username}
-                    aria-label={
-                      username === account.username
-                        ? `已选择${account.role}账户`
-                        : `使用${account.role}账户`
-                    }
-                    onClick={() => {
-                      setUsername(account.username);
-                      setPassword(account.password);
-                      setError('');
-                    }}
-                  >
-                    {username === account.username ? '已选择此账户' : '使用此账户'}
-                  </Button>
-                </article>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
     </main>

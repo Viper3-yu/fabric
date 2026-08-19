@@ -55,7 +55,7 @@ try {
 }
 
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-  Write-Host "Note: demo mode and automated tests do not require Docker. A real Fabric network requires Docker Desktop."
+  Write-Host "Note: the API only runs against a real Fabric network, which requires Docker Desktop."
 }
 
 if ($failed) { exit 1 }

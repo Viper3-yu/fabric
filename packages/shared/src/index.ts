@@ -82,6 +82,8 @@ export interface Shipment {
   shipperName: string;
   carrierId?: string;
   carrierName?: string;
+  /** 负责签收的收货账户；旧数据（未绑定前）可能为空。 */
+  recipientId?: string;
   origin: Address;
   destination: Address;
   goods: GoodsInfo;
@@ -107,7 +109,7 @@ export interface ShipmentHistoryEntry {
 export interface LedgerReceipt<T = Shipment> {
   transactionId: string;
   committedAt: string;
-  ledgerMode: 'fabric' | 'demo';
+  ledgerMode: 'fabric';
   data: T;
 }
 
@@ -115,7 +117,7 @@ export interface ApiSuccess<T> {
   success: true;
   data: T;
   meta?: {
-    ledgerMode?: 'fabric' | 'demo';
+    ledgerMode?: 'fabric';
     requestId?: string;
   };
 }
@@ -144,7 +146,7 @@ export interface DashboardSummary {
 export interface IntegrityResult {
   trackingNumber: string;
   verified: boolean;
-  ledgerMode: 'fabric' | 'demo';
+  ledgerMode: 'fabric';
   status: ShipmentStatus;
   eventCount: number;
   historyContinuous: boolean;

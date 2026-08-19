@@ -178,6 +178,9 @@ func (f *Fabric) CreateShipment(
 		"location":             command.Origin.City + " · " + command.Origin.Detail,
 		"description":          "发货方创建运单",
 	}
+	if command.RecipientID != "" {
+		payload["recipientId"] = command.RecipientID
+	}
 	if command.TemperatureRange != nil {
 		payload["temperatureRange"] = command.TemperatureRange
 	}

@@ -33,24 +33,34 @@ type FabricConfig struct {
 }
 
 type Config struct {
-	Environment    string
-	Host           string
-	Port           int
-	LedgerMode     string
-	JWTSecret      string
-	JWTExpiresIn   time.Duration
-	CORSOrigins    []string
-	DemoLedgerPath string
-	DemoAutoSeed   bool
-	// DemoPasswords maps demo usernames to plaintext password overrides
-	// (course demos). DemoPasswordHashes maps usernames to bcrypt hashes and
-	// takes precedence; production deployments must supply one of the two.
-	DemoPasswords      map[string]string
-	DemoPasswordHashes map[string]string
-	Fabric             FabricConfig
+	Environment  string
+	Host         string
+	Port         int
+	JWTSecret    string
+	JWTExpiresIn time.Duration
+	CORSOrigins  []string
+	// PublicRateLimitPerMinute caps unauthenticated /api/public/ requests per
+	// client IP; 0 disables the limiter.
+	PublicRateLimitPerMinute int
+	// TrustProxyHeaders enables deriving the client IP from the right-most
+	// X-Forwarded-For entry. Only set it when a trusted reverse proxy sits in
+	// front of the API; otherwise clients spoof the header and bypass limits.
+	TrustProxyHeaders bool
+	// AccountPasswords maps account usernames to plaintext password overrides
+	// (development convenience only). AccountPasswordHashes maps usernames to
+	// bcrypt hashes and takes precedence; production deployments must supply
+	// hashes for every built-in account.
+	AccountPasswords      map[string]string
+	AccountPasswordHashes map[string]string
+	Fabric                FabricConfig
 }
 
+// AccountUsernames lists the built-in role accounts that credentials can be
+// configured for via APP_PASSWORD_<USER> / APP_PASSWORD_HASH_<USER>.
+var AccountUsernames = []string{"shipper", "carrier", "receiver", "auditor"}
+
 func Load() (Config, error) {
+	loadDefaultEnvFile()
 	if envFile := strings.TrimSpace(os.Getenv("ENV_FILE")); envFile != "" {
 		if err := loadEnvFile(envFile); err != nil {
 			return Config{}, fmt.Errorf("load ENV_FILE: %w", err)
@@ -58,12 +68,8 @@ func Load() (Config, error) {
 	}
 
 	environment := env("NODE_ENV", "development")
-	mode := env("LEDGER_MODE", "demo")
 	if environment != "development" && environment != "test" && environment != "production" {
 		return Config{}, fmt.Errorf("NODE_ENV must be development, test, or production")
-	}
-	if mode != "demo" && mode != "fabric" {
-		return Config{}, fmt.Errorf("LEDGER_MODE must be demo or fabric")
 	}
 
 	port, err := strconv.Atoi(env("PORT", "3001"))
@@ -74,54 +80,56 @@ func Load() (Config, error) {
 	if err != nil || expires <= 0 {
 		return Config{}, fmt.Errorf("JWT_EXPIRES_IN must be a positive Go duration such as 8h")
 	}
-	autoSeed, err := strconv.ParseBool(env("DEMO_AUTO_SEED", "true"))
+	publicLimit, err := strconv.Atoi(env("PUBLIC_RATE_LIMIT_PER_MINUTE", "60"))
+	if err != nil || publicLimit < 0 || publicLimit > 1_000_000 {
+		return Config{}, fmt.Errorf("PUBLIC_RATE_LIMIT_PER_MINUTE must be from 0 (disabled) to 1000000")
+	}
+	trustProxy, err := strconv.ParseBool(env("TRUST_PROXY", "false"))
 	if err != nil {
-		return Config{}, fmt.Errorf("DEMO_AUTO_SEED must be true or false")
+		return Config{}, fmt.Errorf("TRUST_PROXY must be true or false")
+	}
+
+	corsOrigins := splitList(env("CORS_ORIGIN", "http://localhost:5173,http://127.0.0.1:5173"))
+	for _, origin := range corsOrigins {
+		if origin == "*" {
+			return Config{}, fmt.Errorf(
+				"CORS_ORIGIN cannot use *: the API sends credentials, so origins must be listed explicitly",
+			)
+		}
 	}
 
 	jwtSecret := strings.TrimSpace(os.Getenv("JWT_SECRET"))
-	if (mode == "fabric" || environment == "production") && len(jwtSecret) < 16 {
-		return Config{}, fmt.Errorf("JWT_SECRET with at least 16 characters is required in Fabric mode and production")
-	}
-	if jwtSecret == "" {
-		if environment != "test" {
-			log.Printf(
-				"[jixin-api] JWT_SECRET is not set; falling back to a built-in demo secret. %s",
-				"Anyone with this public repository can forge tokens for this deployment.",
-			)
-		}
-		jwtSecret = "demo-only-jixin-secret-change-me"
+	if len(jwtSecret) < 16 {
+		return Config{}, fmt.Errorf(
+			"JWT_SECRET with at least 16 characters is required; generate one with a password manager or `openssl rand -hex 32`",
+		)
 	}
 
-	demoPath := strings.TrimSpace(os.Getenv("DEMO_LEDGER_PATH"))
-	if demoPath == "" {
-		demoPath = defaultDemoPath()
-	}
-
-	demoPasswords, demoHashes := loadDemoCredentials()
+	passwords, hashes := loadAccountCredentials()
 	if environment == "production" {
-		for _, username := range []string{"shipper", "carrier", "receiver", "auditor"} {
-			if demoPasswords[username] == "" && demoHashes[username] == "" {
+		for _, username := range AccountUsernames {
+			if passwords[username] == "" && hashes[username] == "" {
 				return Config{}, fmt.Errorf(
-					"DEMO_PASSWORD_%s or DEMO_PASSWORD_HASH_%s is required in production",
+					"APP_PASSWORD_%s or APP_PASSWORD_HASH_%s is required in production",
 					strings.ToUpper(username), strings.ToUpper(username),
 				)
 			}
 		}
+	} else {
+		warnMissingCredentials(passwords, hashes)
 	}
 
 	return Config{
-		Environment:        environment,
-		Host:               env("HOST", "127.0.0.1"),
-		Port:               port,
-		LedgerMode:         mode,
-		JWTSecret:          jwtSecret,
-		JWTExpiresIn:       expires,
-		CORSOrigins:        splitList(env("CORS_ORIGIN", "http://localhost:5173,http://127.0.0.1:5173")),
-		DemoLedgerPath:     demoPath,
-		DemoAutoSeed:       autoSeed,
-		DemoPasswords:      demoPasswords,
-		DemoPasswordHashes: demoHashes,
+		Environment:              environment,
+		Host:                     env("HOST", "127.0.0.1"),
+		Port:                     port,
+		JWTSecret:                jwtSecret,
+		JWTExpiresIn:             expires,
+		CORSOrigins:              corsOrigins,
+		PublicRateLimitPerMinute: publicLimit,
+		TrustProxyHeaders:        trustProxy,
+		AccountPasswords:         passwords,
+		AccountPasswordHashes:    hashes,
 		Fabric: FabricConfig{
 			ConnectionProfilePath: strings.TrimSpace(os.Getenv("FABRIC_CONNECTION_PROFILE_PATH")),
 			ChannelName:           env("FABRIC_CHANNEL_NAME", "logisticschannel"),
@@ -149,11 +157,37 @@ func Load() (Config, error) {
 	}, nil
 }
 
-func defaultDemoPath() string {
-	if details, err := os.Stat(filepath.Join("apps", "api")); err == nil && details.IsDir() {
-		return filepath.Join("apps", "api", "data", "demo-ledger.json")
+// loadDefaultEnvFile loads apps/api/.env when ENV_FILE is not set, mirroring
+// the dotenv convention so local operators keep credentials out of the shell.
+func loadDefaultEnvFile() {
+	if strings.TrimSpace(os.Getenv("ENV_FILE")) != "" {
+		return
 	}
-	return filepath.Join("data", "demo-ledger.json")
+	for _, candidate := range []string{
+		filepath.Join("apps", "api", ".env"),
+		".env",
+	} {
+		if details, err := os.Stat(candidate); err == nil && !details.IsDir() {
+			_ = loadEnvFile(candidate)
+			return
+		}
+	}
+}
+
+func warnMissingCredentials(passwords, hashes map[string]string) {
+	missing := make([]string, 0)
+	for _, username := range AccountUsernames {
+		if passwords[username] == "" && hashes[username] == "" {
+			missing = append(missing, username)
+		}
+	}
+	if len(missing) > 0 {
+		log.Printf(
+			"[jixin-api] no credentials configured for accounts: %s. "+
+				"Set APP_PASSWORD_HASH_%s (see apps/api/.env.example) or those accounts cannot sign in.",
+			strings.Join(missing, ", "), strings.ToUpper(missing[0]),
+		)
+	}
 }
 
 func env(key, fallback string) string {
@@ -174,19 +208,19 @@ func splitList(value string) []string {
 	return result
 }
 
-// loadDemoCredentials collects DEMO_PASSWORD_<USER> and
-// DEMO_PASSWORD_HASH_<USER> overrides for the four built-in demo accounts.
+// loadAccountCredentials collects APP_PASSWORD_<USER> and
+// APP_PASSWORD_HASH_<USER> overrides for the four built-in role accounts.
 // Hashes (bcrypt) take precedence at authentication time; plaintext overrides
-// exist so a course demo can pin passwords without editing source code.
-func loadDemoCredentials() (passwords map[string]string, hashes map[string]string) {
+// exist so local development can pin passwords without editing source code.
+func loadAccountCredentials() (passwords map[string]string, hashes map[string]string) {
 	passwords = make(map[string]string)
 	hashes = make(map[string]string)
-	for _, username := range []string{"shipper", "carrier", "receiver", "auditor"} {
+	for _, username := range AccountUsernames {
 		suffix := strings.ToUpper(username)
-		if value := strings.TrimSpace(os.Getenv("DEMO_PASSWORD_" + suffix)); value != "" {
+		if value := strings.TrimSpace(os.Getenv("APP_PASSWORD_" + suffix)); value != "" {
 			passwords[username] = value
 		}
-		if value := strings.TrimSpace(os.Getenv("DEMO_PASSWORD_HASH_" + suffix)); value != "" {
+		if value := strings.TrimSpace(os.Getenv("APP_PASSWORD_HASH_" + suffix)); value != "" {
 			hashes[username] = value
 		}
 	}

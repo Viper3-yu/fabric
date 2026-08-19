@@ -22,8 +22,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	users.Configure(cfg.DemoPasswords, cfg.DemoPasswordHashes)
-	store, err := createLedger(cfg)
+	users.Configure(cfg.AccountPasswords, cfg.AccountPasswordHashes)
+	store, err := ledger.NewFabric(cfg.Fabric)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,10 +46,8 @@ func main() {
 
 	go func() {
 		log.Printf(
-			"[jixin-api] listening on http://%s ledger=%s%s",
-			server.Addr,
-			store.Mode(),
-			map[bool]string{true: " (DEMO LEDGER — NOT REAL BLOCKCHAIN PROOF)", false: ""}[store.Mode() == "demo"],
+			"[jixin-api] listening on http://%s ledger=fabric channel=%s chaincode=%s",
+			server.Addr, cfg.Fabric.ChannelName, cfg.Fabric.ChaincodeName,
 		)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("serve API: %v", err)
@@ -65,20 +63,4 @@ func main() {
 	if err := server.Shutdown(ctx); err != nil {
 		log.Printf("shutdown: %v", err)
 	}
-}
-
-func createLedger(cfg config.Config) (ledger.Ledger, error) {
-	if cfg.LedgerMode == "fabric" {
-		return ledger.NewFabric(cfg.Fabric)
-	}
-	store, err := ledger.NewDemo(cfg.DemoLedgerPath)
-	if err != nil {
-		return nil, err
-	}
-	if cfg.DemoAutoSeed {
-		if _, _, err := ledger.SeedDemo(store, false); err != nil {
-			return nil, err
-		}
-	}
-	return store, nil
 }
