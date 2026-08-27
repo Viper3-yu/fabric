@@ -11,6 +11,9 @@ $Files = Get-ChildItem -LiteralPath `
   (Join-Path $ProjectDir "chaincode\logistics") `
   -Recurse -Filter "*.go" -File |
   Where-Object {
+    # Vendor trees would blow past the Windows command-line length limit
+    # (808+ files) and are excluded by CI / check-go-format.sh as well.
+    $_.FullName -notlike "*\vendor\*" -and
     $_.FullName -notlike "*\.go-cache\*" -and
     $_.FullName -notlike "*\.go-mod\*"
   } |

@@ -4,12 +4,9 @@
  */
 :root {
   color-scheme: light;
-  --jixin-font-ui:
-    'Times New Roman', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, serif;
-  --jixin-font-editorial:
-    'Times New Roman', 'Noto Serif SC Variable', 'Noto Serif SC', serif;
-  --jixin-font-data:
-    'Times New Roman', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, serif;
+  --jixin-font-ui: 'Times New Roman', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, serif;
+  --jixin-font-editorial: 'Times New Roman', 'Noto Serif SC Variable', 'Noto Serif SC', serif;
+  --jixin-font-data: 'Times New Roman', 'Noto Sans SC Variable', 'Noto Sans SC', system-ui, serif;
   --jixin-font-mono: 'Cascadia Mono', 'SFMono-Regular', Consolas, monospace;
   --jixin-accent: #1d624b;
   --jixin-accent-hover: #124a37;

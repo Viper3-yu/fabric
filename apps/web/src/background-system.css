@@ -46,7 +46,9 @@
     ),
     url('/night-route.jpg');
   background-repeat: no-repeat, no-repeat;
-  background-position: left top, center 36%;
+  background-position:
+    left top,
+    center 36%;
   background-size: auto, cover;
   background-attachment: scroll, fixed;
   mask-image: linear-gradient(to bottom, #000 0%, #000 74%, transparent 100%);

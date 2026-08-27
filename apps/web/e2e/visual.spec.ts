@@ -56,7 +56,10 @@ async function settle(page: Page) {
             const img = new Image();
             img.onload = img.onerror = () => {
               // onload 只代表传输完成，强制解码落地再放行截图。
-              img.decode().catch(() => {}).then(() => resolve());
+              img
+                .decode()
+                .catch(() => {})
+                .then(() => resolve());
             };
             img.src = src;
           }),
