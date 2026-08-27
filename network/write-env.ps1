@@ -29,6 +29,13 @@ $Rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
 try { $Rng.GetBytes($SecretBytes) } finally { $Rng.Dispose() }
 $JwtSecret = [BitConverter]::ToString($SecretBytes).Replace("-", "").ToLower()
 
+# Sign-in credentials cannot be derived from the network; keep any APP_PASSWORD*
+# lines the operator already configured so a network rebuild does not wipe them.
+$PreservedPasswordLines = @()
+if (Test-Path -LiteralPath $OutputPath) {
+  $PreservedPasswordLines = @(Get-Content -LiteralPath $OutputPath | Where-Object { $_ -match "^APP_PASSWORD" })
+}
+
 $lines = @(
   "JWT_SECRET=$JwtSecret",
   "FABRIC_CHANNEL_NAME=$ChannelName",
@@ -45,14 +52,23 @@ $lines = @(
   "FABRIC_ORG2_TLS_CERT_PATH=$(Join-Path $Org2Base 'peers\peer0.org2.example.com\tls\ca.crt')",
   "FABRIC_ORG2_CERT_PATH=$(Join-Path $Org2Base 'users\User1@org2.example.com\msp\signcerts\cert.pem')",
   "FABRIC_ORG2_KEY_PATH=$($Org2Key.FullName)",
-  "",
-  "# Sign-in credentials are not generated: set APP_PASSWORD_<USER> or",
-  "# APP_PASSWORD_HASH_<USER> for the accounts that need workbench access.",
-  "# APP_PASSWORD_SHIPPER=",
-  "# APP_PASSWORD_CARRIER=",
-  "# APP_PASSWORD_RECEIVER=",
-  "# APP_PASSWORD_AUDITOR="
+  ""
 )
+
+if ($PreservedPasswordLines.Count -gt 0) {
+  $lines += $PreservedPasswordLines
+  Write-Host "Preserved $($PreservedPasswordLines.Count) APP_PASSWORD* line(s) from the previous env file."
+}
+else {
+  $lines += @(
+    "# Sign-in credentials are not generated: set APP_PASSWORD_<USER> or",
+    "# APP_PASSWORD_HASH_<USER> for the accounts that need workbench access.",
+    "# APP_PASSWORD_SHIPPER=",
+    "# APP_PASSWORD_CARRIER=",
+    "# APP_PASSWORD_RECEIVER=",
+    "# APP_PASSWORD_AUDITOR="
+  )
+}
 
 [IO.File]::WriteAllLines($OutputPath, $lines, [Text.UTF8Encoding]::new($false))
 Write-Host "Generated $OutputPath. It contains machine-local certificate paths and is excluded by .gitignore."

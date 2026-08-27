@@ -19,7 +19,7 @@ pnpm doctor
 
 ## 快速启动（连接真实 Fabric 网络）
 
-以下命令在 Windows PowerShell 中运行。脚本使用 Git for Windows 的 `bin/bash.exe`，部署 `chaincode/logistics` 中的 Go 链码。
+以下命令在 Windows PowerShell 中运行。脚本使用 Git for Windows 的 `bin/bash.exe`，部署 `chaincode/logistics` 中的 Go 链码。Linux/macOS 上同样的 `pnpm fabric:*` 命令直接可用（由 `scripts/run-platform.js` 按平台选择 PowerShell 包装或原生 bash 脚本，`pnpm doctor` 除外——它仅面向 Windows 环境）。
 
 首次准备 Fabric 二进制、镜像和官方测试网络：
 
@@ -41,6 +41,8 @@ APP_PASSWORD_HASH_CARRIER=$2a$10$...
 APP_PASSWORD_HASH_RECEIVER=$2a$10$...
 APP_PASSWORD_HASH_AUDITOR=$2a$10$...
 ```
+
+已写入的 `APP_PASSWORD*` 行在每次 `pnpm fabric:up` 重新生成 `.env.fabric` 时会自动保留，不需要重复配置。
 
 然后启动 API 与前端：
 
