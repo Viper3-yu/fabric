@@ -14,8 +14,6 @@ coverage/
 tmp/
 .go-cache/
 .go-mod/
-data/demo-ledger.json
-apps/api/data/demo-ledger.json
 network/fabric-samples/
 network/install-fabric.sh
 network/bin/
