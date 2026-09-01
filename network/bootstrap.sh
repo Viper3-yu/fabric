@@ -27,6 +27,8 @@ if [[ ! -f "${INSTALLER}" ]]; then
   echo "Downloading the official Hyperledger Fabric installer..."
   curl -fL -o "${INSTALLER}" "https://raw.githubusercontent.com/hyperledger/fabric/main/scripts/install-fabric.sh"
 fi
+# curl 不会带执行位；从 Windows 打包拷贝来的文件也可能丢失 +x。
+chmod +x "${INSTALLER}"
 
 cd "${SCRIPT_DIR}"
 ./install-fabric.sh \

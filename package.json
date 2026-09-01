@@ -8,7 +8,7 @@
     "node": ">=20.12"
   },
   "scripts": {
-    "doctor": "powershell -ExecutionPolicy Bypass -File scripts/doctor.ps1",
+    "doctor": "node scripts/run-platform.js doctor",
     "dev": "pnpm --filter @jixin/shared build && concurrently -k -n API,WEB -c blue,green \"go run ./apps/api/cmd/server\" \"pnpm --filter @jixin/web dev\"",
     "build": "pnpm -r build && go build ./apps/api/... ./chaincode/logistics/...",
     "test": "pnpm -r test && go test ./apps/api/... ./chaincode/logistics/...",

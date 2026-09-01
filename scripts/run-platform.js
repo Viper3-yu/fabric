@@ -10,6 +10,7 @@ const ps1 = (file) => ['powershell', ['-ExecutionPolicy', 'Bypass', '-File', fil
 const sh = (file) => ['bash', [file]];
 
 const tasks = {
+  doctor: isWindows ? ps1('scripts/doctor.ps1') : sh('scripts/doctor.sh'),
   'fabric:bootstrap': isWindows ? ps1('network/bootstrap.ps1') : sh('network/bootstrap.sh'),
   'fabric:up': isWindows ? ps1('network/start.ps1') : sh('network/up.sh'),
   'fabric:down': isWindows ? ps1('network/stop.ps1') : sh('network/stop-fabric.sh'),
