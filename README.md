@@ -1,39 +1,81 @@
 # 迹信
 
-迹信是一个基于 Hyperledger Fabric 的可信物流追踪系统。当前代码由 React/TypeScript 浏览器端、Go HTTP API、Go Fabric Gateway 适配器、Go 智能合约和闭环自动化测试组成。所有业务记录都写入真实的 Fabric 区块链网络；代码不再包含演示账本或演示数据。
+迹信是一个基于 Hyperledger Fabric 区块链的可信物流追踪系统。运单从创建到签收的每一次关键交接——建单、接单、揽收、运输、送达、签收——都会作为一笔交易写入区块链：谁在什么时间做了什么，链上有据可查，任何一方都无法事后单独篡改。
 
-业务架构与状态机见 [设计方案](docs/设计方案.md)，Go 重构审查和精简后的文件职责见 [Go 重构审查报告](docs/Go重构审查报告.md)。
+## 系统是怎么工作的
+
+系统分为三层：浏览器端负责操作界面，Go API 负责业务逻辑和登录鉴权，所有业务记录最终由 Fabric 区块链网络上的 Go 智能合约写入账本。
+
+```mermaid
+graph LR
+    W["浏览器<br>React + TypeScript"] --> A["API 服务<br>Go"]
+    A --> N["Fabric 区块链网络<br>双组织测试网络 + Go 链码"]
+```
+
+区块链带来的保证：
+
+- 状态只能按规则流转：不能跳过揽收直接签收，也不能重复签收，这些由智能合约强制拒绝。
+- 每一次修改都会返回真实的 Fabric 交易 ID，可以在页面的"交易证据"里核对。
+- 一次性签收码只展示一次，链上只保存它的摘要，明文不落链。
+- 温度越界由智能合约自动判定并记录异常，异常记录不能删除。
+
+## 四种内置角色
+
+| 账号       | 角色   | 能做的事                                     |
+| ---------- | ------ | -------------------------------------------- |
+| `shipper`  | 发货方 | 创建运单、取消尚未被接单的运单               |
+| `carrier`  | 承运方 | 接单、揽收、记录运输节点、处理异常、确认送达 |
+| `receiver` | 收货方 | 用一次性签收码确认收货                       |
+| `auditor`  | 审计   | 只读查看运单历史和链上交易证据               |
 
 ## 环境要求
 
-- Go 1.23 或更高版本
-- Node.js 20.12 或更高版本
-- pnpm 11
-- 已启动的 Docker Desktop，以及 Git for Windows 自带的 Git Bash（Fabric 测试网络需要）
+- Go 1.23+、Node.js 20.12+、pnpm 11
+- 正在运行的 Docker 和 `jq`（Fabric 测试网络依赖它们）
+  - Windows：Docker Desktop + Git for Windows
+  - Linux：Docker Engine（含 compose v2 插件）
 
-先检查本机环境：
+装好后先自检一次：
 
-```powershell
+```bash
 pnpm doctor
 ```
 
-## 快速启动（连接真实 Fabric 网络）
+## 快速启动
 
-以下命令在 Windows PowerShell 中运行。脚本使用 Git for Windows 的 `bin/bash.exe`，部署 `chaincode/logistics` 中的 Go 链码。Linux/macOS 上同样的 `pnpm fabric:*` 命令直接可用（由 `scripts/run-platform.js` 按平台选择 PowerShell 包装或原生 bash 脚本，`pnpm doctor` 除外——它仅面向 Windows 环境）。
+以下命令 Windows 在 PowerShell 中执行，Linux/macOS 在终端中执行。`pnpm` 命令本身在两个平台完全一致，脚本会自动选择对应平台的实现。
 
-首次准备 Fabric 二进制、镜像和官方测试网络：
+### 1. 安装依赖（只需一次）
 
-```powershell
+```bash
+pnpm install
+```
+
+### 2. 下载 Fabric 组件（只需一次）
+
+```bash
 pnpm fabric:bootstrap
 ```
 
-启动双组织网络、创建 `logisticschannel`、部署 `logistics` Go 链码，并生成 `apps/api/.env.fabric`（内含本机生成的随机 `JWT_SECRET`）：
+下载 Fabric 二进制、Docker 镜像和官方测试网络，视网速可能需要几分钟。
 
-```powershell
+### 3. 启动区块链网络（每次使用前）
+
+```bash
 pnpm fabric:up
 ```
 
-为需要登录工作台的角色账户设置密码（生成 bcrypt 哈希：`go run ./apps/api/cmd/hash-password 'your-password'`），追加到 `apps/api/.env.fabric`：
+这一步会启动双组织测试网络、创建通道 `logisticschannel`、部署链码，并生成 `apps/api/.env.fabric`（内含随机生成的 `JWT_SECRET` 和本机证书路径）。
+
+### 4. 设置账号密码（只需一次）
+
+源代码里没有任何密码，四个账号的密码由你在这一步配置。先生成一个 bcrypt 哈希：
+
+```bash
+go run ./apps/api/cmd/hash-password '你的密码'
+```
+
+把输出追加到 `apps/api/.env.fabric`，每个账号一行：
 
 ```ini
 APP_PASSWORD_HASH_SHIPPER=$2a$10$...
@@ -42,63 +84,96 @@ APP_PASSWORD_HASH_RECEIVER=$2a$10$...
 APP_PASSWORD_HASH_AUDITOR=$2a$10$...
 ```
 
-已写入的 `APP_PASSWORD*` 行在每次 `pnpm fabric:up` 重新生成 `.env.fabric` 时会自动保留，不需要重复配置。
+配置一次即可：以后重新执行 `pnpm fabric:up` 时，已写入的 `APP_PASSWORD*` 行会自动保留。本地开发也可以改用明文形式 `APP_PASSWORD_<账号>=明文`，详见 `apps/api/.env.example`。
 
-然后启动 API 与前端：
+### 5. 启动应用（每次使用前）
+
+应用通过环境变量 `ENV_FILE` 找到网络配置：
+
+Windows PowerShell：
 
 ```powershell
 $env:ENV_FILE = (Resolve-Path ".\apps\api\.env.fabric").Path
 pnpm dev
 ```
 
-浏览器访问 <http://localhost:5173>，API 默认位于 <http://127.0.0.1:3001>。访问 <http://127.0.0.1:3001/api/network>，确认 `mode` 为 `fabric` 且 `health.status` 为 `ok`。所有修改响应都会返回 Fabric `transactionId`；签收码通过 transient data 提交，不写入交易参数、区块状态或链码事件。
+Linux/macOS：
 
-如果想让工作台和公开页有可浏览的记录，可以写入一组覆盖各状态的预置运单（12 个，全部真实上链，可重复执行——已存在的会跳过）：
+```bash
+export ENV_FILE="$PWD/apps/api/.env.fabric"
+pnpm dev
+```
 
-```powershell
-$env:ENV_FILE = (Resolve-Path ".\apps\api\.env.fabric").Path
+启动完成后：
+
+- 打开 <http://localhost:5173> 进入工作台；
+- 打开 <http://127.0.0.1:3001/api/network>，确认返回的 `mode` 是 `fabric`、`health.status` 是 `ok`，说明应用已连上真实区块链。
+
+### 6. 写入示例运单（可选）
+
+```bash
 pnpm seed
 ```
 
-推荐闭环：发货方建单并保存系统返回的 6 位签收码；承运方依次接单、揽收、更新节点、处理异常并送达；收货方用签收码确认收货；最后使用公开查询页核对脱敏轨迹和交易历史。
+写入 12 条覆盖各种状态的运单，全部真实上链。可以重复执行，已存在的会自动跳过。
 
-停止测试网络：
+### 7. 停止网络
 
-```powershell
+```bash
 pnpm fabric:down
 ```
 
-`apps/api/.env.fabric` 含本机证书和私钥路径，已被 Git 忽略，不得提交。测试网络不是生产网络模板。
+下次启动只需重复第 3、5 步。
 
-## 内置角色账户
+## 亲手走一遍完整流程
 
-系统内置四个角色账户：`shipper`（创建运单、取消待接单运单）、`carrier`（接单、揽收、节点更新、异常处理、送达）、`receiver`（输入一次性签收码确认收货）、`auditor`（查看运单历史和交易证据）。
+1. 用 `shipper` 登录，创建一票运单（可设置温控范围），**保存系统返回的 6 位签收码**——它只显示这一次。
+2. 换 `carrier` 登录，对这票运单依次接单、揽收、添加运输节点、确认送达。中途可以故意录一个越界温度，看看异常如何被记录和处理。
+3. 换 `receiver` 登录，先用错误的签收码试一次（会被拒绝），再用正确的签收码完成签收。
+4. 退出登录，在公开查询页输入运单号，查看脱敏后的轨迹、最终状态和交易证据。
 
-源代码不再包含任何密码。凭据通过环境变量提供：`APP_PASSWORD_<账号>`（明文，仅限本地开发）或 `APP_PASSWORD_HASH_<账号>`（bcrypt 哈希，优先级更高；`NODE_ENV=production` 下每个账户必须配置其一，否则服务拒绝启动）。`JWT_SECRET` 在任何环境都要求至少 16 个字符。详见 `apps/api/.env.example`。
+## 常用命令
 
-## 构建、测试与格式
+| 命令                                                 | 作用                                         |
+| ---------------------------------------------------- | -------------------------------------------- |
+| `pnpm doctor`                                        | 检查本机环境是否齐全                         |
+| `pnpm fabric:bootstrap`                              | 首次下载 Fabric 组件                         |
+| `pnpm fabric:up` / `pnpm fabric:down`                | 启动 / 停止区块链网络                        |
+| `pnpm dev`                                           | 同时启动前端（5173 端口）和 API（3001 端口） |
+| `pnpm seed`                                          | 写入示例运单                                 |
+| `pnpm build`                                         | 构建前端、API 和链码                         |
+| `pnpm test`                                          | 运行全部测试                                 |
+| `pnpm typecheck` / `pnpm lint` / `pnpm format:check` | 类型、静态和格式检查                         |
 
-```powershell
-pnpm build
-pnpm test
-pnpm test:closed-loop
-pnpm test:fabric
-pnpm typecheck
-pnpm lint
-pnpm format:check
+## 测试说明
+
+- `pnpm test` 和 `pnpm test:closed-loop` 使用文件型测试替身模拟链上状态机，**不需要 Docker**，随时能跑。
+- `pnpm test:fabric` 会在运行中的测试网络上执行一遍真实的"建单到签收"链上闭环；Docker 没开时自动跳过，不影响 CI。
+
+## 目录结构
+
+```text
+apps/web             React 前端（业务工作台 + 公开查询页）
+apps/api             Go API：登录鉴权、业务接口、Fabric Gateway 适配器
+packages/shared      前端使用的 TypeScript 类型
+chaincode/logistics  Go 智能合约（运单状态机）
+network              Fabric 测试网络的启动、部署与环境生成脚本
+scripts              环境自检、格式检查等辅助脚本
+deploy               生产部署示例（Nginx 配置、上线核对清单）
+docs                 设计方案、验收记录、迁移指南
 ```
 
-这些命令同时覆盖 React/TypeScript 前端、Go API 和 Go chaincode。单元与闭环测试使用文件型测试替身（`apps/api/internal/ledger/fake`）模拟链上状态机，不需要 Docker；`pnpm test:fabric` 在测试网络运行中执行建单到签收的真实链上闭环（`TestFabricClosedLoopIntegration`），无 Docker 时自动跳过，不影响 CI。
+Go 代码位于 `go.work` 工作区；API 和链码各有独立的 `go.mod`，因此链码目录可以被 Fabric 单独打包。
 
-## 目录
+## 更多文档
 
-- `apps/web`：React 浏览器端。
-- `apps/api`：Go API、JWT/RBAC 和 Fabric Gateway 适配器（`internal/ledger/fake` 仅供测试）。
-- `packages/shared`：前端使用的 TypeScript API/领域类型。
-- `chaincode/logistics`：Go 智能合约及唯一的 Go 物流 JSON 模型。
-- `network`：Fabric 官方测试网络启动、部署与环境生成脚本。
-- `scripts`：环境和格式检查脚本。
-- `deploy`：生产部署示例（Nginx 配置、systemd 单元、上线核对清单）。
-- `docs`：设计、验收、迁移审查和项目说明。
+- [设计方案](docs/设计方案.md)：业务架构与运单状态机
+- [Go 重构审查报告](docs/Go重构审查报告.md)：代码结构与各文件职责
+- [验收记录](docs/验收记录.md)：真实链上闭环的验证证据
+- [Ubuntu 虚拟机部署指南](docs/Ubuntu虚拟机部署指南.md)、[Linux 迁移清单](docs/Linux迁移清单.md)：Linux 环境部署
+- [deploy/README.md](deploy/README.md)：生产部署示例
 
-Go workspace 位于 `go.work`；API 与链码分别拥有独立 `go.mod`，因此链码目录可以被 Fabric 单独打包。
+## 两个重要提醒
+
+- `apps/api/.env.fabric` 含本机证书和私钥路径，已被 Git 忽略，**不要提交**。
+- 当前使用的是 Fabric 官方测试网络，面向开发和演示，**不是生产网络模板**。
