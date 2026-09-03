@@ -26,6 +26,9 @@ const NAV_ITEMS: NavItem[] = [
   { label: '工作台', path: '/app', icon: Dashboard },
   { label: '运单管理', path: '/app/shipments', icon: DeliveryParcel },
   { label: '创建运单', path: '/app/shipments/new', icon: Add, roles: ['shipper'] },
+  { label: '运输控制塔', path: '/app/control-tower', icon: Dashboard },
+  { label: '交接与物流单元', path: '/app/handovers', icon: DeliveryParcel },
+  { label: '数据源与扩展', path: '/app/settings/integrations', icon: Add },
   { label: '公开查询', path: '/track', icon: Search, external: true },
 ];
 
@@ -35,6 +38,9 @@ export function isNavItemActive(pathname: string, itemPath: string): boolean {
   if (itemPath === '/app/shipments') {
     return pathname.startsWith(itemPath) && pathname !== '/app/shipments/new';
   }
+  if (itemPath === '/app/control-tower') return pathname.startsWith(itemPath);
+  if (itemPath === '/app/handovers') return pathname.startsWith(itemPath);
+  if (itemPath === '/app/settings/integrations') return pathname.startsWith(itemPath);
   return pathname === itemPath;
 }
 
@@ -60,9 +66,15 @@ export function AppShell() {
         ? '创建运单'
         : location.pathname === '/app/shipments'
           ? '运单管理'
-          : location.pathname.startsWith('/app/shipments/')
-            ? '运单详情'
-            : '物流协作台';
+          : location.pathname.startsWith('/app/control-tower')
+            ? '运输控制塔'
+            : location.pathname.startsWith('/app/handovers')
+              ? '交接与物流单元'
+              : location.pathname.startsWith('/app/settings/integrations')
+                ? '数据源与扩展'
+                : location.pathname.startsWith('/app/shipments/')
+                  ? '运单详情'
+                  : '物流协作台';
 
   const handleLogout = () => {
     logout();

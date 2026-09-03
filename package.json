@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "迹信 - 基于 Hyperledger Fabric 的可信物流追踪系统",
-  "packageManager": "pnpm@11.9.0",
+  "packageManager": "pnpm@10.18.3",
   "engines": {
     "node": ">=20.12"
   },
@@ -11,12 +11,12 @@
     "doctor": "node scripts/run-platform.js doctor",
     "dev": "pnpm --filter @jixin/shared build && concurrently -k -n API,WEB -c blue,green \"go run ./apps/api/cmd/server\" \"pnpm --filter @jixin/web dev\"",
     "build": "pnpm -r build && go build ./apps/api/... ./chaincode/logistics/...",
-    "test": "pnpm -r test && go test ./apps/api/... ./chaincode/logistics/...",
-    "test:unit": "pnpm -r test:unit && go test ./apps/api/... ./chaincode/logistics/...",
+    "test": "pnpm --filter @jixin/shared build && pnpm -r test && go test ./apps/api/... ./chaincode/logistics/...",
+    "test:unit": "pnpm --filter @jixin/shared build && pnpm -r test:unit && go test ./apps/api/... ./chaincode/logistics/...",
     "test:closed-loop": "go test ./apps/api/internal/httpapi -run TestClosedLoop -count=1",
     "test:fabric": "node scripts/run-platform.js test:fabric",
     "lint": "pnpm -r lint && go vet ./apps/api/... ./chaincode/logistics/...",
-    "typecheck": "pnpm -r typecheck && go test ./apps/api/... ./chaincode/logistics/... -run ^$",
+    "typecheck": "pnpm --filter @jixin/shared build && pnpm -r typecheck && go test ./apps/api/... ./chaincode/logistics/... -run ^$",
     "format": "prettier --write . && go fmt ./apps/api/... ./chaincode/logistics/...",
     "format:check": "prettier --check . && node scripts/run-platform.js check-go-format",
     "fabric:bootstrap": "node scripts/run-platform.js fabric:bootstrap",
@@ -28,5 +28,10 @@
     "concurrently": "^9.2.1",
     "prettier": "^3.6.2",
     "typescript": "^5.8.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "@ibm/plex": "link:./stubs/ibm-plex"
+    }
   }
 }

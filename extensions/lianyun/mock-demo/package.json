@@ -1,0 +1,12 @@
+{
+  "name": "lianyun-control-tower-mock",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "express": "^4.21.1"
+  }
+}

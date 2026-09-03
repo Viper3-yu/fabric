@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>链运协同 | 运输控制塔</title>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">LY</span><span>链运协同</span></div>
+      <nav aria-label="主导航">
+        <a class="nav-item active" href="#tower">运输控制塔</a>
+        <a class="nav-item" href="#shipments">运单与包裹</a>
+        <a class="nav-item" href="#handover">交接管理</a>
+        <a class="nav-item" href="#exceptions">异常中心</a>
+        <a class="nav-item" href="#evidence">凭证中心</a>
+        <a class="nav-item" href="#audit">审计中心</a>
+      </nav>
+      <div class="sidebar-foot"><span class="online-dot" id="serviceDot"></span> <span id="serviceMode">正在检查服务</span><br><small id="serviceDetail">API 状态未知</small></div>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div><p class="crumb">运输运营 / 控制塔</p><h1>运输控制塔</h1></div>
+        <div class="top-actions"><span id="updatedAt">数据更新时间 --</span><button class="button secondary" id="refreshBtn">刷新数据</button><button class="avatar" aria-label="当前用户">运</button></div>
+      </header>
+
+      <section class="kpi-strip" aria-label="控制塔概览">
+        <div><span>在途运单</span><strong>128</strong></div>
+        <div><span>待确认交接</span><strong>6</strong></div>
+        <div><span>高风险运输段</span><strong class="danger">2</strong></div>
+        <div><span>按时履约率</span><strong>96.4%</strong></div>
+      </section>
+
+      <section class="toolbar">
+        <form id="shipmentForm">
+          <label for="shipmentId">运单号</label>
+          <input id="shipmentId" value="YT20260001" autocomplete="off">
+          <button class="button primary">查询</button>
+        </form>
+        <div class="legend" aria-label="路线状态图例"><span><i class="line normal"></i>正常</span><span><i class="line issue"></i>异常</span><span><i class="line moving"></i>运输中</span><span><i class="line plan"></i>计划</span></div>
+      </section>
+
+      <section class="control-grid">
+        <div class="map-area">
+          <div class="map-heading"><div><b id="shipmentLabel">YT20260001</b><span id="routeLabel">杭州 → 北京</span></div><span class="status-tag" id="shipmentStatus">运输中</span></div>
+          <div id="map" aria-label="运单 GIS 路线地图"></div>
+          <div class="map-bottom"><span id="mapHint">点击路线段或节点查看链上事件</span><span>坐标来源：网点主数据 / GPS 插件</span></div>
+        </div>
+        <aside class="detail-panel" aria-live="polite">
+          <div class="panel-heading"><span>风险分析</span><button class="text-button" id="traceTab">可信时间线</button></div>
+          <div id="riskList" class="risk-list"></div>
+          <div class="evidence-block" id="evidenceBlock">
+            <span>链上证据</span>
+            <b id="evidenceTitle">选择风险项查看凭证</b>
+            <code id="evidenceTx">Tx --</code>
+            <code id="evidenceHash">Hash --</code>
+          </div>
+        </aside>
+      </section>
+
+      <section class="lower-grid">
+        <section class="data-panel">
+          <div class="panel-heading"><span>运输时间线</span><button class="text-button" id="showAllEvents">查看全部</button></div>
+          <div id="timeline" class="timeline"></div>
+        </section>
+        <section class="data-panel">
+          <div class="panel-heading"><span>温湿度遥测插件</span><span class="muted">模拟设备 T-009</span></div>
+          <div class="temp-summary"><div><span>当前温度</span><b id="currentTemp">--</b></div><div><span>合格范围</span><b id="tempRange">--</b></div><div><span>链上摘要</span><b>已存证</b></div></div>
+          <svg id="tempChart" viewBox="0 0 520 178" role="img" aria-label="温度时间曲线"></svg>
+        </section>
+      </section>
+
+      <section class="data-panel package-panel">
+        <div class="panel-heading"><span>包裹与物流单元</span><span class="muted">装箱/拆箱关系已上链</span></div>
+        <table><thead><tr><th>包裹号</th><th>当前物流单元</th><th>状态</th><th>可追溯操作</th></tr></thead><tbody id="parcelTable"></tbody></table>
+      </section>
+    </main>
+  </div>
+  <template id="riskTemplate"><article class="risk-item"><span class="risk-level"></span><div><b></b><p></p><small></small></div></article></template>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

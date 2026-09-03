@@ -1,0 +1,6 @@
+{
+  "name": "@ibm/plex",
+  "version": "6.4.1",
+  "private": true,
+  "description": "Lightweight local stub: the web app uses bundled Noto/Manrope fonts instead of the 162 MB IBM Plex meta package."
+}

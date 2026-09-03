@@ -25,3 +25,14 @@ playwright-report/
 test-results/
 .codegraph/
 output/
+**/vendor/
+**/wallet/
+**/organizations/
+**/keystore/
+*.pem
+*.key
+*.p12
+*.pfx
+*.sqlite
+*.db
+*.dump
