@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Button, Tag, TextInput } from '@carbon/react';
 import { Renew } from '@carbon/icons-react';
 import { ControlTowerMap } from '../components/ControlTowerMap';
-import { controlTowerApi, type ControlTowerData } from '../lib/control-tower-api';
+import { type ControlTowerData } from '../lib/control-tower-api';
+import { useControlTower } from '../lib/use-control-tower';
+import { CopyButton } from '../components/CopyButton';
 import { readIntegrationSettings } from '../lib/integration-settings';
 
 const EVENT_LABELS: Record<string, string> = {
@@ -17,6 +19,20 @@ const EVENT_LABELS: Record<string, string> = {
   ARRIVED_HUB: '到达网点',
   EXCEPTION: '运输异常',
   EXCEPTION_RESOLVED: '异常解除',
+};
+const LABELS: Record<string, string> = {
+  ON_CHAIN: '已登记',
+  IN_TRANSIT: '运输中',
+  CREATED: '已创建',
+  ACCEPTED: '已接单',
+  DELIVERED: '已送达',
+  PACKED: '已装箱',
+  UNPACKED: '已拆箱',
+  OPEN: '待核查',
+  RESOLVED: '已解除',
+  HIGH: '高风险',
+  MEDIUM: '需关注',
+  LOW: '提示',
 };
 
 function TemperatureChart({ data }: { data: ControlTowerData }) {
@@ -67,7 +83,7 @@ function TemperatureChart({ data }: { data: ControlTowerData }) {
           允许范围 {data.temperatureRange.min}–{data.temperatureRange.max}℃
         </span>
         <strong>
-          当前 {values.at(-1)}℃ · 湿度 {data.temperature.at(-1)?.humidity}%
+          最近读数 {values.at(-1)}℃ · 湿度 {data.temperature.at(-1)?.humidity}%
         </strong>
       </div>
     </div>
@@ -78,31 +94,11 @@ export function ControlTowerPage() {
   const [settings] = useState(readIntegrationSettings);
   const [draft, setDraft] = useState('YT20260001');
   const [shipmentId, setShipmentId] = useState('YT20260001');
-  const [data, setData] = useState<ControlTowerData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  const load = useCallback(async () => {
-    const controller = new AbortController();
-    setLoading(true);
-    setError('');
-    try {
-      setData(await controlTowerApi.get(shipmentId, controller.signal));
-    } catch (caught) {
-      setData(null);
-      setError(caught instanceof Error ? caught.message : '控制塔数据加载失败');
-    } finally {
-      setLoading(false);
-    }
-    return () => controller.abort();
-  }, [shipmentId]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const { data, loading, error, load } = useControlTower(shipmentId);
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (draft.trim()) setShipmentId(draft.trim());
+    if (draft.trim() === shipmentId) void load();
+    else if (draft.trim()) setShipmentId(draft.trim());
   };
 
   return (
@@ -111,7 +107,7 @@ export function ControlTowerPage() {
         <div>
           <p className="eyebrow">链上链下融合</p>
           <h1>运输控制塔</h1>
-          <p>将 Fabric 事件与 MySQL 网点、路线、GPS 和温湿度数据聚合，定位异常责任段。</p>
+          <p>查看运输进度、异常责任段与交接证据。</p>
         </div>
         <Button kind="tertiary" renderIcon={Renew} onClick={() => void load()}>
           刷新证据
@@ -128,18 +124,28 @@ export function ControlTowerPage() {
       </form>
       {loading ? <div className="tower-loading">正在聚合 Fabric 与 MySQL 数据…</div> : null}
       {error ? (
-        <div className="tower-error">
+        <div className="tower-error" role="alert">
           <strong>无法读取控制塔</strong>
           <span>{error}</span>
         </div>
       ) : null}
       {data ? (
         <>
+          <div className="tower-context">
+            <span>链运控制塔 · 独立运单库</span>
+            <span>
+              {data.dataSource === 'demo'
+                ? '示例遥测'
+                : data.dataSource === 'mysql'
+                  ? '已连接遥测数据库'
+                  : '遥测来源未标注'}
+            </span>
+          </div>
           <section className="tower-summary">
             <article>
               <span>运单</span>
               <strong>{data.shipment.id}</strong>
-              <Tag type="green">{data.shipment.status}</Tag>
+              <Tag type="blue">{LABELS[data.shipment.status] || data.shipment.status}</Tag>
             </article>
             <article>
               <span>运输路线</span>
@@ -177,11 +183,22 @@ export function ControlTowerPage() {
                   <article key={risk.id} data-level={risk.level}>
                     <div>
                       <strong>{risk.title}</strong>
-                      <Tag type={risk.level === 'HIGH' ? 'red' : 'warm-gray'}>{risk.level}</Tag>
+                      <Tag
+                        type={
+                          risk.status === 'RESOLVED'
+                            ? 'green'
+                            : risk.level === 'HIGH'
+                              ? 'red'
+                              : 'warm-gray'
+                        }
+                      >
+                        {LABELS[risk.level] || risk.level}
+                      </Tag>
                     </div>
                     <p>{risk.description}</p>
                     <small>
-                      {risk.segmentId || risk.hubCode || '全程'} · {risk.status}
+                      {risk.segmentId || risk.hubCode || '全程'} ·{' '}
+                      {LABELS[risk.status] || risk.status}
                     </small>
                   </article>
                 ))}
@@ -195,6 +212,12 @@ export function ControlTowerPage() {
                   <h2>温湿度监控</h2>
                 </header>
                 <TemperatureChart data={data} />
+                {data.temperature.length ? (
+                  <p className="tower-observed-at">
+                    采集于 {new Date(data.temperature.at(-1)!.at).toLocaleString('zh-CN')} ·
+                    最后一次采集值
+                  </p>
+                ) : null}
               </section>
             ) : null}
           </div>
@@ -205,23 +228,28 @@ export function ControlTowerPage() {
                 <h2>事件与交易记录</h2>
               </header>
               <ol className="evidence-timeline">
-                {[...data.shipment.events].reverse().map((item) => (
-                  <li key={item.id}>
-                    <div>
-                      <strong>{EVENT_LABELS[item.type] || item.type}</strong>
-                      <time>{new Date(item.at).toLocaleString('zh-CN')}</time>
-                    </div>
-                    <p>
-                      {item.hubName || item.hubCode} · {item.actorOrg} · {item.actorName}
-                    </p>
-                    <code title={item.txId}>{item.txId}</code>
-                    {settings.evidenceAnchor && item.evidenceHash ? (
+                {[...data.shipment.events]
+                  .sort((a, b) => Date.parse(b.at) - Date.parse(a.at))
+                  .map((item) => (
+                    <li key={item.id}>
+                      <div>
+                        <strong>{EVENT_LABELS[item.type] || item.type}</strong>
+                        <time>{new Date(item.at).toLocaleString('zh-CN')}</time>
+                      </div>
                       <p>
-                        证据摘要：<code>{item.evidenceHash}</code>
+                        {item.hubName || item.hubCode} · {item.actorOrg} · {item.actorName}
                       </p>
-                    ) : null}
-                  </li>
-                ))}
+                      <div className="tower-transaction">
+                        <code title={item.txId}>{item.txId}</code>
+                        <CopyButton value={item.txId} label="复制交易 ID" />
+                      </div>
+                      {settings.evidenceAnchor && item.evidenceHash ? (
+                        <p>
+                          证据摘要：<code>{item.evidenceHash}</code>
+                        </p>
+                      ) : null}
+                    </li>
+                  ))}
               </ol>
             </section>
             <section className="tower-panel">
@@ -238,7 +266,7 @@ export function ControlTowerPage() {
                 {data.shipment.parcels.map((parcel) => (
                   <div key={parcel.id}>
                     <strong>{parcel.id}</strong>
-                    <span>{parcel.status}</span>
+                    <span>{LABELS[parcel.status] || parcel.status}</span>
                     <code>{parcel.unitId || '未装箱'}</code>
                   </div>
                 ))}

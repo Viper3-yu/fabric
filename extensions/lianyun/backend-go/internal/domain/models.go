@@ -94,6 +94,7 @@ type TemperatureReading struct {
 }
 
 type ControlTower struct {
+	DataSource       string               `json:"dataSource"`
 	Shipment         Shipment             `json:"shipment"`
 	Hubs             []Hub                `json:"hubs"`
 	Segments         []RouteSegment       `json:"segments"`

@@ -2196,6 +2196,66 @@
   }
 }
 
+.app-shell .tower-context {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  color: var(--jixin-ink-soft);
+  font-size: 0.8rem;
+  margin: 0 0 1rem;
+}
+.app-shell .tower-summary strong {
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+}
+.app-shell .tower-map {
+  min-height: 22rem;
+  height: clamp(22rem, 42vh, 30rem);
+}
+.app-shell .tower-transaction {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.app-shell .tower-transaction code {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.76rem;
+}
+.app-shell .tower-observed-at {
+  color: var(--jixin-ink-soft);
+  font-size: 0.78rem;
+  margin-top: 1rem;
+}
+.app-shell .tower-panel {
+  min-width: 0;
+}
+.app-shell .evidence-timeline {
+  max-height: 34rem;
+  overflow: auto;
+  padding-right: 0.5rem;
+}
+.app-shell .risk-stack article {
+  border-left: 3px solid var(--jixin-accent);
+}
+.app-shell .risk-stack article[data-level='HIGH'] {
+  border-left-color: #fa8a8a;
+}
+@media (max-width: 620px) {
+  .app-shell .tower-context {
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .app-shell .tower-map {
+    height: 22rem;
+  }
+}
+
 .ledger-disclaimer.is-fabric > svg {
   color: var(--jixin-accent);
 }

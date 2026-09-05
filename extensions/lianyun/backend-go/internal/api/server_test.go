@@ -30,6 +30,15 @@ func TestHealthReportsSelectedMode(t *testing.T) {
 	}
 }
 
+func TestMissingShipmentHasReadableError(t *testing.T) {
+	router := New(service.NewControlTowerService(ledger.NewMock())).Router()
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/shipments/missing/control-tower", nil))
+	if response.Code != http.StatusNotFound || !bytes.Contains(response.Body.Bytes(), []byte("未找到该运单")) {
+		t.Fatalf("unexpected error: %s", response.Body.String())
+	}
+}
+
 func TestBilateralHandoverEndpoints(t *testing.T) {
 	router := New(service.NewControlTowerService(ledger.NewMock()), "fabric").Router()
 	initiate := httptest.NewRecorder()

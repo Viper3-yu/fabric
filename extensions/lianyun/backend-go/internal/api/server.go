@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"net/http"
 	"strings"
 
@@ -83,7 +84,12 @@ func (s *Server) confirmHandover(c *gin.Context) {
 func (s *Server) controlTower(c *gin.Context) {
 	data, err := s.service.Get(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"ok": false, "message": err.Error()})
+		log.Printf("control tower lookup failed: %v", err)
+		status, message := http.StatusServiceUnavailable, "运输数据服务暂时不可用，请稍后重试"
+		if strings.Contains(err.Error(), "不存在") {
+			status, message = http.StatusNotFound, "未找到该运单，请核对运单号；控制塔使用独立的链运运单库"
+		}
+		c.JSON(status, gin.H{"ok": false, "message": message})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"ok": true, "data": data})

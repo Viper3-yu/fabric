@@ -20,6 +20,7 @@ export function ControlTowerMap({
 
   useEffect(() => {
     if (!container.current || points.length < 2) return;
+    setError('');
     let disposed = false;
     let cleanup: () => void = () => undefined;
     void import('leaflet')
@@ -27,6 +28,7 @@ export function ControlTowerMap({
         if (disposed || !container.current) return;
         const L = module.default;
         const map = L.map(container.current, { scrollWheelZoom: false, zoomControl: false });
+        cleanup = () => map.remove();
         L.control.zoom({ position: 'bottomright' }).addTo(map);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; OpenStreetMap contributors',
@@ -93,6 +95,7 @@ export function ControlTowerMap({
   return (
     <section className="tower-map-card">
       <div ref={container} className="tower-map" aria-label="GIS 运输路线与责任段" />
+      {points.length < 2 ? <p className="tower-map-error">暂无足够坐标，无法绘制运输路线</p> : null}
       {error ? <p className="tower-map-error">{error}</p> : null}
       <div className="tower-map-legend">
         <span>

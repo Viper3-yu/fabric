@@ -52,8 +52,9 @@ func (s *ControlTowerService) Get(id string) (domain.ControlTower, error) {
 	}
 	allHubs := hubs()
 	if s.data != nil {
-		if loaded, e := s.data.LoadHubs(); e == nil && len(loaded) > 0 {
-			allHubs = loaded
+		allHubs, err = s.data.LoadHubs()
+		if err != nil {
+			return domain.ControlTower{}, fmt.Errorf("网点数据读取失败: %w", err)
 		}
 	}
 	h := map[string]domain.Hub{}
@@ -69,15 +70,30 @@ func (s *ControlTowerService) Get(id string) (domain.ControlTower, error) {
 	gps := []domain.MapPoint{{Longitude: 120.155070, Latitude: 30.274084, At: "2026-09-01T08:20:00Z", Speed: 0}, {Longitude: 120.174000, Latitude: 30.278000, At: "2026-09-01T10:05:00Z", Speed: 42}, {Longitude: 114.600000, Latitude: 30.700000, At: "2026-09-01T15:00:00Z", Speed: 76}, {Longitude: 114.305500, Latitude: 30.593100, At: "2026-09-01T18:20:00Z", Speed: 0}, {Longitude: 114.800000, Latitude: 31.000000, At: "2026-09-02T01:20:00Z", Speed: 80}}
 	temp := []domain.TemperatureReading{{At: "2026-09-01T10:30:00Z", Value: 8.1, Humidity: 52}, {At: "2026-09-01T13:00:00Z", Value: 8.7, Humidity: 54}, {At: "2026-09-01T16:00:00Z", Value: 10.8, Humidity: 61}, {At: "2026-09-01T18:20:00Z", Value: 9.2, Humidity: 58}, {At: "2026-09-02T01:20:00Z", Value: 8.6, Humidity: 54}}
 	if s.data != nil {
-		if loaded, e := s.data.LoadSegments(id, h); e == nil && len(loaded) > 0 {
-			segments = loaded
+		segments, err = s.data.LoadSegments(id, h)
+		if err != nil {
+			return domain.ControlTower{}, fmt.Errorf("路线数据读取失败: %w", err)
 		}
-		if loaded, e := s.data.LoadGPS(id); e == nil && len(loaded) > 0 {
-			gps = loaded
+		gps, err = s.data.LoadGPS(id)
+		if err != nil {
+			return domain.ControlTower{}, fmt.Errorf("GPS 数据读取失败: %w", err)
 		}
-		if loaded, e := s.data.LoadTemperature(id); e == nil && len(loaded) > 0 {
-			temp = loaded
+		temp, err = s.data.LoadTemperature(id)
+		if err != nil {
+			return domain.ControlTower{}, fmt.Errorf("温湿度数据读取失败: %w", err)
 		}
+	}
+	if allHubs == nil {
+		allHubs = []domain.Hub{}
+	}
+	if segments == nil {
+		segments = []domain.RouteSegment{}
+	}
+	if gps == nil {
+		gps = []domain.MapPoint{}
+	}
+	if temp == nil {
+		temp = []domain.TemperatureReading{}
 	}
 	if origin, ok := h[shipment.Origin]; ok {
 		shipment.Origin = origin.City
@@ -91,6 +107,10 @@ func (s *ControlTowerService) Get(id string) (domain.ControlTower, error) {
 		}
 	}
 	tower := domain.ControlTower{Shipment: shipment, Hubs: allHubs, Segments: segments, GPS: gps, Temperature: temp}
+	tower.DataSource = "demo"
+	if s.data != nil {
+		tower.DataSource = "mysql"
+	}
 	tower.TemperatureRange.Min = 2
 	tower.TemperatureRange.Max = 10
 	tower.Risks = risk.Analyze(segments, shipment.Events, gps)

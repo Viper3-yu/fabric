@@ -67,6 +67,7 @@ export interface TemperatureReading {
 }
 
 export interface ControlTowerData {
+  dataSource?: 'demo' | 'mysql';
   shipment: {
     id: string;
     origin: string;
