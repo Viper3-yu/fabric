@@ -6,6 +6,9 @@ import {
   Logout,
   Menu,
   Search,
+  Settings,
+  Map,
+  FlowConnection,
   UserAvatar,
 } from '@carbon/icons-react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -26,9 +29,9 @@ const NAV_ITEMS: NavItem[] = [
   { label: '工作台', path: '/app', icon: Dashboard },
   { label: '运单管理', path: '/app/shipments', icon: DeliveryParcel },
   { label: '创建运单', path: '/app/shipments/new', icon: Add, roles: ['shipper'] },
-  { label: '运输控制塔', path: '/app/control-tower', icon: Dashboard },
-  { label: '交接与物流单元', path: '/app/handovers', icon: DeliveryParcel },
-  { label: '数据源与扩展', path: '/app/settings/integrations', icon: Add },
+  { label: '运输控制塔', path: '/app/control-tower', icon: Map },
+  { label: '交接与物流单元', path: '/app/handovers', icon: FlowConnection },
+  { label: '数据源与扩展', path: '/app/settings/integrations', icon: Settings },
   { label: '公开查询', path: '/track', icon: Search, external: true },
 ];
 
@@ -93,21 +96,35 @@ export function AppShell() {
         </Link>
 
         <nav className="app-sidebar__links" aria-label="主导航">
-          {primaryNavItems.map((item) => {
-            const Icon = item.icon;
-            const active = isNavItemActive(location.pathname, item.path);
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`app-sidebar__link ${active ? 'is-active' : ''}`}
-                aria-current={active ? 'page' : undefined}
-              >
-                <Icon size={18} aria-hidden="true" />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
+          {['业务工作区', '运输协作', '系统设置'].map((group, groupIndex) => (
+            <div className="app-sidebar__group" key={group}>
+              <p className="app-sidebar__group-title">{group}</p>
+              {primaryNavItems
+                .filter((item) => {
+                  const section = item.path.includes('/settings/')
+                    ? 2
+                    : ['/app/control-tower', '/app/handovers'].includes(item.path)
+                      ? 1
+                      : 0;
+                  return section === groupIndex;
+                })
+                .map((item) => {
+                  const Icon = item.icon;
+                  const active = isNavItemActive(location.pathname, item.path);
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={`app-sidebar__link ${active ? 'is-active' : ''}`}
+                      aria-current={active ? 'page' : undefined}
+                    >
+                      <Icon size={18} aria-hidden="true" />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+            </div>
+          ))}
         </nav>
 
         <div className="app-sidebar__footer">

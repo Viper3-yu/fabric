@@ -13,6 +13,7 @@ WEB_ROOT="/var/www/jixin-integrated"
 command -v go >/dev/null
 command -v pnpm >/dev/null
 command -v openssl >/dev/null
+command -v rsync >/dev/null
 [[ -d "$NETWORK_ROOT/organizations" ]] || { echo "Fabric test-network 未运行" >&2; exit 1; }
 [[ -f "$LIANYUN_ROOT/backend-go/.env" ]] || { echo "原控制塔服务配置不存在" >&2; exit 1; }
 
@@ -111,7 +112,10 @@ WantedBy=multi-user.target
 EOF
 
 sudo install -d -m 0755 "$WEB_ROOT"
-sudo cp -a "$PROJECT_ROOT/apps/web/dist/." "$WEB_ROOT/"
+# Keep old chunks for open tabs; publish the HTML entry atomically after assets.
+sudo rsync -a --exclude=index.html "$PROJECT_ROOT/apps/web/dist/" "$WEB_ROOT/"
+sudo install -m 0644 "$PROJECT_ROOT/apps/web/dist/index.html" "$WEB_ROOT/index.html.next"
+sudo mv "$WEB_ROOT/index.html.next" "$WEB_ROOT/index.html"
 sudo chown -R www-data:www-data "$WEB_ROOT"
 sudo install -m 0644 "$PROJECT_ROOT/deploy/wsl/apache-integrated.conf" /etc/apache2/sites-available/jixin-integrated.conf
 grep -q '^Listen 8181$' /etc/apache2/ports.conf || echo 'Listen 8181' | sudo tee -a /etc/apache2/ports.conf >/dev/null

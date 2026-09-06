@@ -49,7 +49,8 @@ export function IntegrationsPage() {
       key: 'gps' as const,
       name: 'GPS 轨迹',
       type: '位置数据',
-      detail: '接收车辆坐标和速度，在地图中判断路线偏离。',
+      detail:
+        '展示控制塔数据源提供的坐标；当前尚未实现自动路线偏离判定。运单详情中的模拟回放独立于此开关。',
     },
     {
       key: 'temperature' as const,

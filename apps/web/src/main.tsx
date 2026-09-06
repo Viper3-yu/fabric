@@ -7,6 +7,7 @@ import './styles.css';
 import './visual-system.css';
 import './operations-system.css';
 import './background-system.css';
+import './business-theme.css';
 import App from './App';
 
 createRoot(document.getElementById('root')!).render(

@@ -14,8 +14,6 @@ import type { DashboardSummary, Shipment } from '@jixin/shared';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { EmptyState, ErrorState, PageSkeleton } from '../components/PageState';
-import { RecordStrip } from '../components/RecordStrip';
-import { ShipmentProgress } from '../components/ShipmentProgress';
 import { StatusTag } from '../components/StatusTag';
 import { api, getErrorMessage } from '../lib/api';
 import {
@@ -140,30 +138,19 @@ export function DashboardPage() {
   if (error) return <ErrorState message={error} onRetry={() => void load()} />;
   if (!summary || !user || !ledgerMode) return null;
 
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? '上午好' : hour < 18 ? '下午好' : '晚上好';
-
   const statusBreakdown = [
     { label: '运输中', value: summary.inTransit },
     { label: '等待签收', value: summary.pendingReceipt },
     { label: '异常待处理', value: summary.exceptions },
     { label: '已完成', value: summary.completed },
   ];
-  const activeShipment =
-    summary.recent.find(
-      (shipment) => shipment.status !== 'RECEIVED' && shipment.status !== 'CANCELLED',
-    ) ??
-    summary.recent[0] ??
-    null;
 
   return (
     <div className="page dashboard-page">
       <header className="page-header page-header--with-action dashboard-header">
         <div>
           <h1>工作台</h1>
-          <p>
-            {greeting}，{user.displayName}。查看当前运输进度、待处理事项和记录服务状态。
-          </p>
+          <p>{user.displayName}，查看运单统计与近期任务。</p>
         </div>
         <div className="dashboard-header__action">
           {user.role === 'shipper' ? (
@@ -177,33 +164,6 @@ export function DashboardPage() {
           )}
         </div>
       </header>
-
-      <section className="dashboard-focus" aria-label="当前运输焦点">
-        <div className="dashboard-focus__heading">
-          <span>当前运输焦点</span>
-          {activeShipment ? (
-            <>
-              <strong>
-                {activeShipment.origin.city} → {activeShipment.destination.city}
-              </strong>
-              <button
-                className="dashboard-focus__link"
-                type="button"
-                onClick={() => navigate(`/app/shipments/${activeShipment.id}`)}
-              >
-                查看路线地图
-                <ArrowRight size={17} aria-hidden="true" />
-              </button>
-            </>
-          ) : (
-            <strong>暂无活动运单</strong>
-          )}
-        </div>
-        <ShipmentProgress shipment={activeShipment} compact />
-        {activeShipment && activeShipment.events.length > 0 ? (
-          <RecordStrip event={activeShipment.events[activeShipment.events.length - 1]!} compact />
-        ) : null}
-      </section>
 
       <section className="dashboard-kpis" aria-label="关键运单指标">
         <article>
@@ -259,7 +219,7 @@ export function DashboardPage() {
             <div className="operations-panel__heading">
               <div>
                 <span>需要推进</span>
-                <h2>我的待处理</h2>
+                <h2>近期运单可执行操作</h2>
               </div>
               <WarningAltFilled size={24} aria-hidden="true" />
             </div>
@@ -297,7 +257,7 @@ export function DashboardPage() {
         <dl className="dashboard-network-strip__facts">
           <div>
             <dt>连接</dt>
-            <dd>{network?.health.status === 'degraded' ? '需要检查' : '正常'}</dd>
+            <dd>{!network ? '未获取' : network.health.status === 'ok' ? '正常' : '需要检查'}</dd>
           </div>
           <div>
             <dt>记录方式</dt>

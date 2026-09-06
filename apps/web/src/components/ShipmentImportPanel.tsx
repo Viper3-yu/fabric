@@ -211,6 +211,16 @@ export function ShipmentImportPanel({ open, onClose, onImported }: ShipmentImpor
         >
           {templateLoading ? '正在生成' : '下载 Excel 模板'}
         </Button>
+        <Button
+          as="a"
+          href="/demo-shipments.csv"
+          download
+          kind="ghost"
+          size="sm"
+          renderIcon={DocumentDownload}
+        >
+          下载 3 条演示数据
+        </Button>
       </div>
 
       {parsing ? <InlineLoading description="正在读取并校验文件" /> : null}

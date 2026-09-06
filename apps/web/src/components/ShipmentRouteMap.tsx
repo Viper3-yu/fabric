@@ -17,6 +17,7 @@ export function ShipmentRouteMap({ shipment }: ShipmentRouteMapProps) {
 
   useEffect(() => {
     if (!containerRef.current || points.length < 2) return;
+    setMapError('');
     let disposed = false;
     let cleanup: () => void = () => undefined;
 
@@ -29,6 +30,7 @@ export function ShipmentRouteMap({ shipment }: ShipmentRouteMapProps) {
           scrollWheelZoom: false,
           zoomControl: false,
         });
+        cleanup = () => map.remove();
         L.control.zoom({ position: 'bottomright' }).addTo(map);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '&copy; OpenStreetMap contributors',
@@ -42,7 +44,7 @@ export function ShipmentRouteMap({ shipment }: ShipmentRouteMapProps) {
           weight: 7,
         }).addTo(map);
         L.polyline(coordinates, {
-          color: '#1f6d4a',
+          color: '#1764c0',
           dashArray: '8 7',
           lineCap: 'round',
           opacity: 0.95,
