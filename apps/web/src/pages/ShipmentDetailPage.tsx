@@ -18,7 +18,6 @@ import { ErrorState, PageSkeleton } from '../components/PageState';
 import { RecordStrip } from '../components/RecordStrip';
 import { ShipmentTimeline } from '../components/ShipmentTimeline';
 import { ShipmentRouteMap } from '../components/ShipmentRouteMap';
-import { SimulatedGpsReplay } from '../components/SimulatedGpsReplay';
 import { StatusTag } from '../components/StatusTag';
 import { api, getErrorMessage } from '../lib/api';
 import {
@@ -48,7 +47,6 @@ export function ShipmentDetailPage() {
   );
   const [reloadKey, setReloadKey] = useState(0);
   const [view, setView] = useState<'info' | 'route' | 'audit'>('route');
-  const [simulate, setSimulate] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -242,7 +240,7 @@ export function ShipmentDetailPage() {
           [
             ['info', '基本信息'],
             ['route', '运输轨迹'],
-            ['audit', '链上记录'],
+            ['audit', '区块链凭证'],
           ] as const
         ).map(([key, label]) => (
           <button type="button" key={key} aria-pressed={view === key} onClick={() => setView(key)}>
@@ -250,30 +248,14 @@ export function ShipmentDetailPage() {
           </button>
         ))}
       </nav>
-      {view === 'route' && (
-        <>
-          <div className="route-mode-switch">
-            <button type="button" aria-pressed={!simulate} onClick={() => setSimulate(false)}>
-              业务节点地图
-            </button>
-            <button type="button" aria-pressed={simulate} onClick={() => setSimulate(true)}>
-              模拟 GPS 演示
-            </button>
-          </div>
-          {simulate ? (
-            <SimulatedGpsReplay key={shipment.id} shipment={shipment} />
-          ) : (
-            <ShipmentRouteMap shipment={shipment} />
-          )}
-        </>
-      )}
+      {view === 'route' ? <ShipmentRouteMap shipment={shipment} /> : null}
 
       <div className={`detail-layout detail-layout--${view}`}>
         <div className="detail-primary" hidden={view === 'info'}>
           <section className="content-section" hidden={view !== 'route'}>
             <div className="section-heading">
               <h2>运输事件</h2>
-              <p>以下为账本记录，与上方模拟回放独立。</p>
+              <p>以下为账本业务事件；定位轨迹属于链下数据源，二者按运单号关联。</p>
             </div>
             {shipment.events.length ? (
               <ShipmentTimeline events={shipment.events} />

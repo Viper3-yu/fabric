@@ -50,7 +50,7 @@ export function IntegrationsPage() {
       name: 'GPS 轨迹',
       type: '位置数据',
       detail:
-        '展示控制塔数据源提供的坐标；当前尚未实现自动路线偏离判定。运单详情中的模拟回放独立于此开关。',
+        '展示控制塔数据源提供的坐标；主运单详情可显示已固化的演示定位样例。当前尚未接入真实车辆设备。',
     },
     {
       key: 'temperature' as const,
