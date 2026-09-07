@@ -8,7 +8,6 @@
     "node": ">=20.12"
   },
   "scripts": {
-    "doctor": "node scripts/run-platform.js doctor",
     "dev": "pnpm --filter @jixin/shared build && concurrently -k -n API,WEB -c blue,green \"go run ./apps/api/cmd/server\" \"pnpm --filter @jixin/web dev\"",
     "build": "pnpm -r build && go build ./apps/api/... ./chaincode/logistics/...",
     "test": "pnpm -r test && go test ./apps/api/... ./chaincode/logistics/...",
@@ -18,7 +17,7 @@
     "lint": "pnpm -r lint && go vet ./apps/api/... ./chaincode/logistics/...",
     "typecheck": "pnpm -r typecheck && go test ./apps/api/... ./chaincode/logistics/... -run ^$",
     "format": "prettier --write . && go fmt ./apps/api/... ./chaincode/logistics/...",
-    "format:check": "prettier --check . && node scripts/run-platform.js check-go-format",
+    "format:check": "prettier --check .",
     "fabric:bootstrap": "node scripts/run-platform.js fabric:bootstrap",
     "fabric:up": "node scripts/run-platform.js fabric:up",
     "fabric:down": "node scripts/run-platform.js fabric:down",

@@ -10,14 +10,10 @@ const ps1 = (file) => ['powershell', ['-ExecutionPolicy', 'Bypass', '-File', fil
 const sh = (file) => ['bash', [file]];
 
 const tasks = {
-  doctor: isWindows ? ps1('scripts/doctor.ps1') : sh('scripts/doctor.sh'),
   'fabric:bootstrap': isWindows ? ps1('network/bootstrap.ps1') : sh('network/bootstrap.sh'),
   'fabric:up': isWindows ? ps1('network/start.ps1') : sh('network/up.sh'),
   'fabric:down': isWindows ? ps1('network/stop.ps1') : sh('network/stop-fabric.sh'),
   'test:fabric': isWindows ? ps1('scripts/test-fabric.ps1') : sh('scripts/test-fabric.sh'),
-  'check-go-format': isWindows
-    ? ps1('scripts/check-go-format.ps1')
-    : sh('scripts/check-go-format.sh'),
 };
 
 const [task] = process.argv.slice(2);

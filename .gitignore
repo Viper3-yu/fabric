@@ -21,7 +21,5 @@ chaincode/logistics/vendor/
 network/wallet/
 network/organizations/
 network/connection-profiles/
-playwright-report/
-test-results/
 .codegraph/
 output/

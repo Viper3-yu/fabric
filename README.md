@@ -1,23 +1,46 @@
 # 迹信
 
-迹信是一个基于 Hyperledger Fabric 区块链的可信物流追踪系统。运单从创建到签收的每一次关键交接——建单、接单、揽收、运输、送达、签收——都会作为一笔交易写入区块链：谁在什么时间做了什么，链上有据可查，任何一方都无法事后单独篡改。
+迹信是一个基于 Hyperledger Fabric 区块链的可信物流追踪系统。运单从创建到签收的每一次关键交接——建单、接单、揽收、运输、异常、送达、签收——都是一笔真实的 Fabric 交易：谁在什么时间做了什么，链上有据可查，任何一方都无法事后单独篡改。
 
-## 系统是怎么工作的
+## 整体工作原理
 
-系统分为三层：浏览器端负责操作界面，Go API 负责业务逻辑和登录鉴权，所有业务记录最终由 Fabric 区块链网络上的 Go 智能合约写入账本。
+系统分三层，职责边界清晰：
+
+| 层         | 技术               | 职责                                                   |
+| ---------- | ------------------ | ------------------------------------------------------ |
+| 浏览器端   | React + TypeScript | 操作界面、公开查询页；不持有任何业务规则               |
+| API 服务   | Go 标准库 HTTP     | 登录鉴权（JWT）、参数校验、角色控制、调用区块链        |
+| 区块链网络 | Hyperledger Fabric | 智能合约执行业务规则，账本保存全部运单与事件，不可篡改 |
 
 ```mermaid
-graph LR
-    W["浏览器<br>React + TypeScript"] --> A["API 服务<br>Go"]
-    A --> N["Fabric 区块链网络<br>双组织测试网络 + Go 链码"]
+flowchart LR
+    W["浏览器<br>React + TypeScript"] -->|HTTPS / JSON| A["Go API<br>JWT 鉴权 + 参数校验"]
+    A -->|Fabric Gateway gRPC| P["双组织 Peer<br>Org1MSP / Org2MSP"]
+    P --> C["logistics 链码<br>状态机 + 权限校验"]
+    C --> D[(CouchDB 账本)]
 ```
 
-区块链带来的保证：
+一笔"承运方录入运输节点"请求的完整旅程：
 
-- 状态只能按规则流转：不能跳过揽收直接签收，也不能重复签收，这些由智能合约强制拒绝。
-- 每一次修改都会返回真实的 Fabric 交易 ID，可以在页面的"交易证据"里核对。
-- 一次性签收码只展示一次，链上只保存它的摘要，明文不落链。
-- 温度越界由智能合约自动判定并记录异常，异常记录不能删除。
+1. 浏览器携带登录时获得的 httpOnly cookie 调用 `POST /api/shipments/:id/actions/checkpoint`。
+2. Go API 校验 JWT 身份和请求参数（字段长度、温度格式、未知字段一律拒绝），确认该角色可以执行该动作。
+3. API 通过 Fabric Gateway，用当前登录角色对应的组织身份（发货方走 Org1MSP，承运方走 Org2MSP）向 Peer 提交交易。
+4. 链码 `logistics` 在链上再次校验：调用者 MSP 是否有权、运单当前状态是否允许该动作（比如未揽收就不能签收）、温度是否越界。
+5. 校验通过后写入世界状态并追加事件，交易在双组织背书后正式上链。
+6. API 收到回执，把 **Fabric 交易 ID、账本时间、更新后的运单**返回给浏览器，页面在"交易证据"中展示，可供核对。
+
+查询类请求（列表、详情、历史、公开查询）同样经由 Gateway 读链，页面看到的所有状态都来自账本，API 不做自己的数据库。
+
+## 区块链用在哪里
+
+智能合约 `chaincode/logistics` 是业务规则的唯一裁决者：
+
+- **状态机强制流转**：`CREATED → ACCEPTED → PICKED_UP → IN_TRANSIT → DELIVERED → RECEIVED`，跳步、重复签收、越权操作在链上直接拒绝，与应用层校验形成双保险。
+- **组织即权限**：链码校验调用者 MSP——发货侧动作只有 Org1MSP 能提交，承运侧动作只有 Org2MSP 能提交，伪造前端请求也无法越权。
+- **可信时间与责任链**：每个事件记录提交者身份、MSP、Fabric 交易时间戳和交易 ID，不信任浏览器自报时间。
+- **隐私不上链**：签收码、送达凭证等原文永不落链，链上只存 SHA-256 摘要；签收时由链码计算摘要比对，验真时重新计算原文件摘要即可判断是否与存证一致。
+- **异常自动存证**：运单设定温控范围后，节点温度越界由链码自动判定并写入异常事件，异常记录不可删除。
+- **公开可核验**：公开查询页返回脱敏轨迹和交易 ID，任何人可用运单号核对，无需登录。
 
 ## 四种内置角色
 
@@ -35,15 +58,9 @@ graph LR
   - Windows：Docker Desktop + Git for Windows
   - Linux：Docker Engine（含 compose v2 插件）
 
-装好后先自检一次：
-
-```bash
-pnpm doctor
-```
-
 ## 快速启动
 
-以下命令 Windows 在 PowerShell 中执行，Linux/macOS 在终端中执行。`pnpm` 命令本身在两个平台完全一致，脚本会自动选择对应平台的实现。
+以下命令 Windows 在 PowerShell 中执行，Linux/macOS 在终端中执行。`pnpm` 命令在两个平台完全一致，脚本会自动选择对应平台的实现。
 
 ### 1. 安装依赖（只需一次）
 
@@ -136,7 +153,6 @@ pnpm fabric:down
 
 | 命令                                                 | 作用                                         |
 | ---------------------------------------------------- | -------------------------------------------- |
-| `pnpm doctor`                                        | 检查本机环境是否齐全                         |
 | `pnpm fabric:bootstrap`                              | 首次下载 Fabric 组件                         |
 | `pnpm fabric:up` / `pnpm fabric:down`                | 启动 / 停止区块链网络                        |
 | `pnpm dev`                                           | 同时启动前端（5173 端口）和 API（3001 端口） |
@@ -153,27 +169,43 @@ pnpm fabric:down
 ## 目录结构
 
 ```text
-apps/web             React 前端（业务工作台 + 公开查询页）
-apps/api             Go API：登录鉴权、业务接口、Fabric Gateway 适配器
-packages/shared      前端使用的 TypeScript 类型
-chaincode/logistics  Go 智能合约（运单状态机）
-network              Fabric 测试网络的启动、部署与环境生成脚本
-scripts              环境自检、格式检查等辅助脚本
-deploy               生产部署示例（Nginx 配置、上线核对清单）
-docs                 设计方案、验收记录、迁移指南
+blockchain
+├── apps
+│   ├── api                  Go API 服务
+│   │   ├── cmd/             程序入口：server 主服务、seed 示例数据、hash-password 密码工具
+│   │   └── internal/        业务代码（Go 约定：internal 不对外暴露）
+│   │       ├── auth/        JWT 签发与校验
+│   │       ├── config/      环境变量加载（密码、Fabric 连接配置）
+│   │       ├── httpapi/     HTTP 路由、请求校验、业务接口
+│   │       ├── ledger/      账本适配层：fabric.go 真实上链，fake/ 供测试
+│   │       ├── users/       四个内置角色账号
+│   │       └── apperror/    统一错误码
+│   └── web                  React 前端
+│       └── src/
+│           ├── pages/       工作台、运单列表/详情、创建运单、登录、公开查询
+│           ├── components/  时间线、路线图、证据条、对话框等业务组件
+│           ├── lib/         API 客户端、脱敏展示、路线地理数据、动效
+│           ├── styles/      设计令牌与全局样式
+│           └── auth/        登录会话上下文
+├── chaincode/logistics      Go 智能合约（运单状态机，可独立打包部署）
+├── packages/shared          前端使用的 TypeScript 类型
+├── network                  Fabric 测试网络的下载、启动、部署与环境生成脚本
+├── scripts                  跨平台任务分发（run-platform.js）与链上闭环测试脚本
+├── deploy                   生产部署示例（Nginx 配置、上线核对清单）
+└── docs                     设计方案、项目介绍、部署指南、设计系统
 ```
 
 Go 代码位于 `go.work` 工作区；API 和链码各有独立的 `go.mod`，因此链码目录可以被 Fabric 单独打包。
 
 ## 更多文档
 
-- [设计方案](docs/设计方案.md)：业务架构与运单状态机
-- [Go 重构审查报告](docs/Go重构审查报告.md)：代码结构与各文件职责
-- [验收记录](docs/验收记录.md)：真实链上闭环的验证证据
-- [Ubuntu 虚拟机部署指南](docs/Ubuntu虚拟机部署指南.md)、[Linux 迁移清单](docs/Linux迁移清单.md)：Linux 环境部署
-- [deploy/README.md](deploy/README.md)：生产部署示例
+- [设计方案](docs/设计方案.md)：业务架构、运单状态机、链上数据与合约接口的完整设计
+- [项目介绍](docs/项目介绍.md)：面向答辩与展示的项目综述
+- [设计系统](docs/设计系统.md)：界面视觉规范（色彩、字体、网格）
+- [Ubuntu 虚拟机部署指南](docs/Ubuntu虚拟机部署指南.md)：单机完整部署
+- [deploy/README.md](deploy/README.md)：多机生产拓扑部署示例
 
 ## 两个重要提醒
 
 - `apps/api/.env.fabric` 含本机证书和私钥路径，已被 Git 忽略，**不要提交**。
-- 当前使用的是 Fabric 官方测试网络，面向开发和演示，**不是生产网络模板**。
+- 当前使用的是 Fabric 官方测试网络，面向开发与教学，**不是生产网络模板**；生产拓扑参见 `deploy/README.md`。

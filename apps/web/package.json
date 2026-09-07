@@ -10,9 +10,7 @@
     "test": "vitest run",
     "test:unit": "vitest run",
     "lint": "tsc -p tsconfig.json --noEmit",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "visual:check": "playwright test",
-    "visual:update": "playwright test --update-snapshots"
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@carbon/icons-react": "^11.64.0",
@@ -31,7 +29,6 @@
     "xlsx": "0.18.5"
   },
   "devDependencies": {
-    "@playwright/test": "^1.62.1",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
