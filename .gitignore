@@ -1,7 +1,6 @@
 node_modules/
 node_modules.interrupted/
 .pnpm-store/
-.playwright-cli/
 dist/
 bin/
 *.exe
@@ -23,3 +22,6 @@ network/organizations/
 network/connection-profiles/
 .codegraph/
 output/
+# Playwright 已移除，旧克隆本地可能残留这些目录
+playwright-report/
+test-results/

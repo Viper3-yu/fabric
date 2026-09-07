@@ -128,7 +128,7 @@ p {
   letter-spacing: -0.02em;
 } /*
  * 业务数字（运单号、数量、指标、时间）：Manrope 等宽数字。
- * mono 只保留给 txId、摘要等需要逐字符核验的标识（DESIGN.md 字体规范）。
+ * mono 只保留给 txId、摘要等需要逐字符核验的标识（docs/设计系统.md 字体规范）。
  */
 .num {
   font-family: var(--jixin-font-data);
