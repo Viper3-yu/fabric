@@ -131,3 +131,61 @@ type LedgerReceipt struct {
 	LedgerMode    string   `json:"ledgerMode"`
 	Data          Shipment `json:"data"`
 }
+
+const (
+	ParcelCreated  = "CREATED"
+	ParcelPacked   = "PACKED"
+	ParcelUnpacked = "UNPACKED"
+
+	UnitPacked   = "PACKED"
+	UnitUnpacked = "UNPACKED"
+
+	HandoverInitiated = "INITIATED"
+	HandoverConfirmed = "CONFIRMED"
+)
+
+// Parcel is a physical package registered under a shipment. Parcels can be
+// aggregated into one logistics unit for transport and unpacked at the
+// destination hub.
+type Parcel struct {
+	DocType     string `json:"docType"`
+	ID          string `json:"id"`
+	ShipmentID  string `json:"shipmentId"`
+	Description string `json:"description,omitempty"`
+	Status      string `json:"status"`
+	UnitID      string `json:"unitId,omitempty"`
+	TxID        string `json:"txId"`
+	CreatedAt   string `json:"createdAt"`
+	UpdatedAt   string `json:"updatedAt"`
+}
+
+// LogisticsUnit groups parcels that travel together, e.g. one pallet or box.
+type LogisticsUnit struct {
+	DocType    string   `json:"docType"`
+	ID         string   `json:"id"`
+	ShipmentID string   `json:"shipmentId"`
+	UnitType   string   `json:"unitType"`
+	ParcelIDs  []string `json:"parcelIds"`
+	Status     string   `json:"status"`
+	TxID       string   `json:"txId"`
+	CreatedAt  string   `json:"createdAt"`
+	UpdatedAt  string   `json:"updatedAt"`
+}
+
+// Handover records a cross-org custody transfer: the shipper side initiates
+// and the carrier side confirms in a separate transaction.
+type Handover struct {
+	DocType       string `json:"docType"`
+	HandoverID    string `json:"handoverId"`
+	ShipmentID    string `json:"shipmentId"`
+	FromHub       string `json:"fromHub"`
+	ToHub         string `json:"toHub"`
+	CarrierOrg    string `json:"carrierOrg"`
+	Status        string `json:"status"`
+	InitiatorOrg  string `json:"initiatorOrg"`
+	ConfirmOrg    string `json:"confirmOrg,omitempty"`
+	CreatedAt     string `json:"createdAt"`
+	ConfirmedAt   string `json:"confirmedAt,omitempty"`
+	InitiatorTxID string `json:"initiatorTxId,omitempty"`
+	ConfirmTxID   string `json:"confirmTxId,omitempty"`
+}

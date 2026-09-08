@@ -2,16 +2,16 @@
 
 迹信是一个基于 Hyperledger Fabric 区块链的可信物流追踪系统。运单从创建到签收的每一次关键交接——建单、接单、揽收、运输、异常、送达、签收——都是一笔真实的 Fabric 交易：谁在什么时间做了什么，链上有据可查，任何一方都无法事后单独篡改。
 
-## 迹信 × 链运集成版
+## 运输控制塔（链运集成）
 
-在迹信原有业务流程之上，集成版增加了 GIS 运输控制塔、双组织交接、物流单元展示及数据源设置：
+在迹信运单流程之上，仓库还集成了组员的"链运"控制塔能力，并且**两套系统共用同一条链码、同一本账本**：
 
-- [集成范围、演示账号及 WSL 部署说明](INTEGRATION.md)
-- `extensions/lianyun/`：控制塔依赖的 Go 后端、Fabric 链码、MySQL schema、原前端和部署脚本。
-- `deploy/wsl/`：集成版部署和真实交接验收脚本。
-- 当前为本机课程演示：两套运单模型尚未统一，桥接服务尚未实现企业独立授权，不能直接作为生产系统对外开放。
+- 控制塔新增的链上能力（包裹登记、物流单元装箱/拆箱、双组织交接确认）已并入 `chaincode/logistics` 统一链码，由 `requireMSP` 按组织控制权限。
+- `apps/tower-api/` 是控制塔的 Go 后端：`mock` 模式零依赖演示，`fabric` 模式直接读统一账本，MySQL 遥测（网点、路线、GPS、温度）作为可选数据源。
+- 前端三个页面：运输控制塔 `/app/control-tower`、双边交接 `/app/handovers`、数据源设置 `/app/settings/integrations`。
+- [控制塔集成说明](INTEGRATION.md)：运行方式、演示数据边界与已知局限。
 
-本仓库不包含 Fabric 证书/私钥、`.env`、数据库运行数据或依赖安装目录。运行集成版请先阅读上方集成说明；下文为迹信主项目的使用说明。
+本仓库不包含 Fabric 证书/私钥、`.env`、数据库运行数据或依赖安装目录。
 
 ## 整体工作原理
 
@@ -193,20 +193,21 @@ blockchain
 │   │       └── apperror/    统一错误码
 │   └── web                  React 前端
 │       └── src/
-│           ├── pages/       工作台、运单列表/详情、创建运单、登录、公开查询
-│           ├── components/  时间线、路线图、证据条、对话框等业务组件
+│           ├── pages/       工作台、运单列表/详情、创建运单、登录、公开查询、控制塔
+│           ├── components/  时间线、路线图、证据条、控制塔地图等业务组件
 │           ├── lib/         API 客户端、脱敏展示、路线地理数据、动效
 │           ├── styles/      设计令牌与全局样式
 │           └── auth/        登录会话上下文
-├── chaincode/logistics      Go 智能合约（运单状态机，可独立打包部署）
+├── apps/tower-api           控制塔 Go 后端（mock/fabric 双模式，独立 go.mod）
+├── chaincode/logistics      Go 智能合约（运单状态机 + 包裹/物流单元/双组织交接）
 ├── packages/shared          前端使用的 TypeScript 类型
 ├── network                  Fabric 测试网络的下载、启动、部署与环境生成脚本
 ├── scripts                  跨平台任务分发（run-platform.js）与链上闭环测试脚本
-├── deploy                   生产部署示例（Nginx 配置、上线核对清单）
+├── deploy                   生产部署示例（Nginx 配置）与控制塔 MySQL 表结构（mysql/）
 └── docs                     设计方案、项目介绍、部署指南、设计系统
 ```
 
-Go 代码位于 `go.work` 工作区；API 和链码各有独立的 `go.mod`，因此链码目录可以被 Fabric 单独打包。
+Go 代码位于 `go.work` 工作区（API 与链码）；`apps/tower-api` 是独立 `go.mod` 模块，为避免依赖版本冲突不加入工作区，测试时在该目录下以 `GOWORK=off go test ./...` 运行（CI 同样如此）。链码目录可以被 Fabric 单独打包。
 
 ## 更多文档
 
