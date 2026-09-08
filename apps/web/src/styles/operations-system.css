@@ -918,6 +918,12 @@
   padding: 0.9rem 1rem;
 }
 
+/* 记录带的固有宽度按不换行计算，必须在网格项上解除自动最小值，
+   否则窄列里会把卡片顶穿 */
+.app-shell .detail-record-health article > * {
+  min-width: 0;
+}
+
 .app-shell .detail-record-health article + article {
   border-color: var(--jixin-border);
 }
@@ -2275,8 +2281,9 @@
 /* ===== 记录带：一条系统记录的标准形态（详情健康卡 / 工作台焦点共用） ===== */
 .app-shell .record-strip {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.4rem 0.6rem;
   margin: 0.55rem 0 0;
   padding: 0.55rem 0.75rem;
   border: 1px dashed var(--jixin-border-strong);
@@ -2319,6 +2326,7 @@
 .app-shell .record-strip__tx {
   display: inline-flex;
   min-width: 0;
+  max-width: 100%;
   flex: 1;
   align-items: center;
   justify-content: flex-end;
@@ -2342,10 +2350,6 @@
 }
 
 @media (max-width: 720px) {
-  .app-shell .record-strip {
-    flex-wrap: wrap;
-  }
-
   .app-shell .record-strip__tx {
     flex-basis: 100%;
     justify-content: flex-start;
