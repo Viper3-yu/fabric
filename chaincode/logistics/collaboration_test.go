@@ -157,6 +157,19 @@ func TestCollaborationParcelUnitAndHandover(t *testing.T) {
 		t.Fatalf("double confirm was not rejected")
 	}
 
+	trace := decodeShipmentTest(t, mustInvoke(t, harness, "Org1MSP", "tx-trace", "ReadShipment", shipment.ID))
+	var handoverEvents []model.ShipmentEvent
+	for _, event := range trace.Events {
+		if event.Type == "HANDOVER_INITIATED" || event.Type == "HANDOVER_CONFIRMED" {
+			handoverEvents = append(handoverEvents, event)
+		}
+	}
+	if len(handoverEvents) != 2 ||
+		handoverEvents[0].Type != "HANDOVER_INITIATED" || handoverEvents[0].Location != "HZ-WH-01" ||
+		handoverEvents[1].Type != "HANDOVER_CONFIRMED" || handoverEvents[1].Location != "HZ-HUB-01" {
+		t.Fatalf("handover milestones missing from shipment trace: %#v", handoverEvents)
+	}
+
 	unpacked, err := harness.invoke(
 		"Org2MSP", "tx-unpack", nil, "UnpackParcels", shipment.ID, "UNIT-001",
 	)
@@ -235,4 +248,13 @@ func TestRecordNodeEventAppendsWithoutTransition(t *testing.T) {
 	); err == nil {
 		t.Fatalf("node event on CREATED shipment was not rejected")
 	}
+}
+
+func mustInvoke(t *testing.T, h *contractHarness, mspID, txID string, args ...string) []byte {
+	t.Helper()
+	payload, err := h.invoke(mspID, txID, nil, args...)
+	if err != nil {
+		t.Fatalf("invoke %s: %v", args[0], err)
+	}
+	return payload
 }

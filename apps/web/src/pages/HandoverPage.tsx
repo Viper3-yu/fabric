@@ -3,8 +3,18 @@ import { Button, Select, SelectItem, Tag, TextInput } from '@carbon/react';
 import { Renew } from '@carbon/icons-react';
 import { controlTowerApi, type ControlTowerData } from '../lib/control-tower-api';
 import { useControlTower } from '../lib/use-control-tower';
+import { useAuth } from '../auth/AuthContext';
+
+const ROLE_LABELS: Record<string, string> = {
+  shipper: '发货方（Org1MSP）',
+  carrier: '承运方（Org2MSP）',
+  receiver: '收货方',
+  auditor: '审计',
+};
 
 export function HandoverPage() {
+  const { user } = useAuth();
+  const role = user?.role ?? '';
   const [shipmentId, setShipmentId] = useState('YT20260001');
   const [handoverId, setHandoverId] = useState(() => `HO-${Date.now().toString(36).toUpperCase()}`);
   const [fromHub, setFromHub] = useState('HZ-HUB-01');
@@ -66,7 +76,12 @@ export function HandoverPage() {
         <p className="eyebrow">多组织协同</p>
         <h1>交接与物流单元</h1>
         <p>发起方与接收方分别留下交易记录，结合箱/托盘关系界定责任边界。</p>
-        <p>本机双组织演示：两个按钮分别调用 Org1 / Org2 服务身份；尚未隔离为企业独立登录权限。</p>
+        <p>
+          双组织权限已隔离：发起按钮仅「发货方」角色可用（Org1
+          服务校验），确认按钮仅「承运方」角色可用（Org2
+          服务校验），两个操作无法由同一账号完成。当前登录：
+          {user ? (ROLE_LABELS[role] ?? role) : '未登录'}
+        </p>
       </header>
       {error ? (
         <p className="tower-error" role="alert">
@@ -110,15 +125,18 @@ export function HandoverPage() {
             {!data?.hubs.length ? <SelectItem value="WH-HUB-01" text="武汉中转中心" /> : null}
           </Select>
           <div className="handover-actions">
-            <Button disabled={busy} onClick={() => void submit('HANDOVER_INITIATED')}>
-              发起交接
+            <Button
+              disabled={busy || role !== 'shipper'}
+              onClick={() => void submit('HANDOVER_INITIATED')}
+            >
+              发起交接（仅发货方）
             </Button>
             <Button
               kind="tertiary"
-              disabled={busy}
+              disabled={busy || role !== 'carrier'}
               onClick={() => void submit('HANDOVER_CONFIRMED')}
             >
-              确认接收
+              确认接收（仅承运方）
             </Button>
             <Button kind="ghost" renderIcon={Renew} onClick={() => void load()}>
               刷新

@@ -22,10 +22,10 @@
 - `LEDGER_MODE=fabric`：连接统一账本，直接查询 JXSEED 等真实运单，需要与 `apps/api` 同源的 Fabric 证书环境变量（`FABRIC_*`，参见 `.env.example`）。
 
 ```bash
-# 演示模式
-cd apps/tower-api && GOWORK=off go run ./cmd/server   # 8080
-# 双组织交接演示再起一个实例
-GOWORK=off PORT=8082 FABRIC_MSP_ID=Org2MSP go run ./cmd/server
+# 演示模式（写操作需要主站会话，JWT_SECRET 必须与 apps/api 一致）
+cd apps/tower-api && GOWORK=off ENV_FILE=../../apps/api/.env.fabric go run ./cmd/server   # 8080，Org1
+# 双组织交接演示再起一个 Org2 实例
+GOWORK=off ENV_FILE=../../apps/api/.env.fabric TOWER_ORG=2 PORT=8082 go run ./cmd/server
 
 # 测试
 GOWORK=off go test ./...
@@ -39,6 +39,17 @@ MySQL 遥测（网点、路线计划、GPS、温湿度）为**可选链下数据
 
 开发演示密码：`shipper / shipper123`、`carrier / carrier123`、`receiver / receiver123`、`auditor / auditor123`。仅限本机开发，不得用于公网部署。
 
+## 会话与双组织权限
+
+控制塔写操作（发起交接、确认交接、追加事件）复用主站 `jixin_session` 会话（同一 `JWT_SECRET` 校验），并按实例组织做角色门控：
+
+| 实例                  | 允许角色  | 可执行操作                    |
+| --------------------- | --------- | ----------------------------- |
+| 8080（`TOWER_ORG=1`） | `shipper` | 发起交接、追加事件（Org1 侧） |
+| 8082（`TOWER_ORG=2`） | `carrier` | 确认交接、追加事件（Org2 侧） |
+
+因此发货方无法确认自己发起的交接（角色门控 + 链码 `requireMSP` 双重拦截），一笔交接必须由两个账号先后完成。读取接口保持开放。链码在发起/确认时还会向运单事件流写入 `HANDOVER_INITIATED` / `HANDOVER_CONFIRMED` 里程碑，公开追溯页可见。
+
 ## 区块链具体负责什么
 
 1. 各组织用 Fabric 身份提交交易，链码校验 MSP 权限与状态合法性，双组织背书后上链。
@@ -47,6 +58,6 @@ MySQL 遥测（网点、路线计划、GPS、温湿度）为**可选链下数据
 
 ## 已知局限
 
-- 控制塔写操作目前经两个本机服务身份演示（8080/8082 各持一个组织身份），桥接 API 尚未实现企业级用户授权隔离，不能作为生产级多方独立签署系统对外开放。
-- 生产化还需：限定接收组织、业务权限与证书隔离、TLS、审计与备份。
-- MySQL 中的路线与遥测为演示数据，接入真实 GPS/温湿度设备仍需设备身份、采样时间与质量校验。
+- 双组织权限隔离是"主站角色 + 双服务实例"形态：真正的多企业部署需要各企业自持证书、独立部署 API 并限制接收组织。
+- 生产化还需：企业独立授权与证书隔离、TLS、审计与备份。
+- 未配置 MySQL 时，控制塔路线/地图为**按运单真实起讫生成的示意轨迹**（时间线取自链上事件，温度曲线为链上节点记录的真实温度），响应仍标注 `dataSource: demo`；接入真实 GPS/温湿度设备还需设备身份、采样时间与质量校验。

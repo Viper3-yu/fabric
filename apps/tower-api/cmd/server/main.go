@@ -96,7 +96,7 @@ func main() {
 		defer db.Close()
 		sources = append(sources, db)
 	}
-	r := api.New(service.NewControlTowerService(l, sources...), mode).Router()
+	r := api.New(service.NewControlTowerService(l, sources...), mode, org, os.Getenv("JWT_SECRET")).Router()
 	if err := r.Run(net.JoinHostPort(os.Getenv("HOST"), port)); err != nil {
 		log.Fatal(fmt.Errorf("listen on %s: %w", net.JoinHostPort(os.Getenv("HOST"), port), err))
 	}

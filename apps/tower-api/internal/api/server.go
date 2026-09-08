@@ -10,17 +10,30 @@ import (
 	"tower-api/internal/service"
 )
 
+// Server fronts the control tower. Write operations are gated by the main
+// API's session: the instance acting as Org1 only accepts the shipper role,
+// and the instance acting as Org2 only accepts the carrier role, so one
+// logged-in account can never perform both sides of a handover.
 type Server struct {
-	service *service.ControlTowerService
-	mode    string
+	service     *service.ControlTowerService
+	mode        string
+	org         string
+	secret      string
+	allowedRole string
 }
 
-func New(s *service.ControlTowerService, mode ...string) *Server {
-	m := "mock"
-	if len(mode) > 0 && mode[0] != "" {
-		m = mode[0]
+func New(s *service.ControlTowerService, mode, org, secret string) *Server {
+	if mode == "" {
+		mode = "mock"
 	}
-	return &Server{service: s, mode: m}
+	if org == "" {
+		org = "1"
+	}
+	allowedRole := "shipper"
+	if org == "2" {
+		allowedRole = "carrier"
+	}
+	return &Server{service: s, mode: mode, org: org, secret: secret, allowedRole: allowedRole}
 }
 
 func (s *Server) Router() *gin.Engine {
@@ -28,29 +41,43 @@ func (s *Server) Router() *gin.Engine {
 	_ = r.SetTrustedProxies([]string{"127.0.0.1", "::1"})
 	r.Use(gin.Logger(), gin.Recovery())
 	r.GET("/api/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"ok": true, "mode": s.mode, "service": "lianyun-control-tower"})
-	})
-	r.POST("/api/auth/login", func(c *gin.Context) {
-		var input struct {
-			Username string `json:"username"`
-			Password string `json:"password"`
-		}
-		if c.BindJSON(&input) != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"ok": false, "message": "参数错误"})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{"ok": true, "data": gin.H{
-			"accessToken": "demo-token-" + input.Username,
-			"user":        gin.H{"name": "演示用户", "role": "CARRIER"},
-		}})
+		c.JSON(http.StatusOK, gin.H{"ok": true, "mode": s.mode, "org": "Org" + s.org + "MSP", "service": "lianyun-control-tower"})
 	})
 	r.GET("/api/shipments/:id/control-tower", s.controlTower)
 	r.GET("/api/shipments/:id/map", s.controlTower)
 	r.GET("/api/shipments/:id/risk-analysis", s.risk)
-	r.POST("/api/shipments/:id/events", s.appendEvent)
-	r.POST("/api/shipments/:id/handovers", s.initiateHandover)
-	r.POST("/api/handovers/:handoverId/confirm", s.confirmHandover)
+
+	// Chaincode-side authorization is enforced per organization (requireMSP),
+	// so each write must go through the instance holding the matching org
+	// identity AND the matching business role.
+	writes := r.Group("/api", s.requireOrgRole)
+	writes.POST("/shipments/:id/events", s.appendEvent)
+	writes.POST("/shipments/:id/handovers", s.initiateHandover)
+	writes.POST("/handovers/:handoverId/confirm", s.confirmHandover)
 	return r
+}
+
+func (s *Server) requireOrgRole(c *gin.Context) {
+	token, err := extractSessionToken(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"ok": false, "message": "请先登录主站后再执行链上操作"})
+		return
+	}
+	claims, err := verifySessionToken(token, s.secret)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"ok": false, "message": "登录会话无效或已过期，请重新登录"})
+		return
+	}
+	if claims.Role != s.allowedRole {
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			"ok":      false,
+			"message": "该操作属于 Org" + s.org + "MSP 侧，需要「" + s.allowedRole + "」角色；当前角色「" + claims.Role + "」无权执行",
+		})
+		return
+	}
+	c.Set("actorRole", claims.Role)
+	c.Set("actorID", claims.Subject)
+	c.Next()
 }
 
 func (s *Server) initiateHandover(c *gin.Context) {
@@ -87,7 +114,7 @@ func (s *Server) controlTower(c *gin.Context) {
 		log.Printf("control tower lookup failed: %v", err)
 		status, message := http.StatusServiceUnavailable, "运输数据服务暂时不可用，请稍后重试"
 		if strings.Contains(err.Error(), "不存在") {
-			status, message = http.StatusNotFound, "未找到该运单，请核对运单号；控制塔使用独立的链运运单库"
+			status, message = http.StatusNotFound, "未找到该运单，请核对运单号"
 		}
 		c.JSON(status, gin.H{"ok": false, "message": message})
 		return
@@ -110,6 +137,9 @@ func (s *Server) appendEvent(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"ok": false, "message": "参数错误"})
 		return
 	}
+	// The chaincode rejects a caller-supplied actorOrg that mismatches the
+	// submitting MSP; the instance identity is the authority here.
+	event.ActorOrg = "Org" + s.org + "MSP"
 	if event.ActorName == "" {
 		event.ActorName = "当前操作员"
 	}

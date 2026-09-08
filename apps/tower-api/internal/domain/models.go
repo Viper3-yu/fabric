@@ -31,17 +31,18 @@ type RouteSegment struct {
 }
 
 type TrackingEvent struct {
-	ID           string `json:"id"`
-	Type         string `json:"type"`
-	HubCode      string `json:"hubCode"`
-	HubName      string `json:"hubName"`
-	ActorOrg     string `json:"actorOrg"`
-	ActorName    string `json:"actorName"`
-	Remark       string `json:"remark"`
-	Severity     string `json:"severity,omitempty"`
-	EvidenceHash string `json:"evidenceHash,omitempty"`
-	At           string `json:"at"`
-	TxID         string `json:"txId"`
+	ID           string   `json:"id"`
+	Type         string   `json:"type"`
+	HubCode      string   `json:"hubCode"`
+	HubName      string   `json:"hubName"`
+	ActorOrg     string   `json:"actorOrg"`
+	ActorName    string   `json:"actorName"`
+	Remark       string   `json:"remark"`
+	Severity     string   `json:"severity,omitempty"`
+	EvidenceHash string   `json:"evidenceHash,omitempty"`
+	At           string   `json:"at"`
+	TxID         string   `json:"txId"`
+	Temperature  *float64 `json:"temperature,omitempty"`
 }
 
 type Parcel struct {

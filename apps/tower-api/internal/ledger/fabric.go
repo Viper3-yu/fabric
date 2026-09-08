@@ -55,15 +55,16 @@ type ledgerShipment struct {
 
 // ledgerEvent mirrors model.ShipmentEvent of the unified chaincode.
 type ledgerEvent struct {
-	Sequence     int    `json:"sequence"`
-	Type         string `json:"type"`
-	Location     string `json:"location"`
-	Description  string `json:"description"`
-	ActorName    string `json:"actorName"`
-	MSPID        string `json:"mspId"`
-	TxID         string `json:"txId"`
-	Timestamp    string `json:"timestamp"`
-	EvidenceHash string `json:"evidenceHash"`
+	Sequence     int      `json:"sequence"`
+	Type         string   `json:"type"`
+	Location     string   `json:"location"`
+	Description  string   `json:"description"`
+	ActorName    string   `json:"actorName"`
+	MSPID        string   `json:"mspId"`
+	TxID         string   `json:"txId"`
+	Timestamp    string   `json:"timestamp"`
+	EvidenceHash string   `json:"evidenceHash"`
+	Temperature  *float64 `json:"temperature"`
 }
 
 func firstFile(dir string) (string, error) {
@@ -161,6 +162,7 @@ func toTrackingEvent(event ledgerEvent) domain.TrackingEvent {
 		EvidenceHash: event.EvidenceHash,
 		At:           event.Timestamp,
 		TxID:         event.TxID,
+		Temperature:  event.Temperature,
 	}
 }
 

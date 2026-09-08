@@ -258,7 +258,7 @@ func (c *LogisticsContract) InitiateHandover(
 	if err != nil {
 		return "", err
 	}
-	_, shipment, err := loadShipment(ctx, shipmentID)
+	key, shipment, err := loadShipment(ctx, shipmentID)
 	if err != nil {
 		return "", err
 	}
@@ -302,6 +302,18 @@ func (c *LogisticsContract) InitiateHandover(
 	if err := putCollab(ctx, handoverKey(handoverID), shipmentHandoverKey(shipment.ID, handoverID), handover); err != nil {
 		return "", err
 	}
+	event := model.ShipmentEvent{
+		Sequence: len(shipment.Events) + 1, Type: "HANDOVER_INITIATED",
+		Location: handover.FromHub, Description: fmt.Sprintf(
+			"发起跨组织交接，接收网点 %s（交接单 %s）", handover.ToHub, handoverID,
+		),
+		ActorID: mspID, ActorName: "发货方", MSPID: mspID,
+		TxID: ctx.GetStub().GetTxID(), Timestamp: timestamp,
+	}
+	appendEvents(&shipment, []model.ShipmentEvent{event}, timestamp)
+	if _, err := commitMutation(ctx, key, shipment, "INITIATE_HANDOVER", []model.ShipmentEvent{event}, timestamp); err != nil {
+		return "", err
+	}
 	return marshalCollab(handover)
 }
 
@@ -343,6 +355,22 @@ func (c *LogisticsContract) ConfirmHandover(
 	handover.ConfirmedAt = timestamp
 	handover.ConfirmTxID = ctx.GetStub().GetTxID()
 	if err := putCollab(ctx, handoverKey(handoverID), shipmentHandoverKey(handover.ShipmentID, handover.HandoverID), handover); err != nil {
+		return "", err
+	}
+	key, shipment, err := loadShipment(ctx, handover.ShipmentID)
+	if err != nil {
+		return "", err
+	}
+	event := model.ShipmentEvent{
+		Sequence: len(shipment.Events) + 1, Type: "HANDOVER_CONFIRMED",
+		Location: handover.ToHub, Description: fmt.Sprintf(
+			"承运方确认接收，交接完成（交接单 %s）", handoverID,
+		),
+		ActorID: mspID, ActorName: "承运方", MSPID: mspID,
+		TxID: ctx.GetStub().GetTxID(), Timestamp: timestamp,
+	}
+	appendEvents(&shipment, []model.ShipmentEvent{event}, timestamp)
+	if _, err := commitMutation(ctx, key, shipment, "CONFIRM_HANDOVER", []model.ShipmentEvent{event}, timestamp); err != nil {
 		return "", err
 	}
 	return marshalCollab(handover)
