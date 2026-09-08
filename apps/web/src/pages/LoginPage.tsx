@@ -58,9 +58,15 @@ export function LoginPage() {
           <span className="login-brand__descriptor">可信物流协作网络</span>
         </div>
         <div className="login-intro__copy">
-          <p className="eyebrow">迹信物流管理</p>
-          <h1 id="login-title">物流业务系统</h1>
-          <p className="login-lead">运单管理、运输跟踪与交接记录。</p>
+          <p className="eyebrow">从发货到签收 责任清晰可查</p>
+          <h1 id="login-title">
+            每次物流
+            <span className="inline-route-image" aria-hidden="true" />
+            <span className="login-title__tail">交接都有可信记录</span>
+          </h1>
+          <p className="login-lead">
+            发货、承运、异常处理和签收都在同一张运单里协作，关键操作和文件核对编号都会自动保存。
+          </p>
         </div>
         <div className="login-intro__footer">
           <Link className="public-entry" to="/track">

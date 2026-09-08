@@ -96,35 +96,21 @@ export function AppShell() {
         </Link>
 
         <nav className="app-sidebar__links" aria-label="主导航">
-          {['业务工作区', '运输协作', '系统设置'].map((group, groupIndex) => (
-            <div className="app-sidebar__group" key={group}>
-              <p className="app-sidebar__group-title">{group}</p>
-              {primaryNavItems
-                .filter((item) => {
-                  const section = item.path.includes('/settings/')
-                    ? 2
-                    : ['/app/control-tower', '/app/handovers'].includes(item.path)
-                      ? 1
-                      : 0;
-                  return section === groupIndex;
-                })
-                .map((item) => {
-                  const Icon = item.icon;
-                  const active = isNavItemActive(location.pathname, item.path);
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className={`app-sidebar__link ${active ? 'is-active' : ''}`}
-                      aria-current={active ? 'page' : undefined}
-                    >
-                      <Icon size={18} aria-hidden="true" />
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
-            </div>
-          ))}
+          {primaryNavItems.map((item) => {
+            const Icon = item.icon;
+            const active = isNavItemActive(location.pathname, item.path);
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`app-sidebar__link ${active ? 'is-active' : ''}`}
+                aria-current={active ? 'page' : undefined}
+              >
+                <Icon size={18} aria-hidden="true" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="app-sidebar__footer">
