@@ -3,10 +3,9 @@
 // representative records to browse. Every scenario already present (matched
 // by shipment id) is skipped, so the command is safe to rerun.
 //
-// Usage (against a running Fabric network):
-//
-//	$env:ENV_FILE = (Resolve-Path ".\apps\api\.env.fabric").Path
-//	go run ./apps/api/cmd/seed
+// Usage: run `pnpm seed` from the repository root, or set ENV_FILE explicitly.
+// Without ENV_FILE the command falls back to apps/api/.env.fabric when it
+// exists, and to apps/api/.env otherwise.
 package main
 
 import (
@@ -15,6 +14,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/Viper3-yu/fabric/apps/api/internal/config"
@@ -22,6 +24,24 @@ import (
 	"github.com/Viper3-yu/fabric/apps/api/internal/users"
 	"github.com/Viper3-yu/fabric/chaincode/logistics/model"
 )
+
+// defaultEnvFile points ENV_FILE at the generated Fabric env file when the
+// command runs from the repository root (e.g. via `pnpm seed`) without an
+// explicit ENV_FILE, so seeding needs no shell-specific env syntax.
+func defaultEnvFile() {
+	if strings.TrimSpace(os.Getenv("ENV_FILE")) != "" {
+		return
+	}
+	for _, candidate := range []string{"apps/api/.env.fabric", "apps/api/.env"} {
+		if _, err := os.Stat(candidate); err != nil {
+			continue
+		}
+		if abs, err := filepath.Abs(candidate); err == nil {
+			os.Setenv("ENV_FILE", abs)
+		}
+		return
+	}
+}
 
 type step struct {
 	action      string // accept | pickup | checkpoint | deliver | confirm | cancel
@@ -204,6 +224,7 @@ func scenarios() []scenario {
 }
 
 func main() {
+	defaultEnvFile()
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal(err)

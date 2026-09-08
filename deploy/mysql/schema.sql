@@ -1,6 +1,7 @@
 CREATE DATABASE IF NOT EXISTS lianyun DEFAULT CHARACTER SET utf8mb4;
-CREATE USER IF NOT EXISTS 'lianyun_app'@'127.0.0.1' IDENTIFIED BY 'lianyun_dev';
-GRANT SELECT, INSERT, UPDATE, DELETE ON lianyun.* TO 'lianyun_app'@'127.0.0.1';
+-- '%' allows connections from the host into the containerized MySQL; dev only.
+CREATE USER IF NOT EXISTS 'lianyun_app'@'%' IDENTIFIED BY 'lianyun_dev';
+GRANT SELECT, INSERT, UPDATE, DELETE ON lianyun.* TO 'lianyun_app'@'%';
 USE lianyun;
 
 CREATE TABLE IF NOT EXISTS users (
