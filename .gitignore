@@ -25,3 +25,14 @@ output/
 # Playwright 已移除，旧克隆本地可能残留这些目录
 playwright-report/
 test-results/
+**/vendor/
+**/wallet/
+**/organizations/
+**/keystore/
+*.pem
+*.key
+*.p12
+*.pfx
+*.sqlite
+*.db
+*.dump

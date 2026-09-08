@@ -10,7 +10,7 @@ import {
   WarningAltFilled,
 } from '@carbon/icons-react';
 import type { Shipment, ShipmentHistoryEntry } from '@jixin/shared';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { ActionDialog } from '../components/ActionDialog';
 import { CopyButton } from '../components/CopyButton';
@@ -46,6 +46,7 @@ export function ShipmentDetailPage() {
     routeState?.receipt ?? null,
   );
   const [reloadKey, setReloadKey] = useState(0);
+  const [view, setView] = useState<'info' | 'route' | 'audit'>('route');
 
   useEffect(() => {
     if (!id) return;
@@ -180,34 +181,40 @@ export function ShipmentDetailPage() {
         />
       ) : null}
 
-      <section className="detail-record-health" aria-label="这张运单的系统记录状态">
-        <article>
-          <div>
-            <span className="network-pulse" aria-hidden="true" />
-            <span>记录状态</span>
-          </div>
-          <strong>顺序完整</strong>
-          <small>目前没有发现中间缺失</small>
-        </article>
-        <article>
-          <div>
-            <Blockchain size={18} aria-hidden="true" />
-            <span>记录环境</span>
-          </div>
-          <strong>Fabric 网络</strong>
-          <small>由多方共同确认</small>
-        </article>
-        <article>
-          <div>
-            <CheckmarkFilled size={18} aria-hidden="true" />
-            <span>最近一条记录</span>
-          </div>
-          <strong className="num">{shipment.events.length} 次变化</strong>
-          {latestEvent ? <RecordStrip event={latestEvent} compact /> : <small>暂无事件记录</small>}
-        </article>
-      </section>
-
-      <ShipmentRouteMap shipment={shipment} />
+      {view === 'audit' && (
+        <section className="detail-record-health" aria-label="这张运单的系统记录状态">
+          <article>
+            <div>
+              <span className="network-pulse" aria-hidden="true" />
+              <span>记录状态</span>
+            </div>
+            <strong>需执行核验</strong>
+            <Link to={`/verify?trackingNumber=${encodeURIComponent(shipment.trackingNumber)}`}>
+              核验事件顺序与文件摘要
+            </Link>
+          </article>
+          <article>
+            <div>
+              <Blockchain size={18} aria-hidden="true" />
+              <span>记录环境</span>
+            </div>
+            <strong>Fabric 网络</strong>
+            <small>由多方共同确认</small>
+          </article>
+          <article>
+            <div>
+              <CheckmarkFilled size={18} aria-hidden="true" />
+              <span>最近一条记录</span>
+            </div>
+            <strong className="num">{shipment.events.length} 次变化</strong>
+            {latestEvent ? (
+              <RecordStrip event={latestEvent} compact />
+            ) : (
+              <small>暂无事件记录</small>
+            )}
+          </article>
+        </section>
+      )}
 
       <section className="detail-summary" aria-label="运单当前概览">
         <Tile>
@@ -228,13 +235,27 @@ export function ShipmentDetailPage() {
         </Tile>
       </section>
 
-      <div className="detail-layout">
-        <div className="detail-primary">
-          <section className="content-section">
+      <nav className="detail-view-switch" aria-label="运单详情内容">
+        {(
+          [
+            ['info', '基本信息'],
+            ['route', '运输轨迹'],
+            ['audit', '区块链凭证'],
+          ] as const
+        ).map(([key, label]) => (
+          <button type="button" key={key} aria-pressed={view === key} onClick={() => setView(key)}>
+            {label}
+          </button>
+        ))}
+      </nav>
+      {view === 'route' ? <ShipmentRouteMap shipment={shipment} /> : null}
+
+      <div className={`detail-layout detail-layout--${view}`}>
+        <div className="detail-primary" hidden={view === 'info'}>
+          <section className="content-section" hidden={view !== 'route'}>
             <div className="section-heading">
-              <p className="eyebrow">运输过程</p>
-              <h2>谁在什么时候做了什么</h2>
-              <p>每次交接和位置更新都按时间排列；展开后，可以看到操作人和系统记录编号。</p>
+              <h2>运输事件</h2>
+              <p>以下为账本业务事件；定位轨迹属于链下数据源，二者按运单号关联。</p>
             </div>
             {shipment.events.length ? (
               <ShipmentTimeline events={shipment.events} />
@@ -243,11 +264,10 @@ export function ShipmentDetailPage() {
             )}
           </section>
 
-          <section className="content-section">
+          <section className="content-section" hidden={view !== 'audit'}>
             <div className="section-heading">
-              <p className="eyebrow">每次修改记录</p>
-              <h2>这张运单是怎么一步步变化的</h2>
-              <p>从建单到当前状态，每次修改都会保留。这里可以检查中间有没有断开。</p>
+              <h2>账本历史版本</h2>
+              <p>按提交时间排列，包含交易编号和当时状态。</p>
             </div>
             <Accordion align="start">
               {newestHistory.map((entry, index) => (
@@ -279,7 +299,7 @@ export function ShipmentDetailPage() {
           </section>
         </div>
 
-        <aside className="detail-aside">
+        <aside className="detail-aside" hidden={view !== 'info'}>
           <Tile className="detail-card">
             <div className="detail-card__heading">
               <DeliveryParcel size={22} aria-hidden="true" />

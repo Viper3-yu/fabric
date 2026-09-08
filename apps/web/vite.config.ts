@@ -17,6 +17,14 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      '/lianyun-org2-api': {
+        target: 'http://127.0.0.1:8082',
+        rewrite: (path) => path.replace(/^\/lianyun-org2-api/, '/api'),
+      },
+      '/lianyun-api': {
+        target: 'http://127.0.0.1:8080',
+        rewrite: (path) => path.replace(/^\/lianyun-api/, '/api'),
+      },
       '/api': {
         target: process.env.VITE_API_PROXY_TARGET ?? 'http://127.0.0.1:3001',
         changeOrigin: true,

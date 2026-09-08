@@ -22,6 +22,15 @@ const CreateShipmentPage = lazy(() =>
 const ShipmentDetailPage = lazy(() =>
   import('./pages/ShipmentDetailPage').then((module) => ({ default: module.ShipmentDetailPage })),
 );
+const ControlTowerPage = lazy(() =>
+  import('./pages/ControlTowerPage').then((module) => ({ default: module.ControlTowerPage })),
+);
+const HandoverPage = lazy(() =>
+  import('./pages/HandoverPage').then((module) => ({ default: module.HandoverPage })),
+);
+const IntegrationsPage = lazy(() =>
+  import('./pages/IntegrationsPage').then((module) => ({ default: module.IntegrationsPage })),
+);
 const LoginPage = lazy(() =>
   import('./pages/LoginPage').then((module) => ({ default: module.LoginPage })),
 );
@@ -104,6 +113,30 @@ export function AppRoutes() {
           element={
             <Suspense fallback={<PageSkeleton rows={4} />}>
               <ShipmentDetailPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="control-tower"
+          element={
+            <Suspense fallback={<PageSkeleton rows={5} />}>
+              <ControlTowerPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="handovers"
+          element={
+            <Suspense fallback={<PageSkeleton rows={4} />}>
+              <HandoverPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="settings/integrations"
+          element={
+            <Suspense fallback={<PageSkeleton rows={4} />}>
+              <IntegrationsPage />
             </Suspense>
           }
         />

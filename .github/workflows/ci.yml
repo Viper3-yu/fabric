@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'codex/**']
   pull_request:
 
 concurrency:
@@ -47,3 +47,13 @@ jobs:
       - run: go build ./apps/api/... ./chaincode/logistics/...
       - name: Closed-loop test
         run: go test ./apps/api/internal/httpapi -run TestClosedLoop -count=1
+      - name: Lianyun extension backend tests
+        working-directory: extensions/lianyun/backend-go
+        env:
+          GOWORK: 'off'
+        run: go test ./...
+      - name: Lianyun extension chaincode build and tests
+        working-directory: extensions/lianyun/chaincode-go
+        env:
+          GOWORK: 'off'
+        run: go test ./...

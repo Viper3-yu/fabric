@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import demoCsv from '../../public/demo-shipments.csv?raw';
 import {
   getShipmentTemplateHeaders,
   parseImportRecords,
@@ -30,6 +31,19 @@ const validRecord = {
 };
 
 describe('parseImportRecords', () => {
+  it('validates all three downloadable demonstration rows through the real CSV parser', async () => {
+    const bytes = new TextEncoder().encode(demoCsv);
+    const rows = await parseShipmentFile({
+      name: 'demo.csv',
+      arrayBuffer: async () => bytes.buffer,
+    } as File);
+    expect(rows).toHaveLength(3);
+    for (const row of rows) {
+      expect(row.errors).toEqual([]);
+      expect(row.input.goods.name).toMatch(/^演示-/);
+    }
+    expect(rows[2]?.input.temperatureRange).toEqual({ min: -18, max: -12, unit: 'C' });
+  });
   it('builds a downloadable template without required-field asterisks', () => {
     expect(getShipmentTemplateHeaders()).not.toContainEqual(expect.stringMatching(/[*＊]/));
   });
