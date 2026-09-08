@@ -18,12 +18,7 @@ import { RecordStrip } from '../components/RecordStrip';
 import { ShipmentProgress } from '../components/ShipmentProgress';
 import { StatusTag } from '../components/StatusTag';
 import { api, getErrorMessage } from '../lib/api';
-import {
-  ACTION_LABELS,
-  formatDateTime,
-  getAvailableActions,
-  routeLabel,
-} from '../lib/presentation';
+import { formatDateTime, getPendingStep, routeLabel } from '../lib/presentation';
 import type { NetworkInfo } from '../types';
 
 function RecentShipments({ shipments }: { shipments: Shipment[] }) {
@@ -131,9 +126,10 @@ export function DashboardPage() {
 
   const pending = useMemo(() => {
     if (!summary || !user) return [];
-    return summary.recent.flatMap((shipment) =>
-      getAvailableActions(user.role, shipment.status).map((action) => ({ shipment, action })),
-    );
+    return summary.recent.flatMap((shipment) => {
+      const step = getPendingStep(user.role, shipment.status);
+      return step ? [{ shipment, step }] : [];
+    });
   }, [summary, user]);
 
   if (loading) return <PageSkeleton rows={5} />;
@@ -201,7 +197,9 @@ export function DashboardPage() {
         </div>
         <ShipmentProgress shipment={activeShipment} compact />
         {activeShipment && activeShipment.events.length > 0 ? (
-          <RecordStrip event={activeShipment.events[activeShipment.events.length - 1]!} compact />
+          <div className="dashboard-focus__body">
+            <RecordStrip event={activeShipment.events[activeShipment.events.length - 1]!} compact />
+          </div>
         ) : null}
       </section>
 
@@ -258,7 +256,7 @@ export function DashboardPage() {
           <article className="operations-panel operations-panel--attention">
             <div className="operations-panel__heading">
               <div>
-                <span>需要推进</span>
+                <span>需要关注</span>
                 <h2>我的待处理</h2>
               </div>
               <WarningAltFilled size={24} aria-hidden="true" />
@@ -266,10 +264,14 @@ export function DashboardPage() {
             <span className="attention-count">{pending.length} 项</span>
             <div className="attention-panel__body">
               <ul className="attention-list">
-                {pending.slice(0, 3).map(({ shipment, action }) => (
-                  <li key={`${shipment.id}-${action}`}>
-                    <button type="button" onClick={() => navigate(`/app/shipments/${shipment.id}`)}>
-                      <span>{ACTION_LABELS[action]}</span>
+                {pending.slice(0, 3).map(({ shipment, step }) => (
+                  <li key={`${shipment.id}-${step.label}`}>
+                    <button
+                      type="button"
+                      className={step.actionable ? '' : 'is-waiting'}
+                      onClick={() => navigate(`/app/shipments/${shipment.id}`)}
+                    >
+                      <span>{step.label}</span>
                       <strong className="num">{shipment.trackingNumber}</strong>
                     </button>
                   </li>

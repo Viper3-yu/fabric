@@ -48,6 +48,42 @@ export function getAvailableActions(role: UserRole, status: ShipmentStatus): Shi
   return ACTION_MATRIX[role][status] ?? [];
 }
 
+export interface PendingStep {
+  label: string;
+  // true=需要当前角色操作；false=流程在等待其他角色
+  actionable: boolean;
+}
+
+const WAITING_LABELS: Record<ShipmentAction, string> = {
+  accept: '等待承运方接单',
+  pickup: '等待承运方揽收',
+  checkpoint: '等待承运方更新运输节点',
+  deliver: '等待承运方确认送达',
+  resolve: '等待承运方处理异常',
+  confirm: '等待收货方签收',
+  exception: '',
+  cancel: '',
+};
+
+// 工作台"我的待处理"视角：取消等备用操作不算待推进事项；下一步在别人手上
+// 时显示等待态，在当前角色手上时才显示可操作动作。
+export function getPendingStep(role: UserRole, status: ShipmentStatus): PendingStep | null {
+  if (role === 'auditor') return null;
+  const next = (
+    {
+      CREATED: { role: 'carrier', action: 'accept' },
+      ACCEPTED: { role: 'carrier', action: 'pickup' },
+      PICKED_UP: { role: 'carrier', action: 'checkpoint' },
+      IN_TRANSIT: { role: 'carrier', action: 'checkpoint' },
+      EXCEPTION: { role: 'carrier', action: 'resolve' },
+      DELIVERED: { role: 'receiver', action: 'confirm' },
+    } as Partial<Record<ShipmentStatus, { role: UserRole; action: ShipmentAction }>>
+  )[status];
+  if (!next) return null;
+  if (role === next.role) return { label: ACTION_LABELS[next.action], actionable: true };
+  return { label: WAITING_LABELS[next.action], actionable: false };
+}
+
 export function getResponsibility(shipment: Shipment): string {
   switch (shipment.status) {
     case 'CREATED':
