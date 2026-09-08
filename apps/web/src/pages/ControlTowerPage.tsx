@@ -92,8 +92,8 @@ function TemperatureChart({ data }: { data: ControlTowerData }) {
 
 export function ControlTowerPage() {
   const [settings] = useState(readIntegrationSettings);
-  const [draft, setDraft] = useState('YT20260001');
-  const [shipmentId, setShipmentId] = useState('YT20260001');
+  const [draft, setDraft] = useState('JXSEED0004');
+  const [shipmentId, setShipmentId] = useState('JXSEED0004');
   const { data, loading, error, load } = useControlTower(shipmentId);
   const submit = (event: FormEvent) => {
     event.preventDefault();

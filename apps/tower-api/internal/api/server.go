@@ -113,8 +113,10 @@ func (s *Server) controlTower(c *gin.Context) {
 	if err != nil {
 		log.Printf("control tower lookup failed: %v", err)
 		status, message := http.StatusServiceUnavailable, "运输数据服务暂时不可用，请稍后重试"
-		if strings.Contains(err.Error(), "不存在") {
-			status, message = http.StatusNotFound, "未找到该运单，请核对运单号"
+		// The chaincode reports missing records in English ("does not
+		// exist"); map both phrasings to a client-facing 404.
+		if strings.Contains(err.Error(), "不存在") || strings.Contains(err.Error(), "does not exist") {
+			status, message = http.StatusNotFound, "未找到该运单，请核对运单号（统一账本运单如 JXSEED0001–0012）"
 		}
 		c.JSON(status, gin.H{"ok": false, "message": message})
 		return

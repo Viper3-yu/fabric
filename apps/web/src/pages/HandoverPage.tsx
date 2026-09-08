@@ -15,7 +15,7 @@ const ROLE_LABELS: Record<string, string> = {
 export function HandoverPage() {
   const { user } = useAuth();
   const role = user?.role ?? '';
-  const [shipmentId, setShipmentId] = useState('YT20260001');
+  const [shipmentId, setShipmentId] = useState('JXSEED0004');
   const [handoverId, setHandoverId] = useState(() => `HO-${Date.now().toString(36).toUpperCase()}`);
   const [fromHub, setFromHub] = useState('HZ-HUB-01');
   const [toHub, setToHub] = useState('WH-HUB-01');
