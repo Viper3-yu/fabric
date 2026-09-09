@@ -1,8 +1,26 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
+const carbonCdnFontFace =
+  /@font-face\s*\{[^{}]*https:\/\/1\.www\.s81c\.com\/common\/carbon\/plex\/fonts\/[^{}]*\}/g;
+
+function stripCarbonCdnFonts() {
+  return {
+    name: 'strip-carbon-cdn-fonts',
+    enforce: 'pre' as const,
+    transform(code: string, id: string) {
+      if (!id.replace(/\\/g, '/').includes('/@carbon/styles/css/styles.css')) {
+        return null;
+      }
+
+      const bundled = code.replace(carbonCdnFontFace, '');
+      return bundled === code ? null : bundled;
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [stripCarbonCdnFonts(), react()],
   build: {
     rollupOptions: {
       output: {
