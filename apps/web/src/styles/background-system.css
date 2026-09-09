@@ -168,7 +168,9 @@
 
   to {
     opacity: 1;
-    transform: translateY(0);
+    /* 不能以 translateY(0) 收尾：fill-mode: both 会把恒等 transform 永久留在
+       main 上，使其成为 fixed 后代的包含块，GSAP ScrollTrigger 的标题钉住会失效。 */
+    transform: none;
   }
 }
 

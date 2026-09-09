@@ -573,7 +573,9 @@ p {
   margin-bottom: 2rem;
 }
 .chain-story__intro h2 {
-  max-width: 14ch;
+  /* em 按中文字宽计量（旧值 14ch 是西文"0"宽度，会把 16 字标题卡成三行），
+     配合 JSX 里的 .headline-br 断成两行：想查的过程都能看到 / 隐私默认隐藏 */
+  max-width: 9.4em;
   margin: 0;
   color: var(--jixin-ink);
   font-size: clamp(2.5rem, 4vw, 3.75rem);
@@ -623,7 +625,9 @@ p {
   color: #75d3aa;
 }
 .manifest-timeline__head h2 {
-  max-width: 13ch;
+  /* em 按中文字宽计量（旧值 13ch 是西文"0"宽度，会把 16 字标题卡成三行并拆断
+     "来龙去脉"），配合 JSX 里的 .headline-br 断成两行：每一步都有记录 / 来龙去脉一看就懂 */
+  max-width: 8.6em;
   margin: 0 0 0.9rem;
   font-family: var(--jixin-font-editorial);
   font-size: clamp(2.75rem, 5vw, 4.75rem);
@@ -721,14 +725,6 @@ p {
   color: #a9bcb2;
   font-size: 0.85rem;
   line-height: 1.65;
-}
-.manifest-step__record {
-  margin: 0.35rem 0 0;
-  padding-top: 0.6rem;
-  border-top: 1px dashed rgba(192, 226, 208, 0.28);
-  color: #cfe3d8;
-  font-size: 0.7rem;
-  letter-spacing: -0.01em;
 } /* ===== 运单解剖图 ===== */
 .waybill-anatomy {
   display: grid;
@@ -866,23 +862,6 @@ p {
 .waybill-legend__evidence strong {
   font-size: 0.8rem;
   font-weight: 600;
-} /* ===== 首屏记录带示例 ===== */
-.hero-record-strip {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem 1rem;
-  margin: 1.25rem 0 0;
-  padding: 0.65rem 0.95rem;
-  border: 1px dashed var(--jixin-border-strong);
-  border-radius: var(--jixin-control-radius);
-  background: var(--jixin-surface);
-  color: var(--jixin-ink-soft);
-  font-size: 0.8rem;
-}
-.hero-record-strip .mono {
-  color: var(--jixin-ink);
-  font-size: 0.76rem;
 } /* ===== 页脚 CTA（原独立区块并入页尾） ===== */
 .public-footer__cta {
   color: var(--jixin-accent);
@@ -1694,6 +1673,10 @@ p {
 }
 
 @media (max-width: 768px) {
+  /* 窄屏宽度放不下两行大字的定行断点，恢复自然换行 */
+  .headline-br {
+    display: none;
+  }
   .public-hero {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
@@ -2097,7 +2080,9 @@ p {
   margin-bottom: 1.25rem;
 }
 .chain-story__intro h2 {
-  max-width: 15ch;
+  /* 此规则在级联中覆盖上方 575 行的同名规则，max-width 必须在此放宽；
+     em 按中文字宽计量（ch 是西文"0"宽度），配合 .headline-br 断成两行 */
+  max-width: 9.4em;
   font-size: clamp(2.5rem, 3.7vw, 3.5rem);
 }
 .chain-story__lead {

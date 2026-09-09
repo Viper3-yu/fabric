@@ -24,28 +24,24 @@ const RECORD_STEPS = [
     label: '发货方建单',
     title: '先把货物和路线说清楚',
     description: '货物、收发地址和温控要求保存后，这趟运输就有了清楚的起点。',
-    record: '建单 CREATED · 上海张江 · 08:36 · tx 8f31a2c9',
     icon: DeliveryParcel,
   },
   {
     label: '承运方接货',
     title: '交给谁系统马上记下',
     description: '接单和揽收会同时记下操作人、所属公司、地点和时间，之后不能悄悄覆盖。',
-    record: '揽收 PICKED_UP · 上海张江 · 09:12 · tx 2b7e40f1',
     icon: Locked,
   },
   {
     label: '运输途中',
     title: '每到一站都多一条记录',
     description: '位置、温度和现场说明按顺序追加；遇到异常，也能看到发生和处理的完整过程。',
-    record: '节点 CHECKPOINT · 昆山中转 · 11:47 · tx d94c66e0',
     icon: DataCheck,
   },
   {
     label: '到货签收',
     title: '最后由收货方完成确认',
     description: '一次性签收码完成最后确认，前面的运输记录会连成一条完整、可回看的时间线。',
-    record: '签收 RECEIVED · 南京玄武 · 15:03 · tx 57a08b3d',
     icon: Blockchain,
   },
 ] as const;
@@ -139,7 +135,11 @@ function ManifestJourney() {
     <section className="manifest-timeline" aria-labelledby="record-journey-title" data-motion-pin>
       <header className="manifest-timeline__head" data-pin-heading>
         <p className="eyebrow">运输清单</p>
-        <h2 id="record-journey-title">每一步都有记录 来龙去脉一看就懂</h2>
+        <h2 id="record-journey-title">
+          每一步都有记录
+          <br className="headline-br" />
+          来龙去脉一看就懂
+        </h2>
         <p
           className="manifest-timeline__scrub"
           aria-label="运输过程中的关键动作都会被系统按顺序保存"
@@ -174,7 +174,6 @@ function ManifestJourney() {
                 </header>
                 <h3>{step.title}</h3>
                 <p>{step.description}</p>
-                <p className="manifest-step__record mono">{step.record}</p>
               </article>
             </li>
           );
@@ -190,7 +189,11 @@ function WaybillAnatomy() {
     <section className="chain-story" aria-labelledby="chain-story-title">
       <div className="chain-story__intro">
         <div>
-          <h2 id="chain-story-title">想查的过程都能看到 隐私默认隐藏</h2>
+          <h2 id="chain-story-title">
+            想查的过程都能看到
+            <br className="headline-br" />
+            隐私默认隐藏
+          </h2>
           <p className="chain-story__lead" data-scrub-copy>
             运输过程和核对编号可以查询；完整文件、证件和联系方式仍由业务方保管，不会出现在公开页面。
           </p>
@@ -412,12 +415,6 @@ export function PublicTrackPage() {
                 {loading ? '正在查询' : '查询物流'}
               </Button>
             </Form>
-            {!shipment ? (
-              <p className="hero-record-strip" data-reveal>
-                <span>每次操作都会生成一条这样的记录</span>
-                <span className="mono">揽收 PICKED_UP · 上海张江 · 09:12 · tx 2b7e40f1</span>
-              </p>
-            ) : null}
             <div className="public-hero__secondary" data-reveal>
               <Link to="/verify">输入文件核对编号 查看是否一致</Link>
             </div>

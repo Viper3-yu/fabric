@@ -141,18 +141,11 @@ export function useCinematicMotion(
         );
 
         pinSections.forEach((section) => {
-          const heading = section.querySelector<HTMLElement>('[data-pin-heading]');
+          // 标题不再 pin：区块的钉住行程只有一百多像素，钉住期间时间线圆点会
+          // 划过标题文案，观感割裂且对包含块（任何祖先的残留 transform）极其
+          // 敏感，多次出现标题飘出屏外的问题。这里只保留卡片入场的滚动动效。
           const cards = gsap.utils.toArray<HTMLElement>('[data-pin-card]', section);
-          if (!heading || !cards.length) return;
-
-          ScrollTrigger.create({
-            trigger: section,
-            start: 'top 7rem',
-            end: 'bottom 72%',
-            pin: heading,
-            pinSpacing: false,
-            anticipatePin: 1,
-          });
+          if (!cards.length) return;
 
           cards.forEach((card) => {
             gsap.fromTo(
