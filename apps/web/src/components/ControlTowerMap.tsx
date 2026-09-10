@@ -1,6 +1,7 @@
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ControlTowerData } from '../lib/control-tower-api';
+import { addBaseMapLayer } from '../lib/map-tiles';
 
 export function ControlTowerMap({
   data,
@@ -30,10 +31,12 @@ export function ControlTowerMap({
         const map = L.map(container.current, { scrollWheelZoom: false, zoomControl: false });
         cleanup = () => map.remove();
         L.control.zoom({ position: 'bottomright' }).addTo(map);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap contributors',
-          maxZoom: 18,
-        }).addTo(map);
+        const removeTiles = addBaseMapLayer(L, map, () => setError('底图加载失败，仅显示路线示意'));
+        const disposeMap = () => {
+          removeTiles();
+          map.remove();
+        };
+        cleanup = disposeMap;
         data.segments.forEach((segment) => {
           const coordinates = (
             segment.polyline?.length
@@ -81,9 +84,6 @@ export function ControlTowerMap({
         }
         map.fitBounds(L.latLngBounds(points), { padding: [34, 34], maxZoom: 8 });
         requestAnimationFrame(() => map.invalidateSize());
-        cleanup = () => {
-          map.remove();
-        };
       })
       .catch(() => setError('地图组件加载失败'));
     return () => {

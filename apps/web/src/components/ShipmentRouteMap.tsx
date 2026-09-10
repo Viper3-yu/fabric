@@ -4,6 +4,7 @@ import type { Shipment } from '@jixin/shared';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatDateTime } from '../lib/presentation';
 import { buildShipmentRoute, routeLineDistanceKm } from '../lib/route-geography';
+import { addBaseMapLayer } from '../lib/map-tiles';
 
 interface ShipmentRouteMapProps {
   shipment: Shipment;
@@ -30,10 +31,13 @@ export function ShipmentRouteMap({ shipment }: ShipmentRouteMapProps) {
           zoomControl: false,
         });
         L.control.zoom({ position: 'bottomright' }).addTo(map);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap contributors',
-          maxZoom: 18,
-        }).addTo(map);
+        const removeTiles = addBaseMapLayer(L, map, () => {
+          if (!disposed) setMapError('底图加载失败，仅显示路线节点示意');
+        });
+        cleanup = () => {
+          removeTiles();
+          map.remove();
+        };
 
         const coordinates = points.map((point) => point.coordinate);
         L.polyline(coordinates, {
@@ -76,7 +80,6 @@ export function ShipmentRouteMap({ shipment }: ShipmentRouteMapProps) {
           padding: [48, 48],
         });
         requestAnimationFrame(() => map.invalidateSize());
-        cleanup = () => map.remove();
       })
       .catch(() => {
         if (!disposed) setMapError('地图组件加载失败，请刷新后重试');
