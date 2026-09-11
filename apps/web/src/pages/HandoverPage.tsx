@@ -38,7 +38,7 @@ export function HandoverPage() {
     [data],
   );
   const submit = async (type: 'HANDOVER_INITIATED' | 'HANDOVER_CONFIRMED') => {
-    if (loading || !data || data.shipment.id !== shipmentId.trim()) {
+    if (loading || !data) {
       setMessage('请先读取有效运单');
       return;
     }
